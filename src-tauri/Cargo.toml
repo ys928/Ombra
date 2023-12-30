@@ -1,0 +1,44 @@
+[package]
+name = "ombra"
+version = "0.0.2"
+description = "一个简洁、强大的聚合型工具。"
+authors = ["ys928"]
+license = "MIT"
+repository = ""
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "1.5", features = [] }
+
+[dependencies]
+tauri = { version = "1.5", features = ["system-tray", "api-all"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+webbrowser = "0.8.12"
+window-shadows = "0.2.2"
+walkdir = "2.4.0"
+chrono = "0.4.31"
+base64 = "0.13"
+pelite = "0.10.0"
+# lnk_parser = "0.4.0"
+rusqlite = { version = "0.30.0", features = ["bundled", "load_extension"] }
+dirs = "5.0.1"
+libloading = "0.8"
+tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
+tauri-plugin-autostart = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = ["winuser", "winbase"] }
+
+[features]
+# this feature is used for production builds or when `devPath` points to the filesystem
+# DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]
+
+[profile.release]
+strip = true  # Automatically strip symbols from the binary.
+opt-level = "z"  # Optimize for size.
+lto = true
+codegen-units = 1
+panic = "abort"
