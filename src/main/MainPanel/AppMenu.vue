@@ -350,12 +350,32 @@ async function search() {
 }
 
 function test_name_metch(name: string, m: string) {
+    //尝试拼音匹配
     let ret = PinyinMatch.match(name, m);
     if (typeof ret != "boolean") {
+        console.log('拼音匹配', name);
         return true;
-    } else {
+    }
+
+    //尝试首字母匹配
+
+    //不是由英文单词组成的名字，直接返回false
+    if (!/^[a-zA-Z\s]+$/.test(name)) {
         return false;
     }
+    //要匹配的内容不是英语字母组成，返回false
+    if (!/^[a-zA-Z]+$/.test(m)) {
+        return false;
+    }
+    // 将搜索内容拆分为单词
+    const words = name.split(/\s+/).filter(word => word.length > 0);
+    //获取所有单词首字母组成的序列
+    const initials_str = words.map(word => word[0]).join('').toLowerCase();
+    if (initials_str.includes(m)) {
+        console.log('首字母匹配：', name);
+        return true;
+    }
+    return false;
 }
 
 //根据程序名称构造html标签
@@ -363,10 +383,32 @@ function get_show_name(name: string) {
     if (!test_name_metch(name, props.search_content)) {
         return get_span(name, 'normal');
     }
-    let ret = PinyinMatch.match(name, props.search_content) as [number, number];
-    let s = get_span(name.substring(0, ret[0]), 'normal');
-    s += get_span(name.substring(ret[0], ret[1] + 1), 'match');
-    s += get_span(name.substring(ret[1] + 1, name.length), 'normal');
+
+    //先根据拼音匹配构造
+    let ret = PinyinMatch.match(name, props.search_content);
+    if (typeof ret != "boolean") {
+        let s = get_span(name.substring(0, ret[0]), 'normal');
+        s += get_span(name.substring(ret[0], ret[1] + 1), 'match');
+        s += get_span(name.substring(ret[1] + 1, name.length), 'normal');
+        return s;
+    }
+
+    //否则根据首字母匹配进行构造
+
+    // 将搜索内容拆分为单词
+    const words = name.split(/\s+/).filter(word => word.length > 0);
+    //获取所有单词首字母组成的序列
+    const initials_str = words.map(word => word[0]).join('').toLowerCase();
+    let pos = initials_str.search(props.search_content.toLowerCase());
+    let s = '';
+    for (let i = 0; i < words.length; i++) {
+        if (i >= pos && i < pos + props.search_content.length) {
+            s += get_span(words[i][0], 'match');
+            s += get_span(words[i].substring(1) + ' ', 'normal');
+        } else {
+            s += get_span(words[i] + ' ', 'normal');
+        }
+    }
     return s;
 }
 
@@ -410,6 +452,7 @@ function init_feature(feature: string[], data: string) {
     app_setup_content = data;
     search();
 }
+
 
 defineExpose({
     click_app,
@@ -500,13 +543,12 @@ defineExpose({
                     height: 35px;
                     margin: 7px 4px 0;
 
-                    word-break: break-all;
-                    text-overflow: ellipsis;
                     display: -webkit-box;
                     -webkit-box-orient: vertical;
                     -webkit-line-clamp: 2;
                     overflow: hidden;
-
+                    color: #d2d2d2;
+                    word-break: break-all;
                     &:deep(.normal) {
                         color: #d2d2d2;
                     }
