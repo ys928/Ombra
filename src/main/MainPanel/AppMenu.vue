@@ -353,7 +353,6 @@ function test_name_metch(name: string, m: string) {
     //尝试拼音匹配
     let ret = PinyinMatch.match(name, m);
     if (typeof ret != "boolean") {
-        console.log('拼音匹配', name);
         return true;
     }
 
@@ -372,7 +371,6 @@ function test_name_metch(name: string, m: string) {
     //获取所有单词首字母组成的序列
     const initials_str = words.map(word => word[0]).join('').toLowerCase();
     if (initials_str.includes(m)) {
-        console.log('首字母匹配：', name);
         return true;
     }
     return false;

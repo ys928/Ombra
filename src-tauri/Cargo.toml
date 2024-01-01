@@ -28,6 +28,7 @@ dirs = "5.0.1"
 libloading = "0.8"
 tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 tauri-plugin-autostart = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
+tauri-plugin-clipboard = { git = "https://github.com/CrossCopy/tauri-plugin-clipboard" }
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["winuser", "winbase"] }
 

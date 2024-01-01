@@ -38,6 +38,7 @@ fn main() {
         .add_item(quit);
     let system_tray = SystemTray::new().with_menu(tray_menu);
     tauri::Builder::default()
+        .plugin(tauri_plugin_clipboard::init())
         .system_tray(system_tray)
         .on_system_tray_event(|app, event| match event {
             SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {

@@ -20,12 +20,14 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, onMounted, ref, watch } from "vue";
+import { Ref, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import AppMenu from "./MainPanel/AppMenu.vue";
 import { unregister, isRegistered } from '@tauri-apps/api/globalShortcut';
 import { read_config_item, set_shortcut, write_config_item } from '~/global'
 import Setting from './MainPanel/Setting.vue';
 import { exp_get_path, win_event_blur, win_event_focus, win_is_visible, win_show, win_focus, win_hide, win_set_size } from '~/ombra'
+import { onTextUpdate, readText, startListening } from "tauri-plugin-clipboard-api";
+import { UnlistenFn } from "@tauri-apps/api/event";
 
 const main_input = ref() as Ref<HTMLInputElement>;
 const measure = ref() as Ref<HTMLElement>;
@@ -69,6 +71,10 @@ watch(is_show, () => {
 
 });
 
+let unlistenTextUpdate: UnlistenFn;
+let unlistenClipboard: () => Promise<void>;
+let clip_board_time = 999;
+let timing_fun: string | number | NodeJS.Timeout | undefined;
 onMounted(async () => {
     win_set_size(170);
     main_input.value.focus();
@@ -88,8 +94,24 @@ onMounted(async () => {
     } else {
         search_input_placeholder.value = placeholder;
     }
+
+    unlistenTextUpdate = await onTextUpdate(() => {
+        clip_board_time = 0;
+        if (timing_fun) clearInterval(timing_fun);
+        timing_fun = setInterval(() => {
+            clip_board_time += 1;
+            if (clip_board_time > 3 && timing_fun) {
+                clearInterval(timing_fun);
+            }
+        }, 1000);
+    });
+    unlistenClipboard = await startListening();
 });
 
+onUnmounted(() => {
+    unlistenTextUpdate();
+    unlistenClipboard();
+})
 
 async function set_callout_shortkey(shortkey: string) {
     await unset_callout_shortkey();
@@ -98,11 +120,10 @@ async function set_callout_shortkey(shortkey: string) {
             is_show.value = false;
         } else {
             is_show.value = true;
-
-            // let ret = await clip_get_text();
-            // if (ret) {
-            //     fun_input();
-            // }
+            if (clip_board_time >= 0 && clip_board_time <= 3) {
+                search_content.value = await readText();
+                fun_input();
+            }
         }
     })
     write_config_item('callout', shortkey);
@@ -120,7 +141,7 @@ async function set_search_input_placeholder(placeholder: string) {
     write_config_item('placeholder', search_input_placeholder.value);
 }
 
-function fun_keydown(e: KeyboardEvent) {
+async function fun_keydown(e: KeyboardEvent) {
     if (e.key == 'ArrowUp') {
         apps_menu.value.move('up');
         return;
@@ -151,6 +172,8 @@ function fun_keydown(e: KeyboardEvent) {
         }
         if (search_content.value.length != 0) {
             search_content.value = "";
+            await nextTick();
+            fun_input();
         } else {
             win_hide();
         }
