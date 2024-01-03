@@ -6,8 +6,8 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { win_focus, win_is_main } from '~/ombra'
-
 onMounted(() => {
+  console.log(window)
   if (win_is_main()) {
     win_focus();
   }

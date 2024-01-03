@@ -234,7 +234,8 @@ export function win_to_app(appid: string) {
 export function win_new_app(appid: string) {
     if (appWindow.label == 'MainWindow') {
         let w = new WebviewWindow(appid, {
-            url: '/apps/' + appid,
+            // url: '/apps/' + appid,
+            url:'/plugin',
             decorations: false,
             transparent: true
         });
