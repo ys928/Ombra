@@ -7,6 +7,7 @@ use std::{
     process::Command,
 };
 
+use known_folders::{get_known_folder_path, KnownFolder};
 use serde::{Deserialize, Serialize};
 use tauri::Window;
 use winapi::ctypes::wchar_t;
@@ -94,7 +95,7 @@ pub fn get_all_app(w: Window) {
         let ico_path = tools::get_data_dir(Some("icons"));
 
         let mut paths: Vec<InstallApp> = Vec::new();
-        let p = r"C:\ProgramData\Microsoft\Windows\Start Menu\Programs";
+        let p = get_known_folder_path(KnownFolder::CommonStartMenu).unwrap();
         for entry in walkdir::WalkDir::new(p).into_iter().filter_map(|e| e.ok()) {
             if !entry.path().to_string_lossy().ends_with(".lnk") {
                 continue;
