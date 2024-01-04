@@ -2,8 +2,10 @@ import AppFileSearch from "./apps/FileSearch/App";
 import AppOpenLink from "./apps/OpenLink/App"
 import AppOpenPath from "./apps/OpenPath/App"
 import AppOpenFile from "./apps/OpenFile/App"
+import PluginWindow from './components/PluginWindow.vue'
 import { add_app } from "./global";
-import { win_is_main } from '~/ombra'
+import { dir_walk, file_convert, file_read_text, win_is_main } from '~/ombra'
+import { path } from "@tauri-apps/api";
 let user_apps_list = [
     AppFileSearch,
     AppOpenLink,
@@ -17,7 +19,8 @@ let app_route = [] as Array<{
 }>
 
 
-export function load_user_app() {
+export async function load_user_app() {
+    //加载内嵌应用
     for (let app of user_apps_list) {
         let url = '/apps/' + app.id;
         //仅限主窗口执行加载app代码
@@ -32,5 +35,40 @@ export function load_user_app() {
             component: app.component
         });
     }
+    //加载插件应用
+    await load_plugin_app();
     return app_route;
 };
+
+async function load_plugin_app() {
+    let plugin_path = await path.resolve('./plugin');
+    let plugin_dirs = await dir_walk(plugin_path);
+    for (let i = 0; i < plugin_dirs.length; i++) {
+        let name = '';
+        let icon = '';
+        let plugin_index = '';
+        let id = ''
+        let features = [];
+        let plugin_files = await dir_walk(plugin_dirs[i].path + '\\' + plugin_dirs[i].name);
+        for (let f of plugin_files) {
+            if (f.name.startsWith('icon')) { //icon图标
+                icon = file_convert(f.path + '\\' + f.name);
+            } else if (f.name == 'index.html') {
+                plugin_index = file_convert(f.path + '\\' + f.name);
+            } else if (f.name == 'config.json') {
+                let text = await file_read_text(f.path + '\\' + f.name);
+                let config = JSON.parse(text);
+                features = config.features;
+                id = config.id;
+                name = config.name;
+            }
+        }
+        if (win_is_main()) {
+            add_app(name, id, icon, features, true, () => { }, false, plugin_index);
+        }
+        app_route.push({
+            path: '/apps/' + id,
+            component: PluginWindow
+        });
+    }
+}

@@ -1,21 +1,23 @@
 <template>
     <div class="PluginWindow">
         <AppTitlebar></AppTitlebar>
-        <iframe id="plugin" :src="f" frameborder="0"></iframe>
+        <iframe id="plugin" :src="plugin_index" frameborder="0"></iframe>
     </div>
 </template>
 
 <script setup lang="ts">
-import { file_convert, file_read_text, file_write_text } from '~/ombra';
+import { file_read_text, file_write_text, om_get_plugin_index } from '~/ombra';
 import AppTitlebar from '../components/AppTitlebar.vue'
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 
-let f = file_convert('D:\\Desktop\\batch-rename\\dist\\index.html');
+let plugin_index = ref('');
+
 
 let iframe: HTMLIFrameElement;
 onMounted(() => {
     iframe = document.querySelector('#plugin') as HTMLIFrameElement;
     window.addEventListener('message', handle_plugin);
+    plugin_index.value = om_get_plugin_index();
 });
 
 async function handle_plugin(e: MessageEvent) {

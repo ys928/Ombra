@@ -9,6 +9,7 @@ export type AppInfo = {
     feature: Array<string>, //该应用可处理的特点，当用户输出指定特点的内容时将被显示在推荐页，目前支持：filename、url、dir_path、file_path,explorer
     only_feature: boolean, //是否只在触发特点时才显示
     weight: number, //应用权重，随用户使用次数进行计算
+    plugin_index: string, //插件index.html文件位置，非插件该值为空
     setup: () => void, //当用户点击该app时将被立即执行的函数，text为用户当前输入的文本,feature为当前用户输入匹配到的特性
 }
 
@@ -18,7 +19,7 @@ export function get_app_list() {
     return app_list;
 }
 
-export function add_app(name: string, id: string, icon: string, feature: Array<string>, self: boolean, callback: Function, only_feature = false) {
+export function add_app(name: string, id: string, icon: string, feature: Array<string>, self: boolean, callback: Function, only_feature = false, plugin_index = '') {
     app_list.push({
         name: name,
         icon: icon,
@@ -26,6 +27,7 @@ export function add_app(name: string, id: string, icon: string, feature: Array<s
         only_feature: only_feature,
         weight: 0,
         id: id,
+        plugin_index: plugin_index,
         self: self,
         setup: () => {
             if (self) {

@@ -234,8 +234,7 @@ export function win_to_app(appid: string) {
 export function win_new_app(appid: string) {
     if (appWindow.label == 'MainWindow') {
         let w = new WebviewWindow(appid, {
-            // url: '/apps/' + appid,
-            url:'/plugin',
+            url: '/apps/' + appid,
             decorations: false,
             transparent: true
         });
@@ -441,6 +440,23 @@ export function om_set_appid(appid: string) {
  */
 export function om_get_appid() {
     let appid = localStorage.getItem('appid');
+    if (appid == null) return '';
+    return appid;
+}
+/**
+ * 
+ * @param index 设置当前要打开的插件代码文件index.html位置
+ */
+export function om_set_plugin_index(index: string) {
+    localStorage.setItem('plugin_index', index);
+}
+
+/**
+ * 
+ * @returns 获取当前要打开的插件代码文件index.html位置
+ */
+export function om_get_plugin_index() {
+    let appid = localStorage.getItem('plugin_index');
     if (appid == null) return '';
     return appid;
 }
