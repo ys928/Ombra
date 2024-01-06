@@ -16,6 +16,48 @@ const list = [
         setup: () => {
             cli_exec(['start', 'ms-settings:windowsupdate']);
         }
+    }, {
+        name: 'WLAN',
+        icon: '/imgs/windows-setting.png',
+        feature: [],
+        setup: () => {
+            cli_exec(['start', 'ms-settings:network-wifi']);
+        }
+    }, {
+        name: 'VPN',
+        icon: '/imgs/windows-setting.png',
+        feature: [],
+        setup: () => {
+            cli_exec(['start', 'ms-settings:network-vpn']);
+        }
+    }, {
+        name: '日期与时间',
+        icon: '/imgs/windows-setting.png',
+        feature: [],
+        setup: () => {
+            cli_exec(['start', 'ms-settings:dateandtime']);
+        }
+    }, {
+        name: '语言与区域',
+        icon: '/imgs/windows-setting.png',
+        feature: [],
+        setup: () => {
+            cli_exec(['start', 'ms-settings:regionlanguage']);
+        }
+    }, {
+        name: '通知',
+        icon: '/imgs/windows-setting.png',
+        feature: [],
+        setup: () => {
+            cli_exec(['start', 'ms-settings:notifications']);
+        }
+    }, {
+        name: '放大镜',
+        icon: '/imgs/windows-setting.png',
+        feature: [],
+        setup: () => {
+            cli_exec(['start', 'ms-settings:easeofaccess-magnifier']);
+        }
     }
     , {
         name: '睡眠',
