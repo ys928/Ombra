@@ -27,7 +27,7 @@ pub fn watch_dir(w: Window, path: &str) {
 }
 
 #[tauri::command]
-pub fn unwatch_dir(w: Window, path: &str) {
+pub fn unwatch_dir(path: &str) {
     let mut watcher = WATCHER.lock().unwrap();
     if watcher.is_none() {
         return;
