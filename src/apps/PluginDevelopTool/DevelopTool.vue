@@ -1,27 +1,28 @@
 <template>
-    <div class="PluginWindow">
+    <div class="DevelopTool">
         <AppTitlebar></AppTitlebar>
         <iframe id="plugin" :src="plugin_index" frameborder="0"></iframe>
     </div>
 </template>
 
 <script setup lang="ts">
-import { file_read_text, file_write_text, om_get_plugin_index } from '~/ombra';
-import AppTitlebar from '../components/AppTitlebar.vue'
+
 import { onMounted, onUnmounted, ref } from 'vue';
+import AppTitlebar from '~/components/AppTitlebar.vue';
+import { file_read_text, file_write_text } from '~/ombra';
 
 let plugin_index = ref('');
-
-
 let iframe: HTMLIFrameElement;
+
 onMounted(() => {
     iframe = document.querySelector('#plugin') as HTMLIFrameElement;
     window.addEventListener('message', handle_plugin);
-    plugin_index.value = om_get_plugin_index();
 });
+
 onUnmounted(() => {
     window.removeEventListener('message', handle_plugin);
 });
+
 async function handle_plugin(e: MessageEvent) {
     if (e.data.type == 'func') {
         switch (e.data.name) {
@@ -40,10 +41,7 @@ async function handle_plugin(e: MessageEvent) {
         }
     }
 }
-
-
 </script>
-
 
 <style scoped lang="less">
 .PluginWindow {

@@ -7,6 +7,7 @@ use tauri::api::dialog;
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window};
 use walkdir::WalkDir;
 mod tools;
+mod file_watch;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct FileInfo {
@@ -82,6 +83,8 @@ fn main() {
             winsys::get_all_app,
             winsys::cmd_exec,
             winsys::get_explorer_show_path,
+            file_watch::watch_dir,
+            file_watch::unwatch_dir,
             walk_all_files,
             search_file,
             get_file_catch_info,
