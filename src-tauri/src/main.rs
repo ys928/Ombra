@@ -32,9 +32,11 @@ mod winsys;
 
 fn main() {
     let quit = CustomMenuItem::new("quit".to_string(), "退出");
+    let update = CustomMenuItem::new("update".to_string(), "更新");
     let start_file_catch = CustomMenuItem::new("file_catch".to_string(), "文件缓存");
     let tray_menu = SystemTrayMenu::new()
         .add_item(start_file_catch)
+        .add_item(update)
         .add_item(quit);
     let system_tray = SystemTray::new().with_menu(tray_menu);
     tauri::Builder::default()
@@ -48,6 +50,9 @@ fn main() {
                 "file_catch" => {
                     let window = app.get_window("MainWindow").unwrap();
                     walk_all_files(window);
+                }
+                "update"=>{
+                    winsys::open_web_url("https://github.com/ys928/Ombra/releases");
                 }
                 _ => {}
             },
