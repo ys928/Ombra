@@ -67,7 +67,6 @@ async function fun_choose() {
     }
     raw_plugin_index = paths;
     plugin_index.value = file_convert(paths);
-    // localStorage.setItem('raw_plugin_index', raw_plugin_index);
     invoke("watch_dir", { path: paths });
 }
 
@@ -77,8 +76,6 @@ listen('file_watch', async (e) => {
         show_plugin_index.value = false;
         await nextTick();
         show_plugin_index.value = true;
-        // plugin_index.value = file_convert(raw_plugin_index);
-        // window.location.reload();
     }
 })
 
