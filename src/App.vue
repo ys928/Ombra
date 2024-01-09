@@ -41,3 +41,11 @@ function fun_contextmenu(e: MouseEvent) {
   background-color: #252525;
 }
 </style>
+
+<style>
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+</style>
