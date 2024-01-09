@@ -9,11 +9,23 @@ static WATCHER: Mutex<Option<ReadDirectoryChangesWatcher>> = Mutex::new(None);
 pub fn watch_dir(w: Window, path: &str) {
     let mut watcher = WATCHER.lock().unwrap();
     if watcher.is_none() {
-        let tmp_watcher = notify::recommended_watcher(move |res| match res {
-            Ok(_e) => {
-                let _ = w.emit("file_change", "change");
+        let tmp_watcher = notify::recommended_watcher(move |res: Result<notify::Event, _>| {
+            if res.is_err() {
+                return;
             }
-            Err(_e) => {}
+            let res = res.unwrap();
+            match res.kind {
+                notify::EventKind::Create(_) => {
+                    let _ = w.emit("file_watch", "create");
+                }
+                notify::EventKind::Modify(_) => {
+                    let _ = w.emit("file_watch", "modify");
+                }
+                notify::EventKind::Remove(_) => {
+                    let _ = w.emit("file_watch", "remove");
+                }
+                _ => {}
+            }
         })
         .unwrap();
         *watcher = Some(tmp_watcher);

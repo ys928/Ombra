@@ -3,6 +3,7 @@ import { listen } from "@tauri-apps/api/event";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 import { LogicalSize, WebviewWindow, appWindow } from "@tauri-apps/api/window";
 import { os } from '@tauri-apps/api'
+import { OpenDialogOptions } from "@tauri-apps/api/dialog";
 /**
  * 说明：本文件为ombra的全局接口文件，包含了目前所有可用的api。
  * 为了方便使用，api的命名规范采用 名词_动词 的形式，例如打开文件的函数为：file_open
@@ -105,7 +106,14 @@ export function app_is_embed() {
 export async function dlg_confirm(msg: string, title: string, type: "warning" | "info" | "error", okLabel = '确定', cancelLabel = '取消') {
     return dialog.confirm(msg, { title: title, type: type, okLabel: okLabel, cancelLabel: cancelLabel })
 }
-
+/**
+ * @description 弹出对话框选择文件打开
+ * @param option 一些选项
+ * @returns 返回选择结果路径，为null则说明没有选择
+ */
+export async function dlg_open(option: OpenDialogOptions) {
+    return dialog.open(option);
+}
 
 /**
  * @description 以utf-8编码读取文本所有内容并返回
