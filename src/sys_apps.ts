@@ -1,5 +1,5 @@
 import { add_app } from "./global";
-import { app_get, app_start, cli_exec, dlg_confirm, file_convert, win_label } from "./ombra";
+import { app_get, app_start, cli_exec, dlg_confirm, file_convert, om_get_features, om_get_text, win_label } from "./ombra";
 
 const list = [
     {
@@ -150,7 +150,7 @@ export async function load_sys_app() {
     }
     //加载系统应用功能
     for (let app of list) {
-        add_app(app.name, '', app.icon, app.feature, false, app.setup);
+        add_app(app.name, '', app.icon, app.feature, false, app.setup, false, '');
     }
     //加载用户安装的应用
     let apps = await app_get();
@@ -159,13 +159,15 @@ export async function load_sys_app() {
         if (apps[i].name == 'Visual Studio Code') {
             feature.push('explorer');
         }
-        add_app(apps[i].name, '', file_convert(apps[i].icon), feature, false, (text: string, features: string[]) => {
+        add_app(apps[i].name, '', file_convert(apps[i].icon), feature, false, () => {
+            let features = om_get_features();
+            let text = om_get_text();
             if (features.includes('explorer')) {
                 cli_exec([apps[i].path, text])
             } else {
                 app_start(apps[i].path);
             }
-        })
+        }, false, '');
 
     }
 };

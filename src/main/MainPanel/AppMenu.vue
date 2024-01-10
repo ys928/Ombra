@@ -36,7 +36,7 @@
 import { onMounted, reactive, ref, watch } from 'vue';
 import PinyinMatch from 'pinyin-match';
 import { get_app_list, write_config_item, type AppInfo, read_config_item, get_span } from '~/global'
-import { om_set_appid, om_set_features, om_set_text, path_judge, win_set_size, win_to_app } from '~/ombra';
+import { om_set_appid, om_set_features, om_set_plugin_index, om_set_text, path_judge, win_set_size, win_to_app } from '~/ombra';
 const props = defineProps(['main_input', 'search_content', 'cur_focus_app']);
 const emit = defineEmits(['update:cur_focus_app']);
 
@@ -253,7 +253,12 @@ async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
     }
 
     om_set_appid(app.id);
-
+    //如果是插件应用，保存插件代码文件位置
+    if (app.plugin_index.length == 0) {
+        om_set_plugin_index('');
+    } else {
+        om_set_plugin_index(app.plugin_index);
+    }
     app.setup();
     if (!app.self) return;
     win_to_app(app.id);
@@ -547,6 +552,7 @@ defineExpose({
                     overflow: hidden;
                     color: #d2d2d2;
                     word-break: break-all;
+
                     &:deep(.normal) {
                         color: #d2d2d2;
                     }
