@@ -1,7 +1,7 @@
 <template>
     <div class="AppTitlebar" data-tauri-drag-region>
         <div class="Icon">
-            <img src="/main_logo.png">
+            <img src="/logo.png">
         </div>
         <div class="mmc">
             <KISeparate class="sep" :w="12" :h="12" @click="winSeparate" v-if="app_is_embed()">

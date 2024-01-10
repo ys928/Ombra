@@ -6,7 +6,7 @@
                 :placeholder="search_input_placeholder">
             <div class="space" @mousedown="main_input.focus()" @dblclick="fun_click_space" data-tauri-drag-region></div>
             <div class="Icon" @click="fun_open_setting">
-                <img src="/main_logo.png" draggable="false">
+                <img src="/logo.png" draggable="false">
             </div>
         </div>
         <Setting v-if="is_show_setting" :set_callout_shortkey="set_callout_shortkey"

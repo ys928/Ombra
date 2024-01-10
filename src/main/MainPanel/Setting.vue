@@ -6,9 +6,6 @@
         <div class="placeholder">
             <span>搜索框占位符</span> <input v-model="search_input_placeholder" @blur="set_placeholder">
         </div>
-        <div class="wf_time_interval">
-            <span>缓存周期</span> <span>todo……</span>
-        </div>
     </div>
 </template>
 
