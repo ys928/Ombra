@@ -140,6 +140,22 @@ const list = [
                 cli_exec(['powershell', '-Command', 'Start-Process', 'PowerShell'])
             }
         }
+    },
+    {
+        name: '系统属性环境变量',
+        icon: '/imgs/rundll32.png',
+        feature: ['explorer'],
+        setup: () => {
+            cli_exec(['start', 'SystemPropertiesAdvanced'])
+        }
+    },
+    {
+        name: '编辑用户环境变量',
+        icon: '/imgs/rundll32.png',
+        feature: ['explorer'],
+        setup: () => {
+            cli_exec(['start', 'rundll32', 'sysdm.cpl,EditEnvironmentVariables'])
+        }
     }
 ];
 
