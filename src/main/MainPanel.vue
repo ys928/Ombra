@@ -303,4 +303,4 @@ function fun_ompositionend() {
     }
 
 }
-</style>~/global
+</style>

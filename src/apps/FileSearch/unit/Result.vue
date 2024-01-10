@@ -5,7 +5,8 @@
             <span class="path">路径</span>
             <span class="time">修改时间</span>
         </div>
-        <div v-for="item in search_result" class="item" @contextmenu="fun_file_item_contextmenu($event, item)">
+        <div v-for="item in search_result" class="item" @contextmenu="fun_file_item_contextmenu($event, item)"
+            @dblclick="fun_dbclick(item)">
             <span class="name" :title="item.name">
                 <KIFolder w="12" h="12" v-if="item.ftype == 2"></KIFolder>
                 <KIDll w="12" h="12" v-else-if="item.name.endsWith('.dll')"></KIDll>
@@ -23,9 +24,10 @@
 
 <script setup lang="ts">
 import { listen } from '@tauri-apps/api/event';
-import { KIDll, KIText, KIFolder, KITypeScript, KIHtml} from '~/kui'
+import { KIDll, KIText, KIFolder, KITypeScript, KIHtml } from '~/kui'
 import { reactive } from 'vue';
 import { get_span, time_to_str } from '~/global';
+import { exp_open_file } from '~/ombra';
 type FileInfo = {
     name: string,
     path: string,
@@ -92,7 +94,20 @@ function fun_show_file_name(name: string) {
     }
     return get_span(name, 'normal');
 }
-
+function fun_dbclick(item: FileInfo) {
+    if (item.ftype == 2) { //如果是文件夹
+        let path = '';
+        if (item.path.length > 0) {
+            path = `${item.path}\\${item.name}`;
+        } else {
+            path = `${item.name}`;
+        }
+        exp_open_file(path);
+        return;
+    }
+    let path = `${item.path}\\${item.name}`;
+    exp_open_file(path);
+}
 </script>
 
 <style scoped lang="less">
