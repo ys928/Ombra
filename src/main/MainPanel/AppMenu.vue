@@ -441,7 +441,7 @@ async function match_feature(cnt: string) {
 
 function recommand_item_is_active(index: number) {
     if (search_result_list.length != 0) {
-        return index == search_result_list.length + recommend_list.length - props.cur_focus_app - 1;
+        return index == props.cur_focus_app - search_result_list.length;
     } else {
         return index == props.cur_focus_app;
     }

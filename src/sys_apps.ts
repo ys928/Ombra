@@ -122,7 +122,9 @@ const list = [
         name: 'CMD',
         icon: '/imgs/cmd.png',
         feature: ['explorer'],
-        setup: (text: string, features: string[]) => {
+        setup: () => {
+            let features = om_get_features();
+            let text = om_get_text();
             if (features.includes('explorer')) {
                 cli_exec(['start', 'cmd', '/k', 'cd', '/d', text])
             } else {
@@ -133,7 +135,9 @@ const list = [
         name: 'PowerShell',
         icon: '/imgs/powershell.png',
         feature: ['explorer'],
-        setup: (text: string, features: string[]) => {
+        setup: () => {
+            let features = om_get_features();
+            let text = om_get_text();
             if (features.includes('explorer')) {
                 cli_exec(['powershell', '-Command', 'Set-Location', '-Path ', text, ';Start-Process', 'PowerShell'])
             } else {
@@ -144,7 +148,7 @@ const list = [
     {
         name: '系统属性环境变量',
         icon: '/imgs/rundll32.png',
-        feature: ['explorer'],
+        feature: [''],
         setup: () => {
             cli_exec(['start', 'SystemPropertiesAdvanced'])
         }
@@ -152,7 +156,7 @@ const list = [
     {
         name: '编辑用户环境变量',
         icon: '/imgs/rundll32.png',
-        feature: ['explorer'],
+        feature: [''],
         setup: () => {
             cli_exec(['start', 'rundll32', 'sysdm.cpl,EditEnvironmentVariables'])
         }
