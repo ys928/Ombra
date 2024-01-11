@@ -244,7 +244,7 @@ function adjust_height() {
     //搜索结果高度
     let search_resule_height = 120;
     if (search_result_is_expand.value) {
-        search_resule_height += 90 * (search_result_list.length / 8);
+        search_resule_height += 90 * Math.floor((search_result_list.length - 1) / 8);
     }
     if (search_result_list.length == 0) {
         search_resule_height = 0
