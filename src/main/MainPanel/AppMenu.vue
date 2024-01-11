@@ -33,7 +33,7 @@
 
 <script setup lang="ts">
 
-import { onMounted, reactive, ref, watch } from 'vue';
+import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 import PinyinMatch from 'pinyin-match';
 import { get_app_list, write_config_item, type AppInfo, read_config_item, get_span } from '~/global'
 import { om_set_appid, om_set_features, om_set_plugin_index, om_set_text, path_judge, win_set_size, win_to_app } from '~/ombra';
@@ -109,61 +109,92 @@ function click_app() {
         fun_open_app(search_result_list[props.cur_focus_app], true);
     }
 }
-function move(dire: String) {
+async function move(dire: String) {
     let all_length = search_result_list.length + recommend_list.length;
+
+    //没有任何可用应用，直接返回
+    if (all_length == 0) return;
+
     switch (dire) {
         case 'up':
             {
-                if (props.cur_focus_app == 0) {
-                    emit('update:cur_focus_app', all_length - 1);
-                    return;
+                //如果两者结果都存在
+                if (search_result_list.length && recommend_list.length) {
+                    //如果当前在搜索结果内
+                    if (props.cur_focus_app < search_result_list.length) {
+                        //如果在最前面，则直接跳到最后
+                        if (props.cur_focus_app == 0) {
+                            emit('update:cur_focus_app', all_length - 1);
+                        } else if (props.cur_focus_app < 8) { //如果在第一行，则每次前进一个
+                            emit('update:cur_focus_app', props.cur_focus_app - 1);
+                        } else { //否则每次前进一行
+                            emit('update:cur_focus_app', props.cur_focus_app - 8);
+                        }
+                    } else {//如果当前在推荐结果内
+                        //如果在推荐结果第一行
+                        if (props.cur_focus_app < search_result_list.length + 8) {
+                            let offset = props.cur_focus_app - search_result_list.length;
+                            let pos = (Math.floor(search_result_list.length / 8) - 1) * 8 + offset;
+                            emit('update:cur_focus_app', pos);
+                        } else { //否则直接每次-8
+                            emit('update:cur_focus_app', props.cur_focus_app - 8);
+                        }
+                    }
+                } else {//如果搜索应用、推荐应用只有一个有结果
+                    //如果在最前面，则直接跳到最后
+                    if (props.cur_focus_app == 0) {
+                        emit('update:cur_focus_app', all_length - 1);
+                    } else if (props.cur_focus_app < 8) { //如果在第一行，则每次前进一个
+                        emit('update:cur_focus_app', props.cur_focus_app - 1);
+                    } else { //否则每次前进一行
+                        emit('update:cur_focus_app', props.cur_focus_app - 8);
+                    }
                 }
-                if (search_result_list.length == 0) {
-                    emit('update:cur_focus_app', all_length - 1);
-                    return;
-                }
-
-                //如果是在第一行
-                if ((search_result_list.length > 8 && props.cur_focus_app < 8) || (search_result_list.length < 8 && props.cur_focus_app < search_result_list.length)) {
-                    emit('update:cur_focus_app', props.cur_focus_app - 1);
-                    return;
-                }
-                //如果处于推荐行
-                if (props.cur_focus_app >= search_result_list.length) {
-                    let offset = props.cur_focus_app - search_result_list.length;
-                    let pos = Math.floor(search_result_list.length / 8) * 8 + offset;
-                    emit('update:cur_focus_app', pos);
-                    // console.log(pos);
-                    return;
-                }
-                emit('update:cur_focus_app', props.cur_focus_app - 8);
             }
             break;
         case 'down':
             {
-                if (props.cur_focus_app >= all_length - 1) {
-                    emit('update:cur_focus_app', 0);
-                    return;
-                }
-                //如果当前在搜索结果的最后一行
-                if (search_result_list.length != 0) {
-                    let sea_lines = Math.floor(search_result_list.length / 8);
-                    let cur_line = Math.floor(props.cur_focus_app / 8);
-                    if (sea_lines == cur_line) {
-                        let offset = search_result_list.length % 8;
-                        if (offset >= recommend_list.length) {
-                            emit('update:cur_focus_app', all_length - 1);
-                        } else {
-                            emit('update:cur_focus_app', search_result_list.length + offset);
+                //如果两者结果都存在
+                if (search_result_list.length && recommend_list.length) {
+                    //如果当前在搜索结果内
+                    if (props.cur_focus_app < search_result_list.length) {
+                        let pos = Math.floor((search_result_list.length - 1) / 8) * 8; //最后一行的起始数字(下标)
+                        if (props.cur_focus_app >= pos) { //如果在最后一行，则根据偏移值调准到推荐结果
+                            let offset = props.cur_focus_app - pos;
+                            if (search_result_list.length + offset >= all_length) {
+                                emit('update:cur_focus_app', all_length - 1);
+                            } else {
+                                emit('update:cur_focus_app', search_result_list.length + offset);
+                            }
+                        } else { //不在最后一行，每次直接-8
+                            emit('update:cur_focus_app', all_length + 8);
                         }
-                        return;
+                    } else {//如果当前在推荐结果内
+                        //如果在推荐结果最后一行
+                        if (props.cur_focus_app >= all_length - 8) {
+                            //如果在最后一个，则直接跳到第一个
+                            if (props.cur_focus_app == all_length - 1) {
+                                emit('update:cur_focus_app', 0);
+                            } else { //否则每次+1
+                                emit('update:cur_focus_app', props.cur_focus_app + 1);
+                            }
+                        } else { //否则直接每次+8
+                            emit('update:cur_focus_app', props.cur_focus_app + 8);
+                        }
+                    }
+                } else {//如果搜索应用、推荐应用只有一个有结果
+                    //如果在推荐结果最后一行
+                    if (props.cur_focus_app >= all_length - 8) {
+                        //如果在最后一个，则直接跳到第一个
+                        if (props.cur_focus_app == all_length - 1) {
+                            emit('update:cur_focus_app', 0);
+                        } else { //否则每次+1
+                            emit('update:cur_focus_app', props.cur_focus_app + 1);
+                        }
+                    } else { //否则直接每次+8
+                        emit('update:cur_focus_app', props.cur_focus_app + 8);
                     }
                 }
-                if (props.cur_focus_app >= all_length - 8) {
-                    emit('update:cur_focus_app', props.cur_focus_app + 1);
-                    return;
-                }
-                emit('update:cur_focus_app', props.cur_focus_app + 8);
             }
             break;
         case 'left':
@@ -185,6 +216,13 @@ function move(dire: String) {
             }
             break;
     }
+    await nextTick();
+    let act_app = document.querySelector('.active');
+    act_app?.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest',
+        behavior: 'smooth'
+    });
     return false;
 }
 
