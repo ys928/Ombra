@@ -15,7 +15,10 @@ import { invoke } from '@tauri-apps/api/tauri';
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import AppTitlebar from '~/components/AppTitlebar.vue';
 import { dlg_open, file_convert, file_read_text, file_write_text } from '~/ombra';
-
+interface FileChange {
+    kind: string,
+    files: Array<string>,
+}
 let plugin_index = ref(''); //转换后的路径
 let raw_plugin_index = '';//原始文件路径备份
 const show_plugin_index = ref(true);
@@ -70,8 +73,8 @@ async function fun_choose() {
     invoke("watch_dir", { path: paths });
 }
 
-listen('file_watch', async (e) => {
-    if (e.payload == 'modify') {
+listen<FileChange>('file_watch', async (e) => {
+    if (e.payload.kind == 'modify' && e.payload.files.includes(raw_plugin_index)) {
         //文件一旦变化，则自动刷新页面数据
         show_plugin_index.value = false;
         await nextTick();

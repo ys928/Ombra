@@ -1,9 +1,16 @@
 use std::{path::Path, sync::Mutex};
 
 use notify::{ReadDirectoryChangesWatcher, RecursiveMode, Watcher};
+use serde::{Deserialize, Serialize};
 use tauri::Window;
 
 static WATCHER: Mutex<Option<ReadDirectoryChangesWatcher>> = Mutex::new(None);
+
+#[derive(Serialize, Deserialize, Clone)]
+struct FileChange {
+    kind: String,
+    files: Vec<String>,
+}
 
 #[tauri::command]
 pub fn watch_dir(w: Window, path: &str) {
@@ -16,13 +23,43 @@ pub fn watch_dir(w: Window, path: &str) {
             let res = res.unwrap();
             match res.kind {
                 notify::EventKind::Create(_) => {
-                    let _ = w.emit("file_watch", "create");
+                    let mut files = Vec::new();
+                    for f in res.paths {
+                        files.push(f.to_string_lossy().to_string());
+                    }
+                    let _ = w.emit(
+                        "file_watch",
+                        FileChange {
+                            kind: "create".to_string(),
+                            files: files,
+                        },
+                    );
                 }
                 notify::EventKind::Modify(_) => {
-                    let _ = w.emit("file_watch", "modify");
+                    let mut files = Vec::new();
+                    for f in res.paths {
+                        files.push(f.to_string_lossy().to_string());
+                    }
+                    let _ = w.emit(
+                        "file_watch",
+                        FileChange {
+                            kind: "modify".to_string(),
+                            files: files,
+                        },
+                    );
                 }
                 notify::EventKind::Remove(_) => {
-                    let _ = w.emit("file_watch", "remove");
+                    let mut files = Vec::new();
+                    for f in res.paths {
+                        files.push(f.to_string_lossy().to_string());
+                    }
+                    let _ = w.emit(
+                        "file_watch",
+                        FileChange {
+                            kind: "remove".to_string(),
+                            files: files,
+                        },
+                    );
                 }
                 _ => {}
             }
@@ -44,5 +81,5 @@ pub fn unwatch_dir(path: &str) {
     if watcher.is_none() {
         return;
     }
-    watcher.as_mut().unwrap().unwatch(Path::new(path)).unwrap();
+    let _ = watcher.as_mut().unwrap().unwatch(Path::new(path));
 }
