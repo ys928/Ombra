@@ -1,7 +1,7 @@
 import { reactive } from "vue";
 import { dir_config, file_read_text, file_write_text, gs_is_registered, gs_register, gs_unregister, path_exist, win_hide, win_set_resizable, win_set_size } from "./ombra";
 
-export type AppInfo = {
+export interface AppInfo {
     name: string, //应用名，将显示在应用菜单面板上
     id: string, //应用id，如果self属性为true，那么该选项必填，否则可选，将被用于独立窗口label、以及vue中的路由
     self: boolean, //是否需要独立窗口功能

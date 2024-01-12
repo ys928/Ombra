@@ -5,6 +5,7 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use tauri::api::dialog;
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window};
+use pinyin::ToPinyin;
 use walkdir::WalkDir;
 mod tools;
 mod file_watch;
@@ -95,7 +96,8 @@ fn main() {
             get_file_catch_info,
             shadow_window,
             dir_or_file,
-            walk_dir
+            walk_dir,
+            to_pinyin
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -300,4 +302,15 @@ fn walk_dir(w: Window, path: String, level: usize) {
         }
         let _ = w.emit("walk_dir_result", files_list);
     });
+}
+
+#[tauri::command]
+fn to_pinyin(hans:&str)->Vec<String> {
+    let mut ret=Vec::new();
+    for pinyin in hans.to_pinyin() {
+        if let Some(pinyin) = pinyin {
+            ret.push(pinyin.plain().to_string());
+        }
+    }
+    return ret;
 }

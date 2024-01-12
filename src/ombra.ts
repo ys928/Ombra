@@ -468,3 +468,12 @@ export function om_get_plugin_index() {
     if (appid == null) return '';
     return appid;
 }
+
+/**
+ * 
+ * @param hans 汉字，如“世界”
+ * @returns 返回汉字对应的拼音数组，如['shi','jie']
+ */
+export async function om_to_pinyin(hans: string) {
+    return await invoke<Array<string>>('to_pinyin', { hans: hans });
+}

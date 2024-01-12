@@ -12,7 +12,7 @@
                 <div v-for="(item, index) in search_result_list" class="item" :key="item.name"
                     :class="{ 'active': index == props.cur_focus_app }" @click="fun_open_app(item, true)">
                     <img :src="item.icon" draggable="false">
-                    <div class="name" v-html="get_show_name(item.name)"></div>
+                    <div class="name" v-html="item.show_name"></div>
                 </div>
             </div>
         </div>
@@ -34,17 +34,21 @@
 <script setup lang="ts">
 
 import { nextTick, onMounted, reactive, ref, watch } from 'vue';
-import PinyinMatch from 'pinyin-match';
 import { get_app_list, write_config_item, type AppInfo, read_config_item, get_span } from '~/global'
-import { om_set_appid, om_set_features, om_set_plugin_index, om_set_text, path_judge, win_set_size, win_to_app } from '~/ombra';
+import { om_set_appid, om_set_features, om_set_plugin_index, om_set_text, om_to_pinyin, path_judge, win_set_size, win_to_app } from '~/ombra';
 const props = defineProps(['main_input', 'search_content', 'cur_focus_app']);
 const emit = defineEmits(['update:cur_focus_app']);
 
+interface AppInfoExt extends AppInfo {
+    is_match: boolean, //当前是否被匹配上了
+    show_name: string, //要显示的名字
+}
+
 const app_list = get_app_list(); //所有应用列表
 
-const search_result_list = reactive([]) as Array<AppInfo>; //每次的搜索结果
+const search_result_list = reactive([]) as Array<AppInfoExt>; //每次的搜索结果
 
-const recommend_list = reactive([]) as Array<AppInfo>; //最多8个推荐应用
+const recommend_list = reactive([]) as Array<AppInfoExt>; //最多8个推荐应用
 
 const search_count = ref(0); //搜索结果的数量
 
@@ -321,16 +325,18 @@ async function search() {
         for (let i = 0; i < app_list.length; i++) {
             for (let f of app_list[i].feature) {
                 if (features_list.includes(f) && recommend_list.length < 8) {
-                    recommend_list.push(app_list[i])
+                    let app = await test_name_match(app_list[i]);
+                    recommend_list.push(app);
                     // console.log(recommend_list);
                 }
             }
             if (app_list[i].only_feature) continue;
 
+            let app = await test_name_match(app_list[i]);
             if (search_result_is_expand.value) {
-                search_result_list.push(app_list[i]);
+                search_result_list.push(app);
             } else if (search_result_list.length < 8) { //在未展开模式下，最多显示8个应用
-                search_result_list.push(app_list[i]);
+                search_result_list.push(app);
             }
         }
         search_count.value = app_list.length;
@@ -348,14 +354,16 @@ async function search() {
     //如果是展开模式下
     if (search_result_is_expand.value) {
         for (let i = 0; i < app_list.length; i++) {
-            if (test_name_metch(app_list[i].name, props.search_content)) {
-                search_result_list.push(app_list[i]);
+            let app = await test_name_match(app_list[i], props.search_content);
+            if (app.is_match) {
+                search_result_list.push(app);
             }
             //推荐应用最多8个
             if (recommend_list.length >= 8) continue;
             for (let f of features_list) {
                 if (app_list[i].feature.includes(f)) {
-                    recommend_list.push(app_list[i]);
+                    let app = await test_name_match(app_list[i]);
+                    recommend_list.push(app);
                     break;
                 }
             }
@@ -370,11 +378,11 @@ async function search() {
     search_count.value = 0;
     for (let i = 0; i < app_list.length; i++) {
         if (app_list[i].only_feature == false) {
-            let ret = test_name_metch(app_list[i].name, props.search_content);
-            if (ret) {
+            let app = await test_name_match(app_list[i], props.search_content);
+            if (app.is_match) {
                 search_count.value += 1;
                 if (search_result_list.length < 8) {
-                    search_result_list.push(app_list[i]);
+                    search_result_list.push(app);
                 }
             }
         }
@@ -382,7 +390,8 @@ async function search() {
         if (recommend_list.length >= 8) continue;
         for (let f of features_list) {
             if (app_list[i].feature.includes(f)) {
-                recommend_list.push(app_list[i]);
+                let app = await test_name_match(app_list[i]);
+                recommend_list.push(app);
                 break;
             }
         }
@@ -392,65 +401,117 @@ async function search() {
     return;
 }
 
-function test_name_metch(name: string, m: string) {
-    //尝试拼音匹配
-    let ret = PinyinMatch.match(name, m);
-    if (typeof ret != "boolean") {
-        return true;
+//根据app name匹配构造要用于显示的show_name标签内容
+async function test_name_match(app: AppInfo, search = '') {
+    let appName = app.name;
+    //没有搜索内容，则直接返回
+    if (search.length == 0) {
+        let appExt: AppInfoExt = {
+            is_match: false,
+            show_name: get_span(appName, 'normal'),
+            ...app
+        };
+        return appExt;
     }
 
-    //尝试首字母匹配
+    //直接搜索
+    let pos = appName.toLocaleLowerCase().indexOf(search.toLocaleLowerCase());
+    if (pos != -1) {
+        let s = get_span(appName.substring(0, pos), 'normal');
+        s += get_span(appName.substring(pos, pos + search.length), 'match');
+        s += get_span(appName.substring(pos + search.length), 'normal');
 
-    //不是由英文单词组成的名字，直接返回false
-    if (!/^[a-zA-Z\s]+$/.test(name)) {
-        return false;
-    }
-    //要匹配的内容不是英语字母组成，返回false
-    if (!/^[a-zA-Z]+$/.test(m)) {
-        return false;
-    }
-    // 将搜索内容拆分为单词
-    const words = name.split(/\s+/).filter(word => word.length > 0);
-    //获取所有单词首字母组成的序列
-    const initials_str = words.map(word => word[0]).join('').toLowerCase();
-    if (initials_str.includes(m)) {
-        return true;
-    }
-    return false;
-}
-
-//根据程序名称构造html标签
-function get_show_name(name: string) {
-    if (!test_name_metch(name, props.search_content)) {
-        return get_span(name, 'normal');
+        let appExt: AppInfoExt = {
+            is_match: true,
+            show_name: s,
+            ...app
+        };
+        return appExt;
     }
 
-    //先根据拼音匹配构造
-    let ret = PinyinMatch.match(name, props.search_content);
-    if (typeof ret != "boolean") {
-        let s = get_span(name.substring(0, ret[0]), 'normal');
-        s += get_span(name.substring(ret[0], ret[1] + 1), 'match');
-        s += get_span(name.substring(ret[1] + 1, name.length), 'normal');
-        return s;
-    }
-
-    //否则根据首字母匹配进行构造
-
-    // 将搜索内容拆分为单词
-    const words = name.split(/\s+/).filter(word => word.length > 0);
-    //获取所有单词首字母组成的序列
-    const initials_str = words.map(word => word[0]).join('').toLowerCase();
-    let pos = initials_str.search(props.search_content.toLowerCase());
-    let s = '';
-    for (let i = 0; i < words.length; i++) {
-        if (i >= pos && i < pos + props.search_content.length) {
-            s += get_span(words[i][0], 'match');
-            s += get_span(words[i].substring(1) + ' ', 'normal');
-        } else {
-            s += get_span(words[i] + ' ', 'normal');
+    //如果搜索内容中没有汉字，则可以尝试英文首字母匹配、中文汉字拼音匹配、中文汉字首字母匹配
+    if (!/.*[\u4e00-\u9fa5].*/.test(search)) {
+        //如果appName为字母数字空格组成，即没有汉字，尝试英文首字母匹配
+        if (/^[\w\s]+$/.test(appName)) {
+            // 将appName先拆分为单词
+            const words = appName.split(/\s+/).filter(word => word.length > 0);
+            //获取所有单词首字母组成的序列
+            const initials_str = words.map(word => word[0]).join('').toLowerCase();
+            let pos = initials_str.indexOf(search.toLowerCase());
+            if (pos != -1) { //如果匹配到了
+                let s = '';
+                for (let i = 0; i < words.length; i++) {
+                    if (i >= pos && i < pos + props.search_content.length) {
+                        s += get_span(words[i][0], 'match');
+                        s += get_span(words[i].substring(1) + ' ', 'normal');
+                    } else {
+                        s += get_span(words[i] + ' ', 'normal');
+                    }
+                }
+                let appExt: AppInfoExt = {
+                    is_match: true,
+                    show_name: s,
+                    ...app
+                };
+                return appExt;
+            }
+        }
+        //如果appName中包含中文，则尝试单独汉字拼音匹配
+        if (/.*[\u4e00-\u9fa5].*/.test(appName)) {
+            let s = ''
+            let f = false;
+            for (let i = 0; i < appName.length; i++) {
+                let c = appName.charAt(i);
+                //如果某个字符为汉字
+                if (/[\u4e00-\u9fa5]/.test(c)) {
+                    let py = await om_to_pinyin(c); //将其转化为拼音
+                    //如果该汉字的拼音以搜索的字符串作为开头，则表示匹配成功
+                    if (py[0].indexOf(search.toLocaleLowerCase()) == 0) {
+                        s += get_span(appName.substring(0, i), 'normal');
+                        s += get_span(appName.substring(i, i + 1), 'match');
+                        s += get_span(appName.substring(i + 1), 'normal');
+                        f = true;
+                        break;
+                    }
+                }
+            }
+            if (f) {
+                let appExt: AppInfoExt = {
+                    is_match: true,
+                    show_name: s,
+                    ...app
+                };
+                return appExt;
+            }
+        }
+        //如果appName完全由汉字组成，则尝试拼音首字母匹配
+        if (/^[\u4e00-\u9fa5]+$/.test(appName)) {
+            let pys = await om_to_pinyin(appName); //将其转化为拼音
+            //获取所有拼音首字母组成的序列
+            const initials_str = pys.map(py => py[0]).join('').toLowerCase();
+            let pos = initials_str.indexOf(search.toLowerCase());
+            let s = '';
+            if (pos != -1) { //如果匹配到了
+                s += get_span(appName.substring(0, pos), 'normal');
+                s += get_span(appName.substring(pos, pos + search.length), 'match');
+                s += get_span(appName.substring(pos + search.length), 'normal');
+                let appExt: AppInfoExt = {
+                    is_match: true,
+                    show_name: s,
+                    ...app
+                };
+                return appExt;
+            }
         }
     }
-    return s;
+
+    //没有匹配项的返回结果
+    let appExt: AppInfoExt = {
+        is_match: false,
+        show_name: get_span(appName, 'normal'),
+        ...app
+    };
+    return appExt;
 }
 
 //根据搜索内容返回可能的特性
