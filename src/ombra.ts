@@ -241,15 +241,15 @@ export function win_to_app(appid: string) {
  */
 export function win_new_app(appid: string) {
     if (appWindow.label == 'MainWindow') {
+        appWindow.hide();
+        window.location.href = '/';
         let w = new WebviewWindow(appid, {
             url: '/apps/' + appid,
             decorations: false,
             transparent: true
         });
-        appWindow.hide();
         w.setSize(new LogicalSize(800, 600));
         w.setResizable(true);
-        window.location.href = '/';
     }
 }
 /**
@@ -315,19 +315,20 @@ export function win_set_resizable(resizable: boolean) {
  * @param callback 当该窗口失去聚焦时执行函数，
  */
 export function win_event_blur(label: string, callback: Function) {
-    listen('tauri://blur', (e) => {
+    return listen('tauri://blur', (e) => {
         if (e.windowLabel == label) {
             callback();
         }
     });
 }
+
 /**
  * 
  * @param label 窗口label
  * @param callback 当该窗口聚焦时执行函数，
  */
 export function win_event_focus(label: string, callback: Function) {
-    listen('tauri://focus', (e) => {
+    return listen('tauri://focus', (e) => {
         if (e.windowLabel == label) {
             callback();
         }

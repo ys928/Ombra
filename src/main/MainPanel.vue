@@ -22,10 +22,9 @@
 <script setup lang="ts">
 import { Ref, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import AppMenu from "./MainPanel/AppMenu.vue";
-import { unregister, isRegistered } from '@tauri-apps/api/globalShortcut';
 import { read_config_item, set_shortcut, write_config_item } from '~/global'
 import Setting from './MainPanel/Setting.vue';
-import { exp_get_path, win_event_blur, win_event_focus, win_is_visible, win_show, win_focus, win_hide, win_set_size } from '~/ombra'
+import { exp_get_path, win_event_blur, win_event_focus, win_is_visible, win_show, win_focus, win_hide, win_set_size, gs_is_registered, gs_unregister } from '~/ombra'
 import { onTextUpdate, readText, startListening } from "tauri-plugin-clipboard-api";
 import { UnlistenFn } from "@tauri-apps/api/event";
 
@@ -40,10 +39,10 @@ const search_input_placeholder = ref('');
 const is_show = ref(true);
 const callout_short_key = ref('');
 
-win_event_blur('MainWindow', () => {
+let fun_eve_blur = win_event_blur('MainWindow', () => {
     is_show.value = false;
 })
-win_event_focus('MainWindow', () => {
+let fun_eve_focus = win_event_focus('MainWindow', () => {
     is_show.value = true;
 });
 
@@ -108,9 +107,15 @@ onMounted(async () => {
     unlistenClipboard = await startListening();
 });
 
-onUnmounted(() => {
+onUnmounted(async () => {
     unlistenTextUpdate();
     unlistenClipboard();
+    fun_eve_blur.then((fun) => {
+        fun();
+    });
+    fun_eve_focus.then((fun) => {
+        fun();
+    });
 })
 
 async function set_callout_shortkey(shortkey: string) {
@@ -131,9 +136,9 @@ async function set_callout_shortkey(shortkey: string) {
 }
 
 async function unset_callout_shortkey() {
-    const isreg = await isRegistered(callout_short_key.value);
+    const isreg = await gs_is_registered(callout_short_key.value);
     if (isreg) {
-        await unregister(callout_short_key.value);
+        await gs_unregister(callout_short_key.value);
     }
 }
 async function set_search_input_placeholder(placeholder: string) {
