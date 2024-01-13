@@ -1,7 +1,7 @@
 [package]
 name = "ombra"
 version = "0.0.2"
-description = "一个简洁、强大的聚合型工具。"
+description = "ombra"
 authors = ["ys928"]
 license = "MIT"
 repository = ""

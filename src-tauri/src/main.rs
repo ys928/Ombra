@@ -1,14 +1,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use std::sync::Mutex;
-
+use pinyin::ToPinyin;
 use serde::{Deserialize, Serialize};
+use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::api::dialog;
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window};
-use pinyin::ToPinyin;
 use walkdir::WalkDir;
-mod tools;
 mod file_watch;
+mod tools;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct FileInfo {
@@ -35,11 +34,7 @@ mod winsys;
 fn main() {
     let quit = CustomMenuItem::new("quit".to_string(), "退出");
     let update = CustomMenuItem::new("update".to_string(), "更新");
-    let start_file_catch = CustomMenuItem::new("file_catch".to_string(), "文件缓存");
-    let tray_menu = SystemTrayMenu::new()
-        .add_item(start_file_catch)
-        .add_item(update)
-        .add_item(quit);
+    let tray_menu = SystemTrayMenu::new().add_item(update).add_item(quit);
     let system_tray = SystemTray::new().with_menu(tray_menu);
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard::init())
@@ -47,13 +42,11 @@ fn main() {
         .on_system_tray_event(|app, event| match event {
             SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
                 "quit" => {
+                    let w = app.get_window("MainWindow").unwrap();
+                    let _ = w.emit("exit_app", "");
                     std::process::exit(0);
                 }
-                "file_catch" => {
-                    let window = app.get_window("MainWindow").unwrap();
-                    walk_all_files(window);
-                }
-                "update"=>{
+                "update" => {
                     winsys::open_web_url("https://github.com/ys928/Ombra/releases");
                 }
                 _ => {}
@@ -108,20 +101,25 @@ fn shadow_window(w: Window) {
     #[cfg(any(windows, target_os = "macos"))]
     window_shadows::set_shadow(&w, true).expect("Unsupported platform!");
 }
-static IS_IN_WALKDIR: Mutex<bool> = Mutex::new(false);
+static IS_IN_WALKDIR: AtomicBool = AtomicBool::new(false);
 
 #[tauri::command]
 fn walk_all_files(w: Window) {
-    let mut is_in_walkdir = IS_IN_WALKDIR.lock().unwrap();
-    if *is_in_walkdir {
+    if IS_IN_WALKDIR.load(Ordering::Relaxed) {
         dialog::message(Some(&w), "提示", "请勿重复操作！");
         return;
     }
-    *is_in_walkdir = true;
+
+    IS_IN_WALKDIR.store(true, Ordering::Relaxed);
+
+    let drives = winsys::get_logical_drives().unwrap();
+    let back_drives = drives.clone();
     //单开一个线程遍历所有文件
     std::thread::spawn(move || {
-        let drives = winsys::get_logical_drives().unwrap();
-
+        //暂时取消监视
+        for d in drives.iter() {
+            file_watch::unwatch_dir(d);
+        }
         file_catch::init(true); //重置缓存文件
 
         let (se, re) = std::sync::mpsc::channel();
@@ -144,13 +142,8 @@ fn walk_all_files(w: Window) {
                     let ftype;
                     if meta.is_dir() {
                         ftype = 2;
-                    } else if meta.is_file() {
-                        ftype = 1;
                     } else {
-                        ftype = 0;
-                    }
-                    if ftype == 0 {
-                        continue;
+                        ftype = 1;
                     }
                     t_se.send(FileInfo {
                         name: name,
@@ -196,8 +189,9 @@ fn walk_all_files(w: Window) {
                 data: all_file_num.to_string(),
             },
         );
-        let mut is_in_walkdir = IS_IN_WALKDIR.lock().unwrap();
-        *is_in_walkdir = false;
+        IS_IN_WALKDIR.store(false, Ordering::Relaxed);
+        //遍历完成后，启动监视
+        file_watch::watch_dir_to_file_catch(back_drives);
     });
 }
 
@@ -305,8 +299,8 @@ fn walk_dir(w: Window, path: String, level: usize) {
 }
 
 #[tauri::command]
-fn to_pinyin(hans:&str)->Vec<String> {
-    let mut ret=Vec::new();
+fn to_pinyin(hans: &str) -> Vec<String> {
+    let mut ret = Vec::new();
     for pinyin in hans.to_pinyin() {
         if let Some(pinyin) = pinyin {
             ret.push(pinyin.plain().to_string());

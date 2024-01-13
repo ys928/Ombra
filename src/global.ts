@@ -1,5 +1,6 @@
 import { reactive } from "vue";
 import { dir_config, file_read_text, file_write_text, gs_is_registered, gs_register, gs_unregister, path_exist, win_hide, win_set_resizable, win_set_size } from "./ombra";
+import { listen } from "@tauri-apps/api/event";
 
 export interface AppInfo {
     name: string, //应用名，将显示在应用菜单面板上
@@ -10,7 +11,7 @@ export interface AppInfo {
     only_feature: boolean, //是否只在触发特点时才显示
     weight: number, //应用权重，随用户使用次数进行计算
     plugin_index: string, //插件index.html文件位置，非插件该值为空
-    setup: () => void, //当用户点击该app时将被立即执行的函数，text为用户当前输入的文本,feature为当前用户输入匹配到的特性
+    setup: () => void, //当用户点击该app时将被立即执行的函数
 }
 
 const app_list = reactive([]) as Array<AppInfo>
@@ -148,10 +149,10 @@ export function get_span(cnt: string, cla: string) {
 let timing_task = [] as Array<{
     setup: Function,
     time: number, //多少分钟执行一次
-    pass: number //已经过去多少分钟
+    pass: number, //已经过去多少分钟
 }>;
 
-setInterval(() => {
+function exec_timgin_task() {
     for (let i = 0; i < timing_task.length; i++) {
         if (timing_task[i].pass < timing_task[i].time) {
             timing_task[i].pass++;
@@ -160,7 +161,8 @@ setInterval(() => {
             timing_task[i].setup();
         }
     }
-}, 60 * 1000); //每分钟枚举一次计时任务表
+}
+setInterval(exec_timgin_task, 60 * 1000); //每分钟枚举一次计时任务表
 
 export function add_timing_task(time: number, setup: Function) {
     timing_task.push({
@@ -169,3 +171,8 @@ export function add_timing_task(time: number, setup: Function) {
         pass: 0
     });
 }
+listen('exit_app', (e) => {
+    if (e.windowLabel == "MainWindow") {
+        localStorage.clear();
+    }
+})

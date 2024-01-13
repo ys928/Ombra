@@ -22,11 +22,19 @@ let app_route = [] as Array<{
 
 
 export async function load_user_app() {
+    let is_init = localStorage.getItem('is_init');
     //加载内嵌应用
     for (let app of user_apps_list) {
         let url = '/apps/' + app.id;
         //仅限主窗口执行加载app代码
         if (win_is_main()) {
+            if (is_init != 'true') {
+                //@ts-ignore
+                if (app.preload) {
+                    //@ts-ignore
+                    app.preload();
+                }
+            }
             add_app(app.name, app.id, app.icon, app.feature, app.self, app.setup, app.only_feature);
         }
         if (app.self == false || app.component == undefined || app.id.length == 0 || app.component == null) {
@@ -39,6 +47,7 @@ export async function load_user_app() {
     }
     //加载插件应用
     await load_plugin_app();
+    localStorage.setItem('is_init', 'true');
     return app_route;
 };
 

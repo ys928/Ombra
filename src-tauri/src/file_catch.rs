@@ -2,16 +2,12 @@ use std::sync::Mutex;
 
 use rusqlite::LoadExtensionGuard;
 
-use crate::{tools, FileInfo};
+use crate::{file_watch::FileChange, tools, FileInfo};
 
 static DB_CONNECT: Mutex<Option<rusqlite::Connection>> = Mutex::new(None);
 
 pub fn init(reset: bool) {
-    let path = tools::get_data_dir(None);
-    let fc = std::path::Path::new(&path)
-        .join("file_catch.db")
-        .to_string_lossy()
-        .to_string();
+    let fc = get_catch_file_path();
     let mut db = DB_CONNECT.lock().unwrap();
     if let None = *db {
         *db = Some(rusqlite::Connection::open(fc).unwrap());
@@ -33,10 +29,20 @@ pub fn init(reset: bool) {
     name text,
     path text,
     time INTEGER,
-    type INTEGER);",
+    type INTEGER,
+    UNIQUE (path, name));",
             [],
         )
         .unwrap();
+}
+
+fn get_catch_file_path() -> String {
+    let path = tools::get_data_dir(None);
+    let fc = std::path::Path::new(&path)
+        .join("file_catch.db")
+        .to_string_lossy()
+        .to_string();
+    return fc;
 }
 
 //大量插入操作
@@ -68,10 +74,10 @@ pub fn search_file(name: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
     );
 
     let stat = db.as_ref().unwrap().prepare(&qstr);
-    if stat.is_err(){
+    if stat.is_err() {
         return Vec::new();
     }
-    let mut stat=stat.unwrap();
+    let mut stat = stat.unwrap();
     let rows = stat
         .query_map([], |row| {
             Ok((
@@ -95,12 +101,62 @@ pub fn search_file(name: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
     return files;
 }
 
-pub fn search_file_as_regex(re: &str,limit: i32, offset: i32) -> Vec<FileInfo> {
+//更新单个文件
+pub fn update_file(path: &Vec<FileChange>) {
+    let db = DB_CONNECT.lock().unwrap();
+    let mut update: rusqlite::Statement<'_> = db
+        .as_ref()
+        .unwrap()
+        .prepare("insert or replace into files (name,path,time,type) values (?1,?2,?3,?4);")
+        .unwrap();
+    let mut remove = db
+        .as_ref()
+        .unwrap()
+        .prepare("delete from files where (path=? and name=?) or (path=?);")
+        .unwrap();
+    let _ = db.as_ref().unwrap().execute("BEGIN TRANSACTION", []);
+    for p in path.iter() {
+        let file_full_path = std::path::Path::new(&p.path);
+        let meta = file_full_path.metadata();
+        if meta.is_err() {
+            continue;
+        }
+        let meta = meta.unwrap();
+        let name = file_full_path
+            .file_name()
+            .unwrap()
+            .to_string_lossy()
+            .to_string();
+        let time = meta.modified().unwrap();
+        let time = tools::sys_time_to_seconds(time);
+        let parent = file_full_path.parent();
+        let parent_path;
+        if let None = parent {
+            parent_path = "".to_string();
+        } else {
+            parent_path = parent.unwrap().to_string_lossy().to_string();
+        }
+        let ftype;
+        if meta.is_dir() {
+            ftype = 2;
+        } else {
+            ftype = 1;
+        }
+        if p.kind == "create" || p.kind == "modify" {
+            update.insert([name, parent_path, time.to_string(), ftype.to_string()]).unwrap();
+        } else if p.kind == "remove" {
+            remove.execute([parent_path,name,p.path.to_string()]).unwrap();
+        }
+    }
+    let _ = db.as_ref().unwrap().execute("COMMIT", []);
+}
+
+pub fn search_file_as_regex(re: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
     init(false);
     let db = DB_CONNECT.lock().unwrap();
     let qstr = format!(
         "SELECT name,path,time,type FROM files WHERE name REGEXP {} limit {} OFFSET {};",
-        re, limit,offset
+        re, limit, offset
     );
     let stat = db.as_ref().unwrap().prepare(&qstr);
     if stat.is_err() {
@@ -130,11 +186,11 @@ pub fn search_file_as_regex(re: &str,limit: i32, offset: i32) -> Vec<FileInfo> {
     return files;
 }
 
-pub fn search_file_as_whole_word(name: &str,limit: i32, offset: i32) -> Vec<FileInfo> {
+pub fn search_file_as_whole_word(name: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
     init(false);
     let name = name
         .replace(r"\", r"\\")
-        .replace(".", "\\.")
+        .replace(".", r"\.")
         .replace("^", r"\^")
         .replace("$", r"\$")
         .replace("+", r"\+")
@@ -145,7 +201,7 @@ pub fn search_file_as_whole_word(name: &str,limit: i32, offset: i32) -> Vec<File
     let db = DB_CONNECT.lock().unwrap();
     let qstr = format!(
         r"SELECT name,path,time,type FROM files WHERE name REGEXP '.*\b{}\b.*' limit {} OFFSET {};",
-        name, limit,offset
+        name, limit, offset
     );
     let stat = db.as_ref().unwrap().prepare(&qstr);
     if stat.is_err() {

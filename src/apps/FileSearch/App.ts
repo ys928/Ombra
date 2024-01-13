@@ -1,6 +1,5 @@
 import FileSearchVue from "./FileSearch.vue"
-import { invoke } from "@tauri-apps/api"
-import { add_timing_task, read_config_item, write_config_item } from "~/global"
+import { invoke } from "@tauri-apps/api/tauri";
 //导出app注册信息对象
 export default {
     name: '文件搜索',
@@ -11,14 +10,9 @@ export default {
     component: FileSearchVue,
     self: true,
     setup: async () => {
-        let ret = await read_config_item('walk_files_time_interval');
-        if (ret == undefined) {
-            ret = 60 * 24;
-            write_config_item('walk_files_time_interval', ret);
-        }
-        add_timing_task(Number(ret), () => {
-            invoke('walk_all_files');
-        }
-        )
+    },
+    preload: () => {
+        //应用启动时自动进行索引
+        invoke('walk_all_files');
     }
 }
