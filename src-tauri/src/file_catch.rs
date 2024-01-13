@@ -1,8 +1,8 @@
-use std::{io::ErrorKind, sync::Mutex};
+use std::{io::ErrorKind, path::PathBuf, sync::Mutex};
 
 use rusqlite::LoadExtensionGuard;
 
-use crate::{file_watch::FileChange, tools, FileInfo};
+use crate::{tools, FileInfo};
 
 static DB_CONNECT: Mutex<Option<rusqlite::Connection>> = Mutex::new(None);
 
@@ -102,7 +102,7 @@ pub fn search_file(name: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
 }
 
 //更新单个文件
-pub fn update_file(path: &Vec<FileChange>) {
+pub fn update_file(path: &Vec<PathBuf>) {
     let db = DB_CONNECT.lock().unwrap();
     let mut update: rusqlite::Statement<'_> = db
         .as_ref()
@@ -115,8 +115,7 @@ pub fn update_file(path: &Vec<FileChange>) {
         .prepare("delete from files where (path=? and name=?) or (path=?);")
         .unwrap();
     let _ = db.as_ref().unwrap().execute("BEGIN TRANSACTION", []);
-    for p in path.iter() {
-        let file_full_path = std::path::Path::new(&p.path);
+    for file_full_path in path.iter() {
         let meta = file_full_path.metadata();
 
         let name = file_full_path
@@ -136,7 +135,11 @@ pub fn update_file(path: &Vec<FileChange>) {
             //删除文件事件处理
             if e.kind() == ErrorKind::NotFound {
                 remove
-                    .execute([parent_path, name, p.path.to_string()])
+                    .execute([
+                        parent_path,
+                        name,
+                        file_full_path.to_string_lossy().to_string(),
+                    ])
                     .unwrap();
             }
             continue;
@@ -152,11 +155,9 @@ pub fn update_file(path: &Vec<FileChange>) {
         } else {
             ftype = 1;
         }
-        if p.kind == "create" || p.kind == "modify" {
-            update
-                .insert([name, parent_path, time.to_string(), ftype.to_string()])
-                .unwrap();
-        }
+        update
+            .insert([name, parent_path, time.to_string(), ftype.to_string()])
+            .unwrap();
     }
     let _ = db.as_ref().unwrap().execute("COMMIT", []);
 }

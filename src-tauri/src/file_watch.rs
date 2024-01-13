@@ -1,4 +1,4 @@
-use std::{path::Path, sync::Mutex, time::Duration};
+use std::{path::{Path, PathBuf}, sync::Mutex, time::Duration};
 
 use notify::{ReadDirectoryChangesWatcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
@@ -9,18 +9,12 @@ use crate::{file_catch, winsys};
 static WATCHER: Mutex<Option<ReadDirectoryChangesWatcher>> = Mutex::new(None);
 
 //所有更改的文件
-static CHANGE_FILES: Mutex<Vec<FileChange>> = Mutex::new(Vec::new());
+static CHANGE_FILES: Mutex<Vec<PathBuf>> = Mutex::new(Vec::new());
 
 #[derive(Serialize, Deserialize, Clone)]
 struct FilesChange {
     kind: String,
     files: Vec<String>,
-}
-
-#[derive(Debug)]
-pub struct FileChange {
-    pub kind: String,
-    pub path: String,
 }
 
 #[tauri::command]
@@ -109,77 +103,26 @@ pub fn watch_all_files() {
         std::thread::spawn(|| loop {
             std::thread::sleep(Duration::from_secs(8));
             let cf = CHANGE_FILES.lock();
-            if cf.is_err(){
+            if cf.is_err() {
                 continue;
             }
-            let mut cf=cf.unwrap();
+            let mut cf = cf.unwrap();
             file_catch::update_file(&(*cf));
             (*cf).clear();
         });
     }
     let mut tmp_watcher = notify::recommended_watcher(move |res: Result<notify::Event, _>| {
         let cf = CHANGE_FILES.lock();
-        if cf.is_err(){
+        if cf.is_err() {
             return;
         }
-        let mut cf=cf.unwrap();
+        let mut cf = cf.unwrap();
         if res.is_err() {
             return;
         }
-        let res = res.unwrap();
-        match res.kind {
-            notify::EventKind::Create(_) => {
-                for p in res.paths {
-                    let mut test = true;
-                    for f in (*cf).iter() {
-                        if f.path == p.to_str().unwrap() && f.kind == "create" {
-                            test = false;
-                            break;
-                        }
-                    }
-                    if test {
-                        (*cf).push(FileChange {
-                            kind: "create".to_string(),
-                            path: p.to_string_lossy().to_string(),
-                        });
-                    }
-                }
-            }
-            notify::EventKind::Modify(_) => {
-                for p in res.paths {
-                    let mut test = true;
-                    for f in (*cf).iter() {
-                        if f.path == p.to_str().unwrap() && f.kind == "modify" {
-                            test = false;
-                            break;
-                        }
-                    }
-                    if test {
-                        (*cf).push(FileChange {
-                            kind: "modify".to_string(),
-                            path: p.to_string_lossy().to_string(),
-                        });
-                    }
-                }
-            }
-            notify::EventKind::Remove(_) => {
-                for p in res.paths {
-                    let mut test = true;
-                    for f in (*cf).iter() {
-                        if f.path == p.to_str().unwrap() && f.kind == "remove" {
-                            test = false;
-                            break;
-                        }
-                    }
-                    if test {
-                        (*cf).push(FileChange {
-                            kind: "remove".to_string(),
-                            path: p.to_string_lossy().to_string(),
-                        });
-                    }
-                }
-            }
-            _ => {}
+        let res=res.unwrap();
+        for p in res.paths {
+            (*cf).push(p);
         }
     })
     .unwrap();

@@ -3,12 +3,8 @@
         <span class="progress"> {{ use_seconds }} {{ task_status }}</span>
         <span class="file_catch">
             <span v-if="file_catch.is_exist">
-                更新于：{{ time_ago(file_catch.time) }}，文件总数：{{ file_catch.file_num }}
+                文件总数：{{ file_catch.file_num }}
             </span>
-            <span v-else>
-                当前还没有缓存文件数据
-            </span>
-            <span class="index" @click="fun_idx">点击索引</span>
         </span>
     </div>
 </template>
@@ -17,8 +13,7 @@
 import { invoke } from '@tauri-apps/api';
 import { listen } from '@tauri-apps/api/event';
 import { onMounted, onUnmounted, ref } from 'vue';
-import { time_ago } from '~/global';
-const emits = defineEmits(['fun_begin_idx', 'fun_search','fun_complete'])
+const emits = defineEmits(['fun_begin_idx', 'fun_search', 'fun_complete'])
 type TaskProgress = {
     status: string, //状态
     data: string,   //传送数据
@@ -32,22 +27,14 @@ const use_seconds = ref();
 const task_status = ref();
 
 onMounted(async () => {
-    file_catch.value = await invoke('get_file_catch_info');
+    setInterval(async () => {
+        file_catch.value = await invoke('get_file_catch_info');
+    }, 3000);
 });
 
 onUnmounted(() => {
 });
 
-let secodes = 0;
-function fun_idx() {
-    // 创建并启动计时器，每秒更新一次
-    secodes = 0;
-    timerInterval = setInterval(function () {
-        secodes++;
-        use_seconds.value = secodes + 's';
-    }, 1000);
-    emits('fun_begin_idx');
-}
 let timerInterval: string | number | NodeJS.Timeout | undefined;
 //获取遍历进度
 listen<TaskProgress>('walk_files_process', async (e) => {
