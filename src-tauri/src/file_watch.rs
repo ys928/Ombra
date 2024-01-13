@@ -4,7 +4,7 @@ use notify::{ReadDirectoryChangesWatcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
 use tauri::Window;
 
-use crate::file_catch;
+use crate::{file_catch, winsys};
 
 static WATCHER: Mutex<Option<ReadDirectoryChangesWatcher>> = Mutex::new(None);
 
@@ -17,6 +17,7 @@ struct FilesChange {
     files: Vec<String>,
 }
 
+#[derive(Debug)]
 pub struct FileChange {
     pub kind: String,
     pub path: String,
@@ -94,30 +95,40 @@ pub fn unwatch_dir(path: &str) {
     let _ = watcher.as_mut().unwrap().unwatch(Path::new(path));
 }
 
-
 static FILE_SYSTEM_WATCHER: Mutex<Option<ReadDirectoryChangesWatcher>> = Mutex::new(None);
 
-pub fn watch_dir_to_file_catch(path: Vec<String>) {
-    let mut fs_watcher=FILE_SYSTEM_WATCHER.lock().unwrap();
-    //确保是第一次监视，且只在第一次调用时启动监视线程
-    if fs_watcher.is_some(){
-        (*fs_watcher)=None;
-    }else{
+pub fn watch_all_files() {
+    let drives = winsys::get_logical_drives().unwrap();
+
+    let mut fs_watcher = FILE_SYSTEM_WATCHER.lock().unwrap();
+    //确保是第一次监视
+    if fs_watcher.is_some() {
+        (*fs_watcher) = None;
+    } else {
+        //且只在第一次调用时启动监视线程
         std::thread::spawn(|| loop {
             std::thread::sleep(Duration::from_secs(8));
-            let mut cf = CHANGE_FILES.lock().unwrap();
+            let cf = CHANGE_FILES.lock();
+            if cf.is_err(){
+                continue;
+            }
+            let mut cf=cf.unwrap();
             file_catch::update_file(&(*cf));
             (*cf).clear();
         });
     }
     let mut tmp_watcher = notify::recommended_watcher(move |res: Result<notify::Event, _>| {
+        let cf = CHANGE_FILES.lock();
+        if cf.is_err(){
+            return;
+        }
+        let mut cf=cf.unwrap();
         if res.is_err() {
             return;
         }
         let res = res.unwrap();
         match res.kind {
             notify::EventKind::Create(_) => {
-                let mut cf = CHANGE_FILES.lock().unwrap();
                 for p in res.paths {
                     let mut test = true;
                     for f in (*cf).iter() {
@@ -135,7 +146,6 @@ pub fn watch_dir_to_file_catch(path: Vec<String>) {
                 }
             }
             notify::EventKind::Modify(_) => {
-                let mut cf = CHANGE_FILES.lock().unwrap();
                 for p in res.paths {
                     let mut test = true;
                     for f in (*cf).iter() {
@@ -153,7 +163,6 @@ pub fn watch_dir_to_file_catch(path: Vec<String>) {
                 }
             }
             notify::EventKind::Remove(_) => {
-                let mut cf = CHANGE_FILES.lock().unwrap();
                 for p in res.paths {
                     let mut test = true;
                     for f in (*cf).iter() {
@@ -174,11 +183,11 @@ pub fn watch_dir_to_file_catch(path: Vec<String>) {
         }
     })
     .unwrap();
-    for p in path {
+    for p in drives {
         tmp_watcher
             .watch(Path::new(&p), RecursiveMode::Recursive)
             .unwrap();
     }
 
-    (*fs_watcher)=Some(tmp_watcher);
+    (*fs_watcher) = Some(tmp_watcher);
 }

@@ -4,7 +4,7 @@
             <img src="/logo.png">
         </div>
         <div class="mmc">
-            <KISeparate class="sep" :w="12" :h="12" @click="winSeparate" v-if="app_is_embed()">
+            <KISeparate class="sep" :w="12" :h="12" @click="winSeparate" v-if="app_is_embed()" title="分离窗口">
             </KISeparate>
             <KIMinus class="min" w="12" h="12" @click="WinMin"></KIMinus>
             <KIFullScreen class="max" w="12" h="12" @click="WinTogMax"></KIFullScreen>

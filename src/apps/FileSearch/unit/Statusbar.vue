@@ -3,7 +3,7 @@
         <span class="progress"> {{ use_seconds }} {{ task_status }}</span>
         <span class="file_catch">
             <span v-if="file_catch.is_exist">
-                缓存于：{{ time_ago(file_catch.time) }}，文件总数：{{ file_catch.file_num }}
+                更新于：{{ time_ago(file_catch.time) }}，文件总数：{{ file_catch.file_num }}
             </span>
             <span v-else>
                 当前还没有缓存文件数据
@@ -31,16 +31,11 @@ const file_catch = ref({
 const use_seconds = ref();
 const task_status = ref();
 
-let timer: string | number | NodeJS.Timeout | undefined;
 onMounted(async () => {
     file_catch.value = await invoke('get_file_catch_info');
-    timer = setTimeout(async () => {
-        file_catch.value = await invoke('get_file_catch_info');
-    }, 90 * 1000);
 });
 
 onUnmounted(() => {
-    clearTimeout(timer);
 });
 
 let secodes = 0;
@@ -96,4 +91,4 @@ listen<TaskProgress>('walk_files_process', async (e) => {
         }
     }
 }
-</style>~/global
+</style>

@@ -105,6 +105,12 @@ static IS_IN_WALKDIR: AtomicBool = AtomicBool::new(false);
 
 #[tauri::command]
 fn walk_all_files(w: Window) {
+    // //测试监视
+    // file_catch::init(false);
+    // println!("11");
+    // file_watch::watch_all_files();
+    // return;
+
     if IS_IN_WALKDIR.load(Ordering::Relaxed) {
         dialog::message(Some(&w), "提示", "请勿重复操作！");
         return;
@@ -112,14 +118,10 @@ fn walk_all_files(w: Window) {
 
     IS_IN_WALKDIR.store(true, Ordering::Relaxed);
 
-    let drives = winsys::get_logical_drives().unwrap();
-    let back_drives = drives.clone();
     //单开一个线程遍历所有文件
     std::thread::spawn(move || {
-        //暂时取消监视
-        for d in drives.iter() {
-            file_watch::unwatch_dir(d);
-        }
+        let drives = winsys::get_logical_drives().unwrap();
+
         file_catch::init(true); //重置缓存文件
 
         let (se, re) = std::sync::mpsc::channel();
@@ -191,7 +193,7 @@ fn walk_all_files(w: Window) {
         );
         IS_IN_WALKDIR.store(false, Ordering::Relaxed);
         //遍历完成后，启动监视
-        file_watch::watch_dir_to_file_catch(back_drives);
+        file_watch::watch_all_files();
     });
 }
 

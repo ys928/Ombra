@@ -1,4 +1,4 @@
-use std::sync::Mutex;
+use std::{io::ErrorKind, sync::Mutex};
 
 use rusqlite::LoadExtensionGuard;
 
@@ -118,17 +118,13 @@ pub fn update_file(path: &Vec<FileChange>) {
     for p in path.iter() {
         let file_full_path = std::path::Path::new(&p.path);
         let meta = file_full_path.metadata();
-        if meta.is_err() {
-            continue;
-        }
-        let meta = meta.unwrap();
+
         let name = file_full_path
             .file_name()
             .unwrap()
             .to_string_lossy()
             .to_string();
-        let time = meta.modified().unwrap();
-        let time = tools::sys_time_to_seconds(time);
+
         let parent = file_full_path.parent();
         let parent_path;
         if let None = parent {
@@ -136,6 +132,20 @@ pub fn update_file(path: &Vec<FileChange>) {
         } else {
             parent_path = parent.unwrap().to_string_lossy().to_string();
         }
+        if let Err(e) = meta {
+            //删除文件事件处理
+            if e.kind() == ErrorKind::NotFound {
+                remove
+                    .execute([parent_path, name, p.path.to_string()])
+                    .unwrap();
+            }
+            continue;
+        }
+        let meta = meta.unwrap();
+
+        let time = meta.modified().unwrap();
+        let time = tools::sys_time_to_seconds(time);
+
         let ftype;
         if meta.is_dir() {
             ftype = 2;
@@ -143,9 +153,9 @@ pub fn update_file(path: &Vec<FileChange>) {
             ftype = 1;
         }
         if p.kind == "create" || p.kind == "modify" {
-            update.insert([name, parent_path, time.to_string(), ftype.to_string()]).unwrap();
-        } else if p.kind == "remove" {
-            remove.execute([parent_path,name,p.path.to_string()]).unwrap();
+            update
+                .insert([name, parent_path, time.to_string(), ftype.to_string()])
+                .unwrap();
         }
     }
     let _ = db.as_ref().unwrap().execute("COMMIT", []);
