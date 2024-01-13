@@ -1,6 +1,6 @@
 [package]
 name = "ombra"
-version = "0.0.2"
+version = "0.0.3"
 description = "ombra"
 authors = ["ys928"]
 license = "MIT"
