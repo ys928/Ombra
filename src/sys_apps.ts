@@ -51,13 +51,6 @@ const list = [
         setup: () => {
             cli_exec(['start', 'ms-settings:notifications']);
         }
-    }, {
-        name: '放大镜',
-        icon: '/imgs/windows-setting.png',
-        feature: [],
-        setup: () => {
-            cli_exec(['start', 'ms-settings:easeofaccess-magnifier']);
-        }
     }
     , {
         name: '睡眠',

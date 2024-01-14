@@ -7,10 +7,9 @@
 </template>
 
 <script setup lang="ts">
-import { clipboard } from '@tauri-apps/api';
 import { Ref, ref, onMounted } from 'vue';
-import { exp_select_file, exp_open_file } from '~/ombra';
-const props = defineProps(['type', 'path', 'name', 'x', 'y']);
+import { exp_select_file, exp_open_file, path_join, clip_set_text } from '~/ombra';
+const props = defineProps(['isdir', 'path', 'name', 'x', 'y']);
 const emits = defineEmits(['hidden']);
 
 const div_pop_menu = ref() as Ref<HTMLElement>
@@ -24,32 +23,31 @@ onMounted(() => {
     })
 });
 
-function fun_open_path() {
-    div_pop_menu.value.style.display = 'none';
-    let path = `${props.path}\\${props.name}`;
-    exp_select_file(path);
-}
-
-function fun_open_file() {
-    div_pop_menu.value.style.display = 'none';
-    if (props.type == 2) { //如果是文件夹
-        let path = '';
-        if (props.path.length > 0) {
-            path = `${props.path}\\${props.name}`;
-        } else {
-            path = `${props.name}`;
-        }
-        exp_open_file(path);
-        return;
+async function fun_open_path() {
+    emits('hidden');
+    let p = props.name;
+    if (props.path.length != 0) {
+        p = await path_join(props.path, props.name);
     }
-    let path = `${props.path}\\${props.name}`;
-    exp_open_file(path);
+    exp_select_file(p);
 }
 
-function fun_copy_path() {
-    div_pop_menu.value.style.display = 'none';
-    let path = `${props.path}\\${props.name}`;
-    clipboard.writeText(path);
+async function fun_open_file() {
+    emits('hidden');
+    let p = props.name;
+    if (props.path.length != 0) {
+        p = await path_join(props.path, props.name);
+    }
+    exp_open_file(p);
+}
+
+async function fun_copy_path() {
+    emits('hidden');
+    let p = props.name;
+    if (props.path.length != 0) {
+        p = await path_join(props.path, props.name);
+    }
+    clip_set_text(p);
 }
 </script>
 

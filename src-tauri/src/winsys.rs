@@ -171,7 +171,12 @@ pub fn get_all_app(w: Window) {
                         icon = v;
                     }
                 }
-                if exe.ends_with(".exe") {
+                if exe.len() > 0
+                    && !(exe.ends_with(".exe") || exe.ends_with(".msc") || exe.ends_with(".bat"))
+                {
+                    continue;
+                }
+                if exe.ends_with(".exe") && !std::path::Path::new(&icon).exists() {
                     let icon_save_path = std::path::Path::new(&ico_path);
                     let icon_save_path = icon_save_path.join(&app.name);
                     if !icon_save_path.exists() {

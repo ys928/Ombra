@@ -7,7 +7,7 @@
         </Result>
         <Statusbar @fun_begin_idx="fun_begin_idx" @fun_search="fun_search" @fun_complete="is_processing = false">
         </Statusbar>
-        <PopMenu ref="div_pop_menu" @hidden="pop_menu.is_show = false" :type="click_item.ftype" :name="click_item.name"
+        <PopMenu ref="div_pop_menu" @hidden="pop_menu.is_show = false" :isdir="click_item.isdir" :name="click_item.name"
             :path="click_item.path" :x="pop_menu.x" :y="pop_menu.y" v-if="pop_menu.is_show">
         </PopMenu>
         <KLoading v-if="is_searching || is_processing"></KLoading>
@@ -30,7 +30,7 @@ type FileInfo = {
     name: string,
     path: string,
     time: number,
-    ftype: number,
+    isdir: boolean,
 }
 const search_content = ref("");
 const div_pop_menu = ref() as Ref<HTMLElement>

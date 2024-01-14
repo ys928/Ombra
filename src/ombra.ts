@@ -40,6 +40,14 @@ export async function path_exist(path: string) {
     return fs.exists(path);
 }
 
+/**
+ * 
+ * @param paths 多个路径
+ * @returns 返回拼接好的路径
+ */
+export function path_join(...paths: string[]) {
+    return path.join(...paths);
+}
 
 /**
  * @description 启动可执行文件

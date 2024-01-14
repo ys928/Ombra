@@ -8,7 +8,7 @@
         <div v-for="item in search_result" class="item" @contextmenu="fun_file_item_contextmenu($event, item)"
             @dblclick="fun_dbclick(item)">
             <span class="name" :title="item.name">
-                <KIFolder w="12" h="12" v-if="item.ftype == 2"></KIFolder>
+                <KIFolder w="12" h="12" v-if="item.isdir"></KIFolder>
                 <KIDll w="12" h="12" v-else-if="item.name.endsWith('.dll')"></KIDll>
                 <KIText w="12" h="12" v-else-if="item.name.endsWith('.txt')"></KIText>
                 <KITypeScript w="12" h="12" style="color: #4f9aba;" v-else-if="item.name.endsWith('.ts')">
@@ -27,12 +27,12 @@ import { listen } from '@tauri-apps/api/event';
 import { KIDll, KIText, KIFolder, KITypeScript, KIHtml } from '~/kui'
 import { reactive } from 'vue';
 import { get_span, time_to_str } from '~/global';
-import { exp_open_file } from '~/ombra';
+import { exp_open_file, path_join } from '~/ombra';
 type FileInfo = {
     name: string,
     path: string,
     time: number,
-    ftype: number,
+    isdir: boolean,
 }
 
 const props = defineProps(['last_cnt', 'last_mode']);
@@ -94,19 +94,12 @@ function fun_show_file_name(name: string) {
     }
     return get_span(name, 'normal');
 }
-function fun_dbclick(item: FileInfo) {
-    if (item.ftype == 2) { //如果是文件夹
-        let path = '';
-        if (item.path.length > 0) {
-            path = `${item.path}\\${item.name}`;
-        } else {
-            path = `${item.name}`;
-        }
-        exp_open_file(path);
-        return;
+async function fun_dbclick(item: FileInfo) {
+    let p = item.name;
+    if (item.path.length != 0) {
+        p = await path_join(item.path, item.name);
     }
-    let path = `${item.path}\\${item.name}`;
-    exp_open_file(path);
+    exp_open_file(p);
 }
 </script>
 

@@ -1,10 +1,8 @@
 <template>
     <div class="StatusBar">
         <span class="progress"> {{ use_seconds }} {{ task_status }}</span>
-        <span class="file_catch">
-            <span v-if="file_catch.is_exist">
-                文件总数：{{ file_catch.file_num }}
-            </span>
+        <span class="file_num">
+            文件总数：<span> {{ file_num }} </span>
         </span>
     </div>
 </template>
@@ -18,17 +16,17 @@ type TaskProgress = {
     status: string, //状态
     data: string,   //传送数据
 }
-const file_catch = ref({
-    is_exist: false,
-    time: 0,
-    file_num: 0
-});
+const file_num = ref(0);
 const use_seconds = ref();
 const task_status = ref();
 
 onMounted(async () => {
     setInterval(async () => {
-        file_catch.value = await invoke('get_file_catch_info');
+        let num = await invoke<number>('get_file_catch_info');
+        if (file_num.value != 0 && num == 0) {
+            return;
+        }
+        file_num.value = num;
     }, 3000);
 });
 

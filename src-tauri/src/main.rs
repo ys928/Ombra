@@ -14,7 +14,7 @@ pub struct FileInfo {
     pub name: String,
     pub path: String,
     pub time: u64,
-    pub ftype: i32,
+    pub isdir: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -84,9 +84,9 @@ fn main() {
             winsys::get_explorer_show_path,
             file_watch::watch_dir,
             file_watch::unwatch_dir,
+            file_catch::get_file_catch_info,
             walk_all_files,
             search_file,
-            get_file_catch_info,
             shadow_window,
             dir_or_file,
             walk_dir,
@@ -122,7 +122,7 @@ fn walk_all_files(w: Window) {
     std::thread::spawn(move || {
         let drives = winsys::get_logical_drives().unwrap();
 
-        file_catch::init(true); //重置缓存文件
+        file_catch::init(); //重置缓存文件
 
         let (se, re) = std::sync::mpsc::channel();
 
@@ -141,17 +141,11 @@ fn walk_all_files(w: Window) {
                     } else {
                         path = parent.unwrap().to_string_lossy().to_string();
                     }
-                    let ftype;
-                    if meta.is_dir() {
-                        ftype = 2;
-                    } else {
-                        ftype = 1;
-                    }
                     t_se.send(FileInfo {
                         name: name,
                         path: path,
                         time: tools::sys_time_to_seconds(time),
-                        ftype: ftype,
+                        isdir: meta.is_dir(),
                     })
                     .unwrap();
                 }
@@ -213,33 +207,7 @@ fn search_file(w: Window, name: String, mode: String, limit: i32, offset: i32) {
     });
 }
 
-#[derive(Serialize, Deserialize)]
-struct FileCatchInfo {
-    is_exist: bool,
-    time: u64,
-    file_num: i32,
-}
 
-#[tauri::command]
-fn get_file_catch_info() -> FileCatchInfo {
-    let path = tools::get_data_dir(None);
-    let fc = std::path::Path::new(&path).join("file_catch.db");
-    if fc.exists() {
-        let f = fc.metadata().unwrap();
-        let time = f.modified().unwrap();
-        return FileCatchInfo {
-            is_exist: true,
-            time: tools::sys_time_to_seconds(time),
-            file_num: file_catch::get_file_num(),
-        };
-    } else {
-        return FileCatchInfo {
-            is_exist: false,
-            time: 0,
-            file_num: 0,
-        };
-    }
-}
 
 #[tauri::command]
 fn dir_or_file(path: &str) -> String {
@@ -278,22 +246,11 @@ fn walk_dir(w: Window, path: String, level: usize) {
             } else {
                 path = parent.unwrap().to_string_lossy().to_string();
             }
-            let ftype;
-            if meta.is_dir() {
-                ftype = 2;
-            } else if meta.is_file() {
-                ftype = 1;
-            } else {
-                ftype = 0;
-            }
-            if ftype == 0 {
-                continue;
-            }
             files_list.push(FileInfo {
                 name: name,
                 path: path,
                 time: tools::sys_time_to_seconds(time),
-                ftype: ftype,
+                isdir: meta.is_dir(),
             });
         }
         let _ = w.emit("walk_dir_result", files_list);
