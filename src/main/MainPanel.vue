@@ -128,6 +128,8 @@ async function set_callout_shortkey(shortkey: string) {
             if (clip_board_time >= 0 && clip_board_time <= 3) {
                 search_content.value = await readText();
                 fun_input();
+            } else {
+                main_input.value.select();
             }
         }
     })
