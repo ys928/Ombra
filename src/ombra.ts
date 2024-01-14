@@ -65,19 +65,19 @@ export function url_open(url: string) {
     invoke('open_web_url', { url: url });
 }
 
-type InstallApp = {
+type AppInfo = {
     name: string,
-    path: string,
     icon: string,
+    start: string,
 }
 /**
  * @description 获取当前系统所有已安装的app
  * @returns 返回app列表数据，每一项包含名称：name、路径：path、图标位置：icon
  */
 export async function app_get() {
-    const get_apps_result = new Promise<Array<InstallApp>>((resolve) => {
+    const get_apps_result = new Promise<Array<AppInfo>>((resolve) => {
         //获取所有遍历到的程序
-        listen<Array<InstallApp>>('get_all_app_result', (e) => {
+        listen<Array<AppInfo>>('get_all_app_result', (e) => {
             resolve(e.payload)
         });
     });
@@ -131,6 +131,14 @@ export async function file_read_text(filepath: string) {
  */
 export function file_write_text(filepath: string, content: string) {
     fs.writeTextFile(filepath, content);
+}
+/**
+ * 
+ * @param path 文件路径
+ * @returns 文件是否存在
+ */
+export function file_exists(path: string) {
+    return fs.exists(path);
 }
 
 /**
