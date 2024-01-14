@@ -26,7 +26,7 @@ import { read_config_item, set_shortcut, write_config_item } from '~/global'
 import Setting from './MainPanel/Setting.vue';
 import { exp_get_path, win_event_blur, win_event_focus, win_is_visible, win_show, win_focus, win_hide, win_set_size, gs_is_registered, gs_unregister } from '~/ombra'
 import { onTextUpdate, readText, startListening } from "tauri-plugin-clipboard-api";
-import { UnlistenFn } from "@tauri-apps/api/event";
+import { UnlistenFn, listen } from "@tauri-apps/api/event";
 
 const main_input = ref() as Ref<HTMLInputElement>;
 const measure = ref() as Ref<HTMLElement>;
@@ -46,6 +46,11 @@ let fun_eve_focus = win_event_focus('MainWindow', () => {
     is_show.value = true;
 });
 
+listen('single-instance', () => {
+    if (is_show.value = false) {
+        is_show.value = true;
+    }
+})
 
 let timer: NodeJS.Timeout | undefined;
 watch(is_show, () => {
