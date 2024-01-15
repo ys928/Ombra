@@ -180,17 +180,13 @@ pub fn get_all_app(w: Window) {
                         continue;
                     }
                     let pk_name = PSGetNameFromPropertyKey(&pk).unwrap();
-                    let k = OsString::from_wide(pk_name.as_wide())
-                        .to_string_lossy()
-                        .to_string();
+                    let k = String::from_utf16_lossy(pk_name.as_wide());
                     let mut value = store.GetValue(&pk).unwrap();
                     let mut arr = [0; 1024];
                     let _ = PropVariantToString(&value, &mut arr);
                     let _ = PropVariantClear(&mut value);
                     let pos = arr.iter().position(|c| *c == 0).unwrap();
-                    let v = OsString::from_wide(&arr[0..pos])
-                        .to_string_lossy()
-                        .to_string();
+                    let v = String::from_utf16_lossy(&arr[0..pos]);
                     // println!("{}={}", &k, &v);
                     if k == "System.ItemNameDisplay" {
                         app.name = v;
@@ -201,7 +197,9 @@ pub fn get_all_app(w: Window) {
                     } else if k == "System.AppUserModel.PackageInstallPath" {
                         pack = v;
                     } else if k == "System.Tile.Square150x150LogoPath" {
-                        icon = v;
+                        if icon.len()==0{
+                            icon = v;
+                        }
                     } else if k == "System.Tile.SmallLogoPath" {
                         icon = v;
                     }

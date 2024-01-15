@@ -192,12 +192,29 @@ async function fun_keydown(e: KeyboardEvent) {
     }
 }
 let is_ompositioning = false;
+
+let need_search = false;
+
+let is_in_searching = false;
+
 async function fun_input() {
     is_show_setting.value = false;
     if (is_ompositioning) return;
+    if (is_in_searching) { //如果当前处于搜索状态，则缓存
+        need_search = true;
+        return;
+    }
+    //否则开始搜索
+    is_in_searching = true;
     adjust_input_size();
     cur_focus_app.value = 0;
-    apps_menu.value.search();
+    await apps_menu.value.search();
+    is_in_searching = false;
+    if (need_search) { //搜索结束，如果需要搜索，则继续
+        need_search = false;
+        fun_input();
+    }
+
 }
 
 function adjust_input_size() {

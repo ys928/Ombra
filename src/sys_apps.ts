@@ -3,13 +3,6 @@ import { app_get, cli_exec, dlg_confirm, file_convert, file_exists, om_get_featu
 
 const list = [
     {
-        name: '设置',
-        icon: '/imgs/windows-setting.png',
-        feature: [],
-        setup: () => {
-            cli_exec(['start', 'ms-settings:']);
-        }
-    }, {
         name: '检测系统更新',
         icon: '/imgs/windows-setting.png',
         feature: [],

@@ -9,7 +9,7 @@
                 </span>
             </div>
             <div class="items">
-                <div v-for="(item, index) in search_result_list" class="item" :key="item.name"
+                <div v-for="(item, index) in search_result_list" class="item"
                     :class="{ 'active': index == props.cur_focus_app }" @click="fun_open_app(item, true)">
                     <img :src="item.icon" draggable="false">
                     <div class="name" v-html="item.show_name"></div>
@@ -21,7 +21,7 @@
                 <span>推荐工具</span>
             </div>
             <div class="items">
-                <div v-for="(item, index) in recommend_list" class="item" :key="item.name"
+                <div v-for="(item, index) in recommend_list" class="item"
                     :class="{ 'active': recommand_item_is_active(index) }" @click="fun_open_app(item, false)">
                     <img :src="item.icon" draggable="false">
                     <div class="name"> <span>{{ item.name }}</span> </div>
@@ -32,7 +32,6 @@
 </template>
 
 <script setup lang="ts">
-
 import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 import { get_app_list, write_config_item, type AppInfo, read_config_item, get_span } from '~/global'
 import { om_set_appid, om_set_features, om_set_plugin_index, om_set_text, om_to_pinyin, path_judge, win_set_size, win_to_app } from '~/ombra';
@@ -53,7 +52,6 @@ const recommend_list = reactive([]) as Array<AppInfoExt>; //最多8个推荐应�
 const search_count = ref(0); //搜索结果的数量
 
 let features_list = [] as Array<string>; //为每次搜索内容所匹配到的特点
-let back_features = [] as Array<string>; //features_list的备份
 
 let search_result_is_expand = ref(false); //记录搜索结果是否为展开状态
 
@@ -291,7 +289,7 @@ async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
         om_set_features([]);
     } else {
         om_set_text(app_setup_content);
-        om_set_features(back_features);
+        om_set_features(features_list);
     }
 
     om_set_appid(app.id);
@@ -307,95 +305,62 @@ async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
 }
 let old_search_content = "";
 //由父组件触发搜索事件
-async function search() {
-    //先根据权重进行排序
-    app_list.sort((a, b) => {
-        return b.weight - a.weight;
-    })
-    //清空
-    search_result_list.length = 0;
-    recommend_list.length = 0;
+async function search(init = false) {
     //如果搜索内容变化，则重新折叠面板
     if (old_search_content != props.search_content) {
         old_search_content = props.search_content;
         search_result_is_expand.value = false;
     }
-    //没有任何输入的情况下
-    if (props.search_content.length == 0) {
-        for (let i = 0; i < app_list.length; i++) {
-            for (let f of app_list[i].feature) {
-                if (features_list.includes(f) && recommend_list.length < 8) {
-                    let app = await test_name_match(app_list[i]);
-                    recommend_list.push(app);
-                    // console.log(recommend_list);
-                }
-            }
-            if (app_list[i].only_feature) continue;
+    //只在非初始化的情况下才重置feature
+    if (!init) {
+        //首先根据输入内容匹配特性
+        let fe = await match_feature(props.search_content);
+        features_list.length = 0;
+        features_list.push(...fe);
+    }
 
-            let app = await test_name_match(app_list[i]);
-            if (search_result_is_expand.value) {
-                search_result_list.push(app);
-            } else if (search_result_list.length < 8) { //在未展开模式下，最多显示8个应用
-                search_result_list.push(app);
+    //用于临时存储匹配结果
+    let tmp_match_result = [];
+    //用于临时存储推荐结果
+    let tmp_recommend_result = [];
+
+    for (let app_item of app_list) {
+        //匹配推荐应用
+        for (let f of app_item.feature) {
+            if (features_list.includes(f)) {
+                let app = await test_name_match(app_item);
+                tmp_recommend_result.push(app);
             }
         }
-        search_count.value = app_list.length;
-        adjust_height();
-        features_list.length = 0; //最后清理掉features
-        return;
+        //跳过only_featur显示
+        if (app_item.only_feature) continue;
+        //匹配搜索应用
+        let app = await test_name_match(app_item, props.search_content);
+        if (app.is_match) {
+            tmp_match_result.push(app);
+        }
     }
-    //有输入的情况下
-    app_setup_content = props.search_content;
-    //首先匹配特性
-    let fe = await match_feature(props.search_content);
-    features_list.push(...fe);
-    back_features.length = 0;
-    back_features.push(...fe);//备份
-    //如果是展开模式下
+    //根据权重排序
+    tmp_recommend_result.sort((a, b) => {
+        return b.weight - a.weight;
+    })
+    recommend_list.splice(0); //清空
+    //最多8个推荐应用
+    recommend_list.push(...tmp_recommend_result.slice(0, 8));
+    //根据权重排序
+    tmp_match_result.sort((a, b) => {
+        return b.weight - a.weight;
+    })
+    search_result_list.splice(0); //清空
+    //当前是否展开
     if (search_result_is_expand.value) {
-        for (let i = 0; i < app_list.length; i++) {
-            let app = await test_name_match(app_list[i], props.search_content);
-            if (app.is_match) {
-                search_result_list.push(app);
-            }
-            //推荐应用最多8个
-            if (recommend_list.length >= 8) continue;
-            for (let f of features_list) {
-                if (app_list[i].feature.includes(f)) {
-                    let app = await test_name_match(app_list[i]);
-                    recommend_list.push(app);
-                    break;
-                }
-            }
-        }
-        adjust_height();
-        search_count.value = search_result_list.length;
-        features_list.length = 0; //最后清理掉features
-        return;
+        search_result_list.push(...tmp_match_result);
+    } else { //在未展开模式下，最多显示8个应用
+        search_result_list.push(...tmp_match_result.slice(0, 8));
     }
-
-    //如果处于未展开状态，那么最多显示8个
-    search_count.value = 0;
-    for (let i = 0; i < app_list.length; i++) {
-        if (app_list[i].only_feature == false) {
-            let app = await test_name_match(app_list[i], props.search_content);
-            if (app.is_match) {
-                search_count.value += 1;
-                if (search_result_list.length < 8) {
-                    search_result_list.push(app);
-                }
-            }
-        }
-        //推荐应用最多8个
-        if (recommend_list.length >= 8) continue;
-        for (let f of features_list) {
-            if (app_list[i].feature.includes(f)) {
-                let app = await test_name_match(app_list[i]);
-                recommend_list.push(app);
-                break;
-            }
-        }
-    }
+    //显示的搜索结果始终为实际匹配到的个数
+    search_count.value = tmp_match_result.length;
+    //调整窗口
     adjust_height();
     features_list.length = 0; //最后清理掉features
     return;
@@ -407,7 +372,7 @@ async function test_name_match(app: AppInfo, search = '') {
     //没有搜索内容，则直接返回
     if (search.length == 0) {
         let appExt: AppInfoExt = {
-            is_match: false,
+            is_match: true,
             show_name: get_span(appName, 'normal'),
             ...app
         };
@@ -420,11 +385,26 @@ async function test_name_match(app: AppInfo, search = '') {
         let s = get_span(appName.substring(0, pos), 'normal');
         s += get_span(appName.substring(pos, pos + search.length), 'match');
         s += get_span(appName.substring(pos + search.length), 'normal');
-
+        let weight = app.weight;
+        if (pos == 0) { //if in header
+            weight += 3;
+        } else if (pos == 1) {
+            weight += 2;
+        } else if (pos == 2) {
+            weight += 1;
+        }
         let appExt: AppInfoExt = {
             is_match: true,
             show_name: s,
-            ...app
+            weight: weight,
+            name: app.name,
+            id: app.id,
+            self: app.self,
+            icon: app.icon,
+            feature: app.feature,
+            only_feature: app.only_feature,
+            plugin_index: app.plugin_index,
+            setup: app.setup
         };
         return appExt;
     }
@@ -448,10 +428,26 @@ async function test_name_match(app: AppInfo, search = '') {
                         s += get_span(words[i] + ' ', 'normal');
                     }
                 }
+                let weight = app.weight;
+                if (pos == 0) { //if in header
+                    weight += 3;
+                } else if (pos == 1) {
+                    weight += 2;
+                } else if (pos == 2) {
+                    weight += 1;
+                }
                 let appExt: AppInfoExt = {
                     is_match: true,
                     show_name: s,
-                    ...app
+                    weight: weight,
+                    name: app.name,
+                    id: app.id,
+                    self: app.self,
+                    icon: app.icon,
+                    feature: app.feature,
+                    only_feature: app.only_feature,
+                    plugin_index: app.plugin_index,
+                    setup: app.setup
                 };
                 return appExt;
             }
@@ -460,26 +456,43 @@ async function test_name_match(app: AppInfo, search = '') {
         if (/.*[\u4e00-\u9fa5].*/.test(appName)) {
             let s = ''
             let f = false;
-            for (let i = 0; i < appName.length; i++) {
-                let c = appName.charAt(i);
+            let index = 0;
+            for (; index < appName.length; index++) {
+                let c = appName.charAt(index);
                 //如果某个字符为汉字
                 if (/[\u4e00-\u9fa5]/.test(c)) {
                     let py = await om_to_pinyin(c); //将其转化为拼音
                     //如果该汉字的拼音以搜索的字符串作为开头，则表示匹配成功
                     if (py[0].indexOf(search.toLocaleLowerCase()) == 0) {
-                        s += get_span(appName.substring(0, i), 'normal');
-                        s += get_span(appName.substring(i, i + 1), 'match');
-                        s += get_span(appName.substring(i + 1), 'normal');
+                        s += get_span(appName.substring(0, index), 'normal');
+                        s += get_span(appName.substring(index, index + 1), 'match');
+                        s += get_span(appName.substring(index + 1), 'normal');
                         f = true;
                         break;
                     }
                 }
             }
             if (f) {
+                let weight = app.weight;
+                if (index == 0) { //if in header
+                    weight += 3;
+                } else if (index == 1) {
+                    weight += 2;
+                } else if (index == 2) {
+                    weight += 1;
+                }
                 let appExt: AppInfoExt = {
                     is_match: true,
                     show_name: s,
-                    ...app
+                    weight: weight,
+                    name: app.name,
+                    id: app.id,
+                    self: app.self,
+                    icon: app.icon,
+                    feature: app.feature,
+                    only_feature: app.only_feature,
+                    plugin_index: app.plugin_index,
+                    setup: app.setup
                 };
                 return appExt;
             }
@@ -495,10 +508,22 @@ async function test_name_match(app: AppInfo, search = '') {
                 s += get_span(appName.substring(0, pos), 'normal');
                 s += get_span(appName.substring(pos, pos + search.length), 'match');
                 s += get_span(appName.substring(pos + search.length), 'normal');
+                let weight = app.weight;
+                if (pos == 0) { //if in header
+                    weight += 3;
+                }
                 let appExt: AppInfoExt = {
                     is_match: true,
                     show_name: s,
-                    ...app
+                    weight: weight,
+                    name: app.name,
+                    id: app.id,
+                    self: app.self,
+                    icon: app.icon,
+                    feature: app.feature,
+                    only_feature: app.only_feature,
+                    plugin_index: app.plugin_index,
+                    setup: app.setup
                 };
                 return appExt;
             }
@@ -516,7 +541,8 @@ async function test_name_match(app: AppInfo, search = '') {
 
 //根据搜索内容返回可能的特性
 async function match_feature(cnt: string) {
-    let tmp_feature = []
+    let tmp_feature = [] as Array<string>
+    if (cnt.length == 0) return tmp_feature;
     let re_sep = /^[^\/\\:\*\?"<>|]*$/g;
     if (re_sep.test(cnt)) {
         tmp_feature.push('filename');
@@ -549,12 +575,9 @@ function recommand_item_is_active(index: number) {
 function init_feature(feature: string[], data: string) {
     features_list.length = 0;
     features_list.push(...feature);
-    back_features.length = 0;
-    back_features.push(...feature);
     app_setup_content = data;
-    search();
+    search(true);
 }
-
 
 defineExpose({
     click_app,
