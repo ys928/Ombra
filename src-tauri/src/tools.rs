@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 pub fn ensure_dir(dir: &str) -> bool {
     let p = std::path::Path::new(dir);
     if !p.exists() || !p.is_dir() {
@@ -15,7 +17,7 @@ pub fn sys_time_to_seconds(time: std::time::SystemTime) -> u64 {
     return duration_since_epoch.as_secs();
 }
 
-pub fn get_data_dir(dir: Option<&str>) -> String {
+pub fn get_data_dir(dir: Option<&str>) -> PathBuf {
     let data_path = dirs::data_dir().unwrap();
     let data_path = std::path::Path::new(&data_path);
     let path;
@@ -25,5 +27,5 @@ pub fn get_data_dir(dir: Option<&str>) -> String {
         path = data_path.join("ombra").join(dir.unwrap());
     }
     ensure_dir(path.to_str().unwrap());
-    return path.to_string_lossy().to_string();
+    return path;
 }

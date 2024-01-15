@@ -6,6 +6,14 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::api::dialog;
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window};
 use walkdir::WalkDir;
+
+use log4rs::append::rolling_file::{
+    policy::compound::{roll::delete::DeleteRoller, trigger::size::SizeTrigger, CompoundPolicy},
+    RollingFileAppender,
+};
+use log4rs::config::{Appender, Config, Root};
+use log4rs::encode::pattern::PatternEncoder;
+
 mod file_watch;
 mod tools;
 
@@ -32,6 +40,29 @@ mod file_catch;
 mod winsys;
 
 fn main() {
+    let log_file_path = tools::get_data_dir(None).join("ombra.log");
+    let requests = RollingFileAppender::builder()
+        .encoder(Box::new(PatternEncoder::new("{d} - {m}{n}")))
+        .build(
+            log_file_path,
+            Box::new(CompoundPolicy::new(
+                Box::new(SizeTrigger::new(1024 * 1024)),
+                Box::new(DeleteRoller::new()),
+            )),
+        )
+        .unwrap();
+
+    let config = Config::builder()
+        .appender(Appender::builder().build("logfile", Box::new(requests)))
+        .build(
+            Root::builder()
+                .appender("logfile")
+                .build(log::LevelFilter::Info),
+        )
+        .unwrap();
+
+    let _ = log4rs::init_config(config).unwrap();
+
     let quit = CustomMenuItem::new("quit".to_string(), "退出");
     let update = CustomMenuItem::new("update".to_string(), "更新");
     let tray_menu = SystemTrayMenu::new().add_item(update).add_item(quit);
@@ -206,8 +237,6 @@ fn search_file(w: Window, name: String, mode: String, limit: i32, offset: i32) {
         }
     });
 }
-
-
 
 #[tauri::command]
 fn dir_or_file(path: &str) -> String {

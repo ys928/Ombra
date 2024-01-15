@@ -4,12 +4,13 @@ use std::{
     process::Command,
 };
 
+use log::{error, info, trace};
 use serde::{Deserialize, Serialize};
 use tauri::Window;
 
 use crate::tools::{self};
 use windows::{
-    core::{w, Interface, PCWSTR},
+    core::{w, PCWSTR},
     Win32::{
         Storage::FileSystem::{GetDriveTypeW, GetLogicalDrives},
         System::{
@@ -111,18 +112,33 @@ struct AppInfo {
 
 #[tauri::command]
 pub fn get_all_app(w: Window) {
+    trace!("enter get_all_app");
     std::thread::spawn(move || {
         unsafe {
             let _ = CoInitialize(Some(std::ptr::null()));
-            let pbc = CreateBindCtx(0).unwrap();
-            let folder: IShellItem =
-                SHCreateItemFromParsingName(w!("shell:appsFolder"), &pbc).unwrap();
-            let shell_items: IEnumShellItems = folder.BindToHandler(&pbc, &BHID_EnumItems).unwrap();
+            let pbc = CreateBindCtx(0);
+            if pbc.is_err() {
+                error!("call CreateBindCtx failed");
+                return;
+            }
+            let pbc = pbc.unwrap();
+            let folder = SHCreateItemFromParsingName(w!("shell:appsFolder"), &pbc);
+            if folder.is_err() {
+                error!("call SHCreateItemFromParsingName failed");
+                return;
+            }
+            let folder: IShellItem = folder.unwrap();
+            let shell_items = folder.BindToHandler(&pbc, &BHID_EnumItems);
+            if shell_items.is_err() {
+                error!("call BindToHandler to get folder failed");
+                return;
+            }
+            let shell_items: IEnumShellItems = shell_items.unwrap();
             let mut app_list = Vec::new();
             let ico_path = tools::get_data_dir(Some("icons"));
             loop {
                 let mut data: u32 = 0;
-                let mut item = vec![Some(IShellItem::from_raw(std::ptr::null_mut()))];
+                let mut item = vec![None];
                 let result = shell_items.Next(&mut item, Some(&mut data));
                 if result.is_err() {
                     break;
@@ -131,8 +147,18 @@ pub fn get_all_app(w: Window) {
                 if item.is_none() {
                     break;
                 }
-                let item = item.clone().unwrap();
-                let store: IPropertyStore = item.BindToHandler(&pbc, &BHID_PropertyStore).unwrap();
+                let item = item.clone();
+                if item.is_none() {
+                    info!("clone item failed");
+                    continue;
+                }
+                let item = item.unwrap();
+                let store = item.BindToHandler(&pbc, &BHID_PropertyStore);
+                if store.is_err() {
+                    info!("call BindToHandler to get item failed");
+                    continue;
+                }
+                let store: IPropertyStore = store.unwrap();
                 let count = store.GetCount().unwrap();
                 let mut app = AppInfo::default();
                 let mut icon = String::new();
@@ -193,6 +219,7 @@ pub fn get_all_app(w: Window) {
             }
             CoUninitialize();
             let _ = w.emit("get_all_app_result", &app_list);
+            trace!("send event:get_all_app_result {}", app_list.len());
         };
     });
 }
