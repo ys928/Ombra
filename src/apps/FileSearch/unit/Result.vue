@@ -90,18 +90,9 @@ function fun_show_file_name(name: string) {
         s += get_span(name.substring(pos, pos + props.last_cnt.length), 'light');
         s += get_span(name.substring(pos + props.last_cnt.length), 'normal');
         return s;
-    } else if (props.last_mode == 'regex') {
-        return get_span(name, 'normal');
-    } else if (props.last_mode == 'whole_word') {
-        let r = RegExp(`(.*\\b)(${props.last_cnt})(\\b.*)`);
-        let m = r.exec(name);
-        if (m != null) {
-            let s = get_span(m[1], 'normal');
-            s += get_span(m[2], 'light');
-            s += get_span(m[3], 'normal');
-            return s;
-        }
-
+    } else if (props.last_mode == 'exact') {
+        let s = get_span(name, 'light');
+        return s;
     }
     return get_span(name, 'normal');
 }

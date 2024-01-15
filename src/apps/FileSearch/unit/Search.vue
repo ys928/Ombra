@@ -3,21 +3,18 @@
         <input v-model="search_content" ref="search_input" @input="fun_input" @compositionstart="fun_compositionstart"
             @compositionend="fun_compositionend" @keydown="fun_keydown($event)">
         <span class="option">
-            <KIWholeWord title="全字匹配" :w="18" :h="18" :class="{ active: use_whole_word }" @click="fun_switch_whole_word">
+            <KIWholeWord title="精确匹配" :w="18" :h="18" :class="{ active: use_whole_word }" @click="fun_switch_whole_word">
             </KIWholeWord>
-            <KIRegex title="使用正则表达式" :w="18" :h="18" :class="{ active: use_regex }" @click="fun_switch_regex">
-            </KIRegex>
         </span>
     </div>
 </template>
 
 <script setup lang="ts">
 import { Ref, onMounted, ref } from 'vue';
-import { KIWholeWord, KIRegex } from '~/kui';
+import { KIWholeWord } from '~/kui';
 
 const emits = defineEmits(['fun_search', 'fun_exit']);
 
-const use_regex = ref(false) as Ref<Boolean>;
 const use_whole_word = ref(false) as Ref<Boolean>;
 
 const search_content = ref('');
@@ -44,34 +41,13 @@ function fun_keydown(e: KeyboardEvent) {
         }
     }
 }
-function fun_switch_regex() {
-    use_regex.value = !use_regex.value;
-    if (use_regex.value) {
-        if (use_whole_word.value) {
-            mode.value = 'whole_word';
-        } else {
-            mode.value = 'regex';
-        }
-    } else {
-        if (use_whole_word.value) {
-            mode.value = 'whole_word';
-        } else {
-            mode.value = 'normal';
-        }
-    }
-    emits('fun_search', search_content.value, mode.value, 0);
-}
 
 function fun_switch_whole_word() {
     use_whole_word.value = !use_whole_word.value;
     if (use_whole_word.value) {
-        mode.value = 'whole_word';
+        mode.value = 'exact';
     } else {
-        if (use_regex.value) {
-            mode.value = 'regex';
-        } else {
-            mode.value = 'normal';
-        }
+        mode.value = 'normal';
     }
     emits('fun_search', search_content.value, mode.value, 0);
 }

@@ -1,7 +1,5 @@
 use std::{io::ErrorKind, path::PathBuf, sync::Mutex, collections::LinkedList};
 
-use rusqlite::LoadExtensionGuard;
-
 use crate::{tools, FileInfo};
 
 static DB_CONNECT: Mutex<Option<rusqlite::Connection>> = Mutex::new(None);
@@ -13,10 +11,6 @@ pub fn init() {
     let mut db = DB_CONNECT.lock().unwrap();
     let _ = std::fs::remove_file(&fc);
     *db = Some(rusqlite::Connection::open(fc).unwrap());
-    unsafe {
-        let _guard = LoadExtensionGuard::new(db.as_ref().unwrap());
-        let _ = db.as_ref().unwrap().load_extension("regex0.dll", None);
-    };
     db.as_ref()
         .unwrap()
         .execute(
@@ -178,58 +172,10 @@ pub fn update_file(path: &Vec<PathBuf>) {
     let _ = db.as_ref().unwrap().execute("COMMIT", []);
 }
 
-pub fn search_file_as_regex(re: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
+pub fn search_file_as_exact(name: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
     let db = DB_CONNECT.lock().unwrap();
     let qstr = format!(
-        "SELECT name,path,time,isdir FROM files WHERE name REGEXP {} limit {} OFFSET {};",
-        re, limit, offset
-    );
-    let stat = db.as_ref().unwrap().prepare(&qstr);
-    if stat.is_err() {
-        return Vec::new();
-    }
-    let mut stat = stat.unwrap();
-    let rows = stat
-        .query_map([], |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, String>(1)?,
-                row.get::<_, u64>(2)?,
-                row.get::<_, i32>(3)?,
-            ))
-        })
-        .unwrap();
-    let mut files = Vec::new();
-    for row in rows {
-        let (name, path, time, t) = row.unwrap();
-        let mut isdir = false;
-        if t == 1 {
-            isdir = true;
-        }
-        files.push(FileInfo {
-            name: name,
-            path: path,
-            time: time,
-            isdir: isdir,
-        });
-    }
-    return files;
-}
-
-pub fn search_file_as_whole_word(name: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
-    let name = name
-        .replace(r"\", r"\\")
-        .replace(".", r"\.")
-        .replace("^", r"\^")
-        .replace("$", r"\$")
-        .replace("+", r"\+")
-        .replace("*", r"\*")
-        .replace("?", r"\?")
-        .replace("+", r"\+")
-        .replace("+", r"\+");
-    let db = DB_CONNECT.lock().unwrap();
-    let qstr = format!(
-        r"SELECT name,path,time,isdir FROM files WHERE name REGEXP '.*\b{}\b.*' limit {} OFFSET {};",
+        r"SELECT name,path,time,isdir FROM files WHERE name='{}' limit {} OFFSET {};",
         name, limit, offset
     );
     let stat = db.as_ref().unwrap().prepare(&qstr);

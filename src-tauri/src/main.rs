@@ -229,11 +229,8 @@ fn search_file(w: Window, name: String, mode: String, limit: i32, offset: i32) {
         if mode == "normal" {
             let ret = file_catch::search_file(&name, limit, offset);
             let _ = w.emit("search_file_result", ret);
-        } else if mode == "regex" {
-            let ret = file_catch::search_file_as_regex(&name, limit, offset);
-            let _ = w.emit("search_file_result", ret);
-        } else if mode == "whole_word" {
-            let ret = file_catch::search_file_as_whole_word(&name, limit, offset);
+        }  else if mode == "exact" {
+            let ret = file_catch::search_file_as_exact(&name, limit, offset);
             let _ = w.emit("search_file_result", ret);
         }
     });
