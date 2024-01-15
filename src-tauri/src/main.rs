@@ -1,7 +1,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use log::debug;
 use pinyin::ToPinyin;
 use serde::{Deserialize, Serialize};
+use std::collections::LinkedList;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::api::dialog;
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window};
@@ -138,10 +140,9 @@ static IS_IN_WALKDIR: AtomicBool = AtomicBool::new(false);
 fn walk_all_files(w: Window) {
     // //测试监视
     // file_catch::init(false);
-    // println!("11");
     // file_watch::watch_all_files();
     // return;
-
+    debug!("enter walk_all_files");
     if IS_IN_WALKDIR.load(Ordering::Relaxed) {
         dialog::message(Some(&w), "提示", "请勿重复操作！");
         return;
@@ -183,9 +184,9 @@ fn walk_all_files(w: Window) {
             });
         }
         drop(se);
-        let mut files: Vec<FileInfo> = Vec::new();
+        let mut files: LinkedList<FileInfo> = LinkedList::new();
         for file in re {
-            files.push(file);
+            files.push_back(file);
 
             if files.len() % 10000 != 0 {
                 continue;

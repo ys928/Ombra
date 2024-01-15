@@ -1,4 +1,4 @@
-use std::{io::ErrorKind, path::PathBuf, sync::Mutex};
+use std::{io::ErrorKind, path::PathBuf, sync::Mutex, collections::LinkedList};
 
 use rusqlite::LoadExtensionGuard;
 
@@ -48,7 +48,7 @@ pub fn get_file_catch_info() -> i32 {
 }
 
 //大量插入操作
-pub fn insert_files(files: Vec<FileInfo>) {
+pub fn insert_files(files: LinkedList<FileInfo>) {
     let db = DB_CONNECT.lock().unwrap();
     let mut stat = db
         .as_ref()
@@ -70,7 +70,7 @@ pub fn insert_files(files: Vec<FileInfo>) {
         .execute("CREATE INDEX index_name ON files(name);", []); //建立索引，提高匹配效率
     let _ = db.as_ref().unwrap().execute("VACUUM;", []); //缩减占用空间
 }
-
+//搜索文件
 pub fn search_file(name: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
     debug!("enter search_file");
     let db = DB_CONNECT.try_lock();
@@ -119,7 +119,7 @@ pub fn search_file(name: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
     return files;
 }
 
-//更新单个文件
+//更新文件
 pub fn update_file(path: &Vec<PathBuf>) {
     let db = DB_CONNECT.lock().unwrap();
     let mut update: rusqlite::Statement<'_> = db
