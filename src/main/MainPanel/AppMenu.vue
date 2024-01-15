@@ -317,6 +317,8 @@ async function search(init = false) {
         let fe = await match_feature(props.search_content);
         features_list.length = 0;
         features_list.push(...fe);
+        //传递app启动内容
+        app_setup_content = props.search_content;
     }
 
     //用于临时存储匹配结果
@@ -362,7 +364,6 @@ async function search(init = false) {
     search_count.value = tmp_match_result.length;
     //调整窗口
     adjust_height();
-    features_list.length = 0; //最后清理掉features
     return;
 }
 

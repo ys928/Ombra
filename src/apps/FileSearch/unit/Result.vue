@@ -8,12 +8,18 @@
         <div v-for="item in search_result" class="item" @contextmenu="fun_file_item_contextmenu($event, item)"
             @dblclick="fun_dbclick(item)">
             <span class="name" :title="item.name">
-                <KIFolder w="12" h="12" v-if="item.isdir"></KIFolder>
-                <KIDll w="12" h="12" v-else-if="item.name.endsWith('.dll')"></KIDll>
-                <KIText w="12" h="12" v-else-if="item.name.endsWith('.txt')"></KIText>
-                <KITypeScript w="12" h="12" style="color: #4f9aba;" v-else-if="item.name.endsWith('.ts')">
+                <KIFolder :w="logo_size.w" :h="logo_size.h" v-if="item.isdir"></KIFolder>
+                <KIDll :w="logo_size.w" :h="logo_size.h" v-else-if="item.name.endsWith('.dll')"></KIDll>
+                <KIText :w="logo_size.w" :h="logo_size.h" v-else-if="item.name.endsWith('.txt')"></KIText>
+                <KITypeScript :w="logo_size.w" :h="logo_size.h" style="color: #4f9aba;"
+                    v-else-if="item.name.endsWith('.ts')">
                 </KITypeScript>
-                <KIHtml w="12" h="12" style="color: #e37933;" v-else-if="item.name.endsWith('.html')"></KIHtml>
+                <KIHtml :w="logo_size.w" :h="logo_size.h" style="color: #e37933;" v-else-if="item.name.endsWith('.html')">
+                </KIHtml>
+                <KIPdf :w="logo_size.w" :h="logo_size.h" v-else-if="item.name.endsWith('.pdf')"></KIPdf>
+                <KIJs :w="logo_size.w" :h="logo_size.h" v-else-if="item.name.endsWith('.js')"></KIJs>
+                <KIJson :w="logo_size.w" :h="logo_size.h" style="color: #cbcb41;" v-else-if="item.name.endsWith('.json')">
+                </KIJson>
                 <span v-html="fun_show_file_name(item.name)"></span>
             </span>
             <span class="path" :title="item.path">{{ item.path }}</span>
@@ -24,8 +30,8 @@
 
 <script setup lang="ts">
 import { listen } from '@tauri-apps/api/event';
-import { KIDll, KIText, KIFolder, KITypeScript, KIHtml } from '~/kui'
-import { reactive } from 'vue';
+import { KIDll, KIText, KIFolder, KITypeScript, KIHtml, KIPdf, KIJs, KIJson } from '~/kui'
+import { reactive, ref } from 'vue';
 import { get_span, time_to_str } from '~/global';
 import { exp_open_file, path_join } from '~/ombra';
 type FileInfo = {
@@ -40,6 +46,11 @@ const props = defineProps(['last_cnt', 'last_mode']);
 const emits = defineEmits(['fun_set_pop_menu', 'fun_search', 'fun_complete_search']);
 
 const search_result = reactive([]) as Array<FileInfo>;
+
+const logo_size = ref({
+    w: 13,
+    h: 13,
+})
 
 function clear_result() {
     search_result.length = 0;
@@ -128,7 +139,7 @@ async function fun_dbclick(item: FileInfo) {
     .table_header {
         margin-top: 15px;
         display: flex;
-        font-size: 12px;
+        font-size: 13px;
         padding: 0 10px;
 
         span {
@@ -151,7 +162,7 @@ async function fun_dbclick(item: FileInfo) {
     }
 
     .item {
-        font-size: 12px;
+        font-size: 13px;
         display: flex;
         padding: 0 10px;
         height: 24px;
@@ -201,4 +212,4 @@ async function fun_dbclick(item: FileInfo) {
         }
     }
 }
-</style>~/global
+</style>
