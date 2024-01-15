@@ -6,7 +6,7 @@ use crate::{tools, FileInfo};
 
 static DB_CONNECT: Mutex<Option<rusqlite::Connection>> = Mutex::new(None);
 
-use log::{info, trace};
+use log::{info, debug};
 
 pub fn init() {
     let fc = get_catch_file_path();
@@ -72,7 +72,7 @@ pub fn insert_files(files: Vec<FileInfo>) {
 }
 
 pub fn search_file(name: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
-    trace!("enter search_file");
+    debug!("enter search_file");
     let db = DB_CONNECT.try_lock();
     if db.is_err() {
         info!("lock db failed");
@@ -172,12 +172,7 @@ pub fn update_file(path: &Vec<PathBuf>) {
             t = 1;
         }
         update
-            .insert([
-                name,
-                parent_path,
-                time.to_string(),
-                t.to_string(),
-            ])
+            .insert([name, parent_path, time.to_string(), t.to_string()])
             .unwrap();
     }
     let _ = db.as_ref().unwrap().execute("COMMIT", []);
@@ -276,7 +271,7 @@ pub fn get_file_num() -> i32 {
         return 0;
     }
     let db = db.unwrap();
-    if db.is_none(){
+    if db.is_none() {
         info!("db is none failed");
         return 0;
     }

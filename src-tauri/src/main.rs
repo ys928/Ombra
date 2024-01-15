@@ -57,7 +57,7 @@ fn main() {
         .build(
             Root::builder()
                 .appender("logfile")
-                .build(log::LevelFilter::Info),
+                .build(log::LevelFilter::Debug),
         )
         .unwrap();
 

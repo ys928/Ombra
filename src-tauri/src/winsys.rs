@@ -1,29 +1,38 @@
 use std::{
     ffi::OsString,
+    mem::ManuallyDrop,
     os::windows::{ffi::OsStringExt, process::CommandExt},
     process::Command,
 };
 
-use log::{error, info, trace};
+use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use tauri::Window;
 
 use crate::tools::{self};
 use windows::{
-    core::{w, PCWSTR},
+    core::{w, ComInterface, Interface, PCWSTR},
     Win32::{
+        Foundation::S_OK,
         Storage::FileSystem::{GetDriveTypeW, GetLogicalDrives},
         System::{
             Com::{
-                CoInitialize, CoUninitialize, CreateBindCtx,
+                CoCreateInstance, CoInitialize, CoTaskMemFree, CoUninitialize, CreateBindCtx,
+                IServiceProvider,
                 StructuredStorage::{PropVariantClear, PropVariantToString},
+                CLSCTX_LOCAL_SERVER,
             },
+            Variant::{VARIANT, VARIANT_0, VARIANT_0_0, VARIANT_0_0_0, VT_I4},
             WindowsProgramming,
         },
-        UI::Shell::{
-            BHID_EnumItems, BHID_PropertyStore, IEnumShellItems, IShellItem,
-            PropertiesSystem::{IPropertyStore, PSGetNameFromPropertyKey, PROPERTYKEY},
-            SHCreateItemFromParsingName,
+        UI::{
+            Shell::{
+                BHID_EnumItems, BHID_PropertyStore, IEnumShellItems, IFolderView, IPersistFolder2,
+                IShellBrowser, IShellItem, IShellWindows, IWebBrowser2,
+                PropertiesSystem::{IPropertyStore, PSGetNameFromPropertyKey, PROPERTYKEY},
+                SHCreateItemFromParsingName, SHGetNameFromIDList, ShellWindows, SIGDN_FILESYSPATH,
+            },
+            WindowsAndMessaging::{GetClassNameW, GetForegroundWindow},
         },
     },
 };
@@ -112,7 +121,7 @@ struct AppInfo {
 
 #[tauri::command]
 pub fn get_all_app(w: Window) {
-    trace!("enter get_all_app");
+    debug!("enter get_all_app");
     std::thread::spawn(move || {
         unsafe {
             let _ = CoInitialize(Some(std::ptr::null()));
@@ -219,7 +228,7 @@ pub fn get_all_app(w: Window) {
             }
             CoUninitialize();
             let _ = w.emit("get_all_app_result", &app_list);
-            trace!("send event:get_all_app_result {}", app_list.len());
+            debug!("send event:get_all_app_result {}", app_list.len());
         };
     });
 }
@@ -253,23 +262,106 @@ pub fn get_logical_drives() -> Result<Vec<String>, std::io::Error> {
 
 #[tauri::command]
 pub fn get_explorer_show_path() -> String {
+    debug!("enter get_explorer_show_path");
+    let mut folder_cur_path = "none".to_string();
     unsafe {
-        let lib = libloading::Library::new("winsys.dll").unwrap();
-        let get_explorer_path: libloading::Symbol<unsafe extern "C" fn() -> *mut u16> =
-            lib.get(b"get_explorer_path").unwrap();
-        let free_memory: libloading::Symbol<unsafe extern "C" fn(*mut u16)> =
-            lib.get(b"free_memory").unwrap();
-        let path = get_explorer_path();
-        if path == std::ptr::null_mut() {
-            return "none".to_string();
+        let foreground_window: windows::Win32::Foundation::HWND = GetForegroundWindow();
+        let mut class_name = [0; 260];
+        GetClassNameW(foreground_window, &mut class_name);
+        let pos = class_name.iter().position(|c| *c == 0).unwrap();
+        let class_name = String::from_utf16_lossy(&class_name[0..pos]);
+        if class_name != "CabinetWClass" {
+            debug!("not explorer window：{}", class_name);
+            return folder_cur_path;
         }
-        // 将原始指针转换为引用
-        let reference: &[u16] = std::slice::from_raw_parts(path, 260);
-        let os_stirng = OsString::from_wide(reference);
-        let full_path = os_stirng.to_string_lossy().to_string();
-        free_memory(path);
-        let pos = full_path.find('\0').unwrap();
-        let (a, _) = full_path.split_at(pos);
-        return a.to_string();
-    }
+        debug!("find explorer windows");
+        let _ = CoInitialize(None);
+        let psh_windows = CoCreateInstance(&ShellWindows, None, CLSCTX_LOCAL_SERVER);
+        if psh_windows.is_err() {
+            CoUninitialize();
+            return folder_cur_path;
+        }
+        let psh_windows: IShellWindows = psh_windows.unwrap();
+        let count = psh_windows.Count();
+        if count.is_err() {
+            CoUninitialize();
+            return folder_cur_path;
+        }
+        let count: i32 = count.unwrap();
+        for i in 0..count {
+            let i = VARIANT {
+                Anonymous: VARIANT_0 {
+                    Anonymous: ManuallyDrop::new(VARIANT_0_0 {
+                        vt: VT_I4,
+                        wReserved1: 0,
+                        wReserved2: 0,
+                        wReserved3: 0,
+                        Anonymous: VARIANT_0_0_0 { lVal: i },
+                    }),
+                },
+            };
+            let disp = psh_windows.Item(i);
+            if disp.is_err() {
+                continue;
+            }
+            let disp = disp.unwrap();
+            let mut p_app = std::ptr::null_mut();
+            let ret = disp.query(&IWebBrowser2::IID, &mut p_app);
+            if ret != S_OK {
+                continue;
+            }
+            let p_app = IWebBrowser2::from_raw(p_app);
+            let win_hwnd = p_app.HWND();
+            if win_hwnd.is_err() {
+                continue;
+            }
+            let win_hwnd = win_hwnd.unwrap();
+            if win_hwnd.0 != foreground_window.0 {
+                continue;
+            }
+            let mut psp = std::ptr::null_mut();
+            let ret = p_app.query(&IServiceProvider::IID, &mut psp);
+            if ret != S_OK {
+                continue;
+            }
+            let psp = IServiceProvider::from_raw(psp);
+            let browser = psp.QueryService(&IShellBrowser::IID);
+            if browser.is_err() {
+                continue;
+            }
+            let browser: IShellBrowser = browser.unwrap();
+            let shell_view = browser.QueryActiveShellView();
+            if shell_view.is_err() {
+                continue;
+            }
+            let shell_view = shell_view.unwrap();
+            let mut p_folder_view = std::ptr::null_mut();
+            let ret = shell_view.query(&IFolderView::IID, &mut p_folder_view);
+            if ret != S_OK {
+                continue;
+            }
+            let p_folder_view = IFolderView::from_raw(p_folder_view);
+            let folder = p_folder_view.GetFolder();
+            if folder.is_err() {
+                continue;
+            }
+            let folder: IPersistFolder2 = folder.unwrap();
+            let pidl = folder.GetCurFolder();
+            if pidl.is_err() {
+                continue;
+            }
+            let pidl = pidl.unwrap();
+            let path = SHGetNameFromIDList(pidl, SIGDN_FILESYSPATH);
+            if path.is_err() {
+                continue;
+            }
+            let path = path.unwrap();
+            let path = path.as_wide();
+            folder_cur_path = String::from_utf16_lossy(path);
+            CoTaskMemFree(Some(path.as_ptr() as *const std::ffi::c_void));
+            break;
+        }
+        CoUninitialize();
+    };
+    return folder_cur_path;
 }
