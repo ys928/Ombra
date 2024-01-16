@@ -4,6 +4,7 @@ use log::debug;
 use pinyin::ToPinyin;
 use serde::{Deserialize, Serialize};
 use std::collections::LinkedList;
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::api::dialog;
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window};
@@ -23,6 +24,7 @@ mod tools;
 pub struct FileInfo {
     pub name: String,
     pub path: String,
+    pub ext: String,
     pub time: u64,
     pub isdir: bool,
 }
@@ -164,18 +166,37 @@ fn walk_all_files(w: Window) {
             std::thread::spawn(move || {
                 for entry in WalkDir::new(d).into_iter().filter_map(|e| e.ok()) {
                     let meta = entry.metadata().unwrap();
-                    let name = entry.file_name().to_string_lossy().to_string();
+                    let isdir = meta.is_dir();
                     let time = meta.modified().unwrap();
-                    let parent = entry.path().parent();
-                    let path;
-                    if let None = parent {
-                        path = "".to_string();
+                    let path = entry.path();
+                    let name;
+                    let ext;
+                    if isdir {
+                        name = path
+                            .file_name()
+                            .unwrap_or(path.as_os_str())
+                            .to_string_lossy()
+                            .to_string();
+                        ext = String::new();
                     } else {
-                        path = parent.unwrap().to_string_lossy().to_string();
+                        name = path.file_stem().unwrap().to_string_lossy().to_string();
+                        ext = path
+                            .extension()
+                            .unwrap_or_default()
+                            .to_string_lossy()
+                            .to_string();
                     }
+
+                    let parent_path = path
+                        .parent()
+                        .unwrap_or(&PathBuf::new())
+                        .to_string_lossy()
+                        .to_string();
+
                     t_se.send(FileInfo {
                         name: name,
-                        path: path,
+                        path: parent_path,
+                        ext: ext,
                         time: tools::sys_time_to_seconds(time),
                         isdir: meta.is_dir(),
                     })
@@ -224,30 +245,6 @@ fn walk_all_files(w: Window) {
 }
 
 #[tauri::command]
-fn search_file(w: Window, name: String, mode: String, limit: i32, offset: i32) {
-    std::thread::spawn(move || {
-        if mode == "normal" {
-            let ret = file_catch::search_file(&name, limit, offset);
-            let _ = w.emit("search_file_result", ret);
-        }  else if mode == "exact" {
-            let ret = file_catch::search_file_as_exact(&name, limit, offset);
-            let _ = w.emit("search_file_result", ret);
-        }
-    });
-}
-
-#[tauri::command]
-fn dir_or_file(path: &str) -> String {
-    let p = std::path::Path::new(path);
-    if p.is_dir() {
-        return "dir".to_string();
-    } else if p.is_file() {
-        return "file".to_string();
-    }
-    return "error".to_string();
-}
-
-#[tauri::command]
 fn walk_dir(w: Window, path: String, level: usize) {
     std::thread::spawn(move || {
         let mut files_list = Vec::new();
@@ -264,20 +261,44 @@ fn walk_dir(w: Window, path: String, level: usize) {
                 continue;
             }
             let meta = entry.metadata().unwrap();
-            let name = entry.file_name().to_string_lossy().to_string();
+            let isdir = meta.is_dir();
             let time = meta.modified().unwrap();
-            let parent = entry.path().parent();
-            let path;
-            if let None = parent {
-                path = "".to_string();
+            let path = entry.path();
+
+            let name;
+            let ext;
+            if isdir {
+                name = path
+                    .file_name()
+                    .unwrap_or(path.as_os_str())
+                    .to_string_lossy()
+                    .to_string();
+                ext = String::new();
             } else {
-                path = parent.unwrap().to_string_lossy().to_string();
+                name = path
+                    .file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string();
+                ext = path
+                    .extension()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string();
             }
+
+            let parent_path = path
+                .parent()
+                .unwrap_or(&PathBuf::new())
+                .to_string_lossy()
+                .to_string();
+
             files_list.push(FileInfo {
                 name: name,
-                path: path,
+                path: parent_path,
+                ext: ext,
                 time: tools::sys_time_to_seconds(time),
-                isdir: meta.is_dir(),
+                isdir: isdir,
             });
         }
         let _ = w.emit("walk_dir_result", files_list);
@@ -293,4 +314,28 @@ fn to_pinyin(hans: &str) -> Vec<String> {
         }
     }
     return ret;
+}
+
+#[tauri::command]
+fn search_file(w: Window, name: String, ext: String, mode: String, limit: i32, offset: i32) {
+    std::thread::spawn(move || {
+        if mode == "normal" {
+            let ret = file_catch::search_file(&name, &ext, limit, offset);
+            let _ = w.emit("search_file_result", ret);
+        } else if mode == "exact" {
+            let ret = file_catch::search_file_as_exact(&name, &ext, limit, offset);
+            let _ = w.emit("search_file_result", ret);
+        }
+    });
+}
+
+#[tauri::command]
+fn dir_or_file(path: &str) -> String {
+    let p = std::path::Path::new(path);
+    if p.is_dir() {
+        return "dir".to_string();
+    } else if p.is_file() {
+        return "file".to_string();
+    }
+    return "error".to_string();
 }

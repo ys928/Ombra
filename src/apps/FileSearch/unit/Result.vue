@@ -20,7 +20,7 @@
                 <KIJs :w="logo_size.w" :h="logo_size.h" v-else-if="item.name.endsWith('.js')"></KIJs>
                 <KIJson :w="logo_size.w" :h="logo_size.h" style="color: #cbcb41;" v-else-if="item.name.endsWith('.json')">
                 </KIJson>
-                <span v-html="fun_show_file_name(item.name)"></span>
+                <span v-html="fun_show_file_name(item.name, item.ext)"></span>
             </span>
             <span class="path" :title="item.path">{{ item.path }}</span>
             <span class="time">{{ time_to_str(item.time) }}</span>
@@ -36,12 +36,13 @@ import { get_span, time_to_str } from '~/global';
 import { exp_open_file, path_join } from '~/ombra';
 type FileInfo = {
     name: string,
+    ext: string,
     path: string,
     time: number,
     isdir: boolean,
 }
 
-const props = defineProps(['last_cnt', 'last_mode']);
+const props = defineProps(['last_cnt', 'last_mode', 'last_ext']);
 
 const emits = defineEmits(['fun_set_pop_menu', 'fun_search', 'fun_complete_search']);
 
@@ -79,20 +80,36 @@ function handle_scroll(e: Event) {
     const { scrollTop, clientHeight, scrollHeight } = e.target as HTMLElement;
     if (Math.ceil(scrollTop) + clientHeight >= scrollHeight) {
         scroll_count++;
-        emits('fun_search', props.last_cnt, props.last_mode, scroll_count * 50);
+        if (props.last_ext.length > 0) {
+            emits('fun_search', props.last_cnt + '.' + props.last_ext, props.last_mode, scroll_count * 50);
+        } else {
+            emits('fun_search', props.last_cnt, props.last_mode, scroll_count * 50);
+        }
     }
 }
 
-function fun_show_file_name(name: string) {
+function fun_show_file_name(name: string, ext: string) {
     if (props.last_mode == 'normal') {
         let pos = name.toLowerCase().indexOf(props.last_cnt.toLowerCase());
         let s = get_span(name.substring(0, pos), 'normal');
         s += get_span(name.substring(pos, pos + props.last_cnt.length), 'light');
         s += get_span(name.substring(pos + props.last_cnt.length), 'normal');
+        if (props.last_ext.length > 0) {
+            let pos = ext.toLocaleLowerCase().indexOf(props.last_ext);
+            s += get_span(".", 'normal');
+            s += get_span(ext.substring(0, pos), 'normal');
+            s += get_span(ext.substring(pos, pos + props.last_ext.length), 'light');
+            s += get_span(ext.substring(pos + props.last_ext.length), 'normal');
+        } else {
+            s += get_span('.' + ext, 'normal');
+        }
         return s;
     } else if (props.last_mode == 'exact') {
-        let s = get_span(name, 'light');
-        return s;
+        let show_name = name;
+        if (props.last_ext.length > 0) {
+            show_name += '.' + ext;
+        }
+        return get_span(show_name, 'light');
     }
     return get_span(name, 'normal');
 }

@@ -11,7 +11,7 @@
 import { invoke } from '@tauri-apps/api';
 import { listen } from '@tauri-apps/api/event';
 import { onMounted, onUnmounted, ref } from 'vue';
-const emits = defineEmits(['fun_begin_idx', 'fun_search', 'fun_complete'])
+const emits = defineEmits(['fun_begin_idx', 'fun_search', 'fun_process'])
 type TaskProgress = {
     status: string, //状态
     data: string,   //传送数据
@@ -27,7 +27,7 @@ onMounted(async () => {
             return;
         }
         file_num.value = num;
-    }, 3000);
+    }, 15000);
 });
 
 onUnmounted(() => {
@@ -39,11 +39,12 @@ listen<TaskProgress>('walk_files_process', async (e) => {
     // 初始化计时器变量
     if (e.payload.status == 'walking') { //正在遍历文件夹
         task_status.value = '正在索引文件：' + e.payload.data;
+        emits('fun_process', true);
     } else if (e.payload.status == 'begin_save') {
         task_status.value = '正在缓存：' + e.payload.data;
     } else if (e.payload.status == 'end') {
         task_status.value = '已完成数据缓存';
-        emits('fun_complete');
+        emits('fun_process', false);
         clearInterval(timerInterval);
         emits('fun_search', '', 'normal', 0);
     }

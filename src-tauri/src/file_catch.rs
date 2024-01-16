@@ -1,10 +1,10 @@
-use std::{io::ErrorKind, path::PathBuf, sync::Mutex, collections::LinkedList};
+use std::{collections::LinkedList, io::ErrorKind, path::PathBuf, sync::Mutex};
 
 use crate::{tools, FileInfo};
 
 static DB_CONNECT: Mutex<Option<rusqlite::Connection>> = Mutex::new(None);
 
-use log::{info, debug};
+use log::{debug, info};
 
 pub fn init() {
     let fc = get_catch_file_path();
@@ -17,9 +17,10 @@ pub fn init() {
             "create table files(
     name text,
     path text,
-    time INTEGER,
+    ext text,
     isdir INTEGER,
-    UNIQUE (path, name));",
+    time INTEGER,
+    UNIQUE (path, name, isdir));",
             [],
         )
         .unwrap();
@@ -47,7 +48,7 @@ pub fn insert_files(files: LinkedList<FileInfo>) {
     let mut stat = db
         .as_ref()
         .unwrap()
-        .prepare("insert into files (name,path,time,isdir) values (?1,?2,?3,?4);")
+        .prepare("insert into files (name,ext,path,time,isdir) values (?1,?2,?3,?4,?5);")
         .unwrap();
     let _ = db.as_ref().unwrap().execute("BEGIN TRANSACTION", []);
     for i in files {
@@ -55,7 +56,7 @@ pub fn insert_files(files: LinkedList<FileInfo>) {
         if i.isdir {
             t = 1;
         }
-        let _ = stat.execute([i.name, i.path, i.time.to_string(), t.to_string()]);
+        let _ = stat.execute([i.name, i.ext, i.path, i.time.to_string(), t.to_string()]);
     }
     let _ = db.as_ref().unwrap().execute("COMMIT", []);
     let _ = db
@@ -65,7 +66,7 @@ pub fn insert_files(files: LinkedList<FileInfo>) {
     let _ = db.as_ref().unwrap().execute("VACUUM;", []); //缩减占用空间
 }
 //搜索文件
-pub fn search_file(name: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
+pub fn search_file(name: &str, ext: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
     debug!("enter search_file");
     let db = DB_CONNECT.try_lock();
     if db.is_err() {
@@ -77,8 +78,49 @@ pub fn search_file(name: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
         return Vec::new();
     }
     let qstr = format!(
-        "SELECT name,path,time,isdir FROM files WHERE name LIKE '%{}%' limit {} OFFSET {};",
-        name, limit, offset
+            "SELECT name,ext,path,time,isdir FROM files WHERE name LIKE '%{}%' and ext LIKE '%{}%' limit {} OFFSET {};",
+            name,ext, limit, offset
+        );
+
+    let stat = db.as_ref().unwrap().prepare(&qstr);
+    if stat.is_err() {
+        return Vec::new();
+    }
+    let mut stat = stat.unwrap();
+    let rows = stat
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, u64>(3)?,
+                row.get::<_, i32>(4)?,
+            ))
+        })
+        .unwrap();
+    let mut files = Vec::new();
+    for row in rows {
+        let (name, ext, path, time, t) = row.unwrap();
+        let mut isdir = false;
+        if t == 1 {
+            isdir = true;
+        }
+        files.push(FileInfo {
+            name: name,
+            path: path,
+            ext: ext,
+            time: time,
+            isdir: isdir,
+        });
+    }
+    return files;
+}
+
+pub fn search_file_as_exact(name: &str, ext: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
+    let db = DB_CONNECT.lock().unwrap();
+    let qstr = format!(
+        r"SELECT name,ext,path,time,isdir FROM files WHERE name='{}' and ext='{}' limit {} OFFSET {};",
+        name, ext, limit, offset
     );
 
     let stat = db.as_ref().unwrap().prepare(&qstr);
@@ -91,20 +133,22 @@ pub fn search_file(name: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
             Ok((
                 row.get::<_, String>(0)?,
                 row.get::<_, String>(1)?,
-                row.get::<_, u64>(2)?,
-                row.get::<_, i32>(3)?,
+                row.get::<_, String>(2)?,
+                row.get::<_, u64>(3)?,
+                row.get::<_, i32>(4)?,
             ))
         })
         .unwrap();
     let mut files = Vec::new();
     for row in rows {
-        let (name, path, time, t) = row.unwrap();
+        let (name, ext, path, time, t) = row.unwrap();
         let mut isdir = false;
         if t == 1 {
             isdir = true;
         }
         files.push(FileInfo {
             name: name,
+            ext: ext,
             path: path,
             time: time,
             isdir: isdir,
@@ -115,11 +159,15 @@ pub fn search_file(name: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
 
 //更新文件
 pub fn update_file(path: &Vec<PathBuf>) {
-    let db = DB_CONNECT.lock().unwrap();
+    let db = DB_CONNECT.lock();
+    if db.is_err() {
+        return;
+    }
+    let db = db.unwrap();
     let mut update: rusqlite::Statement<'_> = db
         .as_ref()
         .unwrap()
-        .prepare("insert or replace into files (name,path,time,isdir) values (?1,?2,?3,?4);")
+        .prepare("insert or replace into files (name,ext,path,time,isdir) values (?1,?2,?3,?4,?5);")
         .unwrap();
     let mut remove = db
         .as_ref()
@@ -136,13 +184,12 @@ pub fn update_file(path: &Vec<PathBuf>) {
             .to_string_lossy()
             .to_string();
 
-        let parent = file_full_path.parent();
-        let parent_path;
-        if let None = parent {
-            parent_path = "".to_string();
-        } else {
-            parent_path = parent.unwrap().to_string_lossy().to_string();
-        }
+        let parent_path = file_full_path
+            .parent()
+            .unwrap_or(&PathBuf::new())
+            .to_string_lossy()
+            .to_string();
+
         if let Err(e) = meta {
             //删除文件事件处理
             if e.kind() == ErrorKind::NotFound {
@@ -161,53 +208,22 @@ pub fn update_file(path: &Vec<PathBuf>) {
         let time = meta.modified().unwrap();
         let time = tools::sys_time_to_seconds(time);
 
+        let mut ext = "".to_string();
         let mut t = 0;
         if meta.is_dir() {
             t = 1;
+        } else {
+            ext = file_full_path
+                .file_stem()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string();
         }
         update
-            .insert([name, parent_path, time.to_string(), t.to_string()])
+            .insert([name, ext, parent_path, time.to_string(), t.to_string()])
             .unwrap();
     }
     let _ = db.as_ref().unwrap().execute("COMMIT", []);
-}
-
-pub fn search_file_as_exact(name: &str, limit: i32, offset: i32) -> Vec<FileInfo> {
-    let db = DB_CONNECT.lock().unwrap();
-    let qstr = format!(
-        r"SELECT name,path,time,isdir FROM files WHERE name='{}' limit {} OFFSET {};",
-        name, limit, offset
-    );
-    let stat = db.as_ref().unwrap().prepare(&qstr);
-    if stat.is_err() {
-        return Vec::new();
-    }
-    let mut stat = stat.unwrap();
-    let rows = stat
-        .query_map([], |row| {
-            Ok((
-                row.get::<_, String>(0)?,
-                row.get::<_, String>(1)?,
-                row.get::<_, u64>(2)?,
-                row.get::<_, i32>(3)?,
-            ))
-        })
-        .unwrap();
-    let mut files = Vec::new();
-    for row in rows {
-        let (name, path, time, t) = row.unwrap();
-        let mut isdir = false;
-        if t == 1 {
-            isdir = true;
-        }
-        files.push(FileInfo {
-            name: name,
-            path: path,
-            time: time,
-            isdir: isdir,
-        });
-    }
-    return files;
 }
 
 pub fn get_file_num() -> i32 {

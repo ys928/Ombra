@@ -2,10 +2,10 @@
     <div class="FileSearch">
         <AppTitlebar :id="app_file_search.id" :text="search_content"></AppTitlebar>
         <Search ref="vue_search" @fun_search="fun_search" @fun_exit="fun_exit"></Search>
-        <Result ref="vue_result" :last_cnt="last_search.cnt" :last_mode="last_search.mode"
+        <Result ref="vue_result" :last_cnt="last_search.cnt" :last_mode="last_search.mode" :last_ext="last_search.ext"
             @fun_set_pop_menu="fun_set_pop_menu" @fun_search="fun_search" @fun_complete_search="is_searching = false">
         </Result>
-        <Statusbar @fun_begin_idx="fun_begin_idx" @fun_search="fun_search" @fun_complete="is_processing = false">
+        <Statusbar @fun_begin_idx="fun_begin_idx" @fun_search="fun_search" @fun_process="fun_process">
         </Statusbar>
         <PopMenu ref="div_pop_menu" @hidden="pop_menu.is_show = false" :isdir="click_item.isdir" :name="click_item.name"
             :path="click_item.path" :x="pop_menu.x" :y="pop_menu.y" v-if="pop_menu.is_show">
@@ -25,13 +25,14 @@ import Statusbar from './unit/Statusbar.vue';
 import Result from './unit/Result.vue';
 import { KLoading } from '~/kui';
 import { om_get_text, win_close } from '~/ombra';
-
 type FileInfo = {
     name: string,
+    ext: string,
     path: string,
     time: number,
     isdir: boolean,
 }
+
 const search_content = ref("");
 const div_pop_menu = ref() as Ref<HTMLElement>
 //当前是否处于缓存数据状态
@@ -45,6 +46,7 @@ const vue_result = ref();
 //最后一次搜索状态，用于滚动事件重复发送
 const last_search = reactive({
     cnt: '',
+    ext: '',
     mode: 'normal'
 });
 
@@ -97,12 +99,21 @@ function fun_set_pop_menu(x: number, y: number, item: FileInfo) {
 
 function fun_search(cnt: string, mode: string, offset: number) {
     if (is_processing.value) return; //缓存状态禁止搜索
+    let ext = "";
+    let pos = cnt.lastIndexOf(".");
+    if (pos != -1) {
+        ext = cnt.substring(pos + 1);
+        cnt = cnt.substring(0, pos);
+    }
+
     if (offset == 0) { //为首次搜索
         scroll_count == 0;
         vue_result.value.clear_result();
         last_search.cnt = cnt;
         last_search.mode = mode;
+        last_search.ext = ext;
     }
+
     if (is_searching.value) { //正处于搜索状态，将本次搜索任务进行缓存
         searching_task.deal = true;
         searching_task.content = cnt;
@@ -110,8 +121,10 @@ function fun_search(cnt: string, mode: string, offset: number) {
         return;
     }
     is_searching.value = true;
+
     const searchContent = {
         name: cnt,
+        ext: ext,
         mode: mode,
         limit: 50,
         offset: offset,
@@ -121,6 +134,10 @@ function fun_search(cnt: string, mode: string, offset: number) {
 
 function fun_exit() {
     win_close();
+}
+
+function fun_process(status: boolean) {
+    is_searching.value = status;
 }
 
 </script>
