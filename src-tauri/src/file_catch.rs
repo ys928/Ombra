@@ -20,7 +20,7 @@ pub fn init() {
     ext text,
     isdir INTEGER,
     time INTEGER,
-    UNIQUE (path, name, isdir));",
+    UNIQUE (path, name,ext,isdir));",
             [],
         )
         .unwrap();
@@ -208,10 +208,11 @@ pub fn update_file(path: &Vec<PathBuf>) {
         let time = meta.modified().unwrap();
         let time = tools::sys_time_to_seconds(time);
 
-        let mut ext = "".to_string();
+        let ext;
         let mut t = 0;
         if meta.is_dir() {
             t = 1;
+            ext = String::new();
         } else {
             ext = file_full_path
                 .file_stem()

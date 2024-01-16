@@ -4,7 +4,6 @@ use log::debug;
 use pinyin::ToPinyin;
 use serde::{Deserialize, Serialize};
 use std::collections::LinkedList;
-use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::api::dialog;
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window};
@@ -17,17 +16,10 @@ use log4rs::append::rolling_file::{
 use log4rs::config::{Appender, Config, Root};
 use log4rs::encode::pattern::PatternEncoder;
 
+use crate::tools::FileInfo;
+
 mod file_watch;
 mod tools;
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct FileInfo {
-    pub name: String,
-    pub path: String,
-    pub ext: String,
-    pub time: u64,
-    pub isdir: bool,
-}
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct TaskProgress {
@@ -165,42 +157,11 @@ fn walk_all_files(w: Window) {
             //每个盘都单开一个线程遍历，提高速度
             std::thread::spawn(move || {
                 for entry in WalkDir::new(d).into_iter().filter_map(|e| e.ok()) {
-                    let meta = entry.metadata().unwrap();
-                    let isdir = meta.is_dir();
-                    let time = meta.modified().unwrap();
-                    let path = entry.path();
-                    let name;
-                    let ext;
-                    if isdir {
-                        name = path
-                            .file_name()
-                            .unwrap_or(path.as_os_str())
-                            .to_string_lossy()
-                            .to_string();
-                        ext = String::new();
-                    } else {
-                        name = path.file_stem().unwrap().to_string_lossy().to_string();
-                        ext = path
-                            .extension()
-                            .unwrap_or_default()
-                            .to_string_lossy()
-                            .to_string();
+                    let fi = tools::get_file_info(entry.path());
+                    if fi.is_none() {
+                        continue;
                     }
-
-                    let parent_path = path
-                        .parent()
-                        .unwrap_or(&PathBuf::new())
-                        .to_string_lossy()
-                        .to_string();
-
-                    t_se.send(FileInfo {
-                        name: name,
-                        path: parent_path,
-                        ext: ext,
-                        time: tools::sys_time_to_seconds(time),
-                        isdir: meta.is_dir(),
-                    })
-                    .unwrap();
+                    t_se.send(fi.unwrap()).unwrap();
                 }
             });
         }
@@ -260,46 +221,11 @@ fn walk_dir(w: Window, path: String, level: usize) {
                 f = false;
                 continue;
             }
-            let meta = entry.metadata().unwrap();
-            let isdir = meta.is_dir();
-            let time = meta.modified().unwrap();
-            let path = entry.path();
-
-            let name;
-            let ext;
-            if isdir {
-                name = path
-                    .file_name()
-                    .unwrap_or(path.as_os_str())
-                    .to_string_lossy()
-                    .to_string();
-                ext = String::new();
-            } else {
-                name = path
-                    .file_stem()
-                    .unwrap_or_default()
-                    .to_string_lossy()
-                    .to_string();
-                ext = path
-                    .extension()
-                    .unwrap_or_default()
-                    .to_string_lossy()
-                    .to_string();
+            let fi = tools::get_file_info(entry.path());
+            if fi.is_none() {
+                continue;
             }
-
-            let parent_path = path
-                .parent()
-                .unwrap_or(&PathBuf::new())
-                .to_string_lossy()
-                .to_string();
-
-            files_list.push(FileInfo {
-                name: name,
-                path: parent_path,
-                ext: ext,
-                time: tools::sys_time_to_seconds(time),
-                isdir: isdir,
-            });
+            files_list.push(fi);
         }
         let _ = w.emit("walk_dir_result", files_list);
     });

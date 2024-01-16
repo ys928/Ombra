@@ -1,5 +1,16 @@
 use std::path::PathBuf;
 
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct FileInfo {
+    pub name: String,
+    pub path: String,
+    pub ext: String,
+    pub time: u64,
+    pub isdir: bool,
+}
+
 pub fn ensure_dir(dir: &str) -> bool {
     let p = std::path::Path::new(dir);
     if !p.exists() || !p.is_dir() {
@@ -28,4 +39,51 @@ pub fn get_data_dir(dir: Option<&str>) -> PathBuf {
     }
     ensure_dir(path.to_str().unwrap());
     return path;
+}
+
+pub fn get_file_info(path: &std::path::Path) -> Option<FileInfo> {
+    let meta = path.metadata();
+    if meta.is_err() {
+        return None;
+    }
+    let meta = meta.unwrap();
+
+    let isdir = meta.is_dir();
+    let time = meta.modified().unwrap();
+
+    let name;
+    let ext;
+    if isdir {
+        name = path
+            .file_name()
+            .unwrap_or(path.as_os_str())
+            .to_string_lossy()
+            .to_string();
+        ext = String::new();
+    } else {
+        name = path
+            .file_stem()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+        ext = path
+            .extension()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .to_string();
+    }
+
+    let parent_path = path
+        .parent()
+        .unwrap_or(&std::path::PathBuf::new())
+        .to_string_lossy()
+        .to_string();
+
+    Some(FileInfo {
+        name: name,
+        path: parent_path,
+        ext: ext,
+        time: sys_time_to_seconds(time),
+        isdir: isdir,
+    })
 }
