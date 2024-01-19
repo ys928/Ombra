@@ -95,6 +95,7 @@ fn main() {
         })
         .setup(move |app| {
             let window = app.get_window("MainWindow").unwrap();
+            window.center().unwrap();
             #[cfg(any(windows, target_os = "macos"))]
             window_shadows::set_shadow(&window, true).expect("Unsupported platform!");
             Ok(())
