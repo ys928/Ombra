@@ -356,14 +356,14 @@ export function win_event_focus(label: string, callback: Function) {
  * @param path 文件路径
  */
 export function exp_open_file(path: string) {
-    cli_exec(['start', 'explorer', path]);
+    invoke('default_open_file', { path: path });
 }
 /**
  * @description 打开资源管理器选择到指定文件
  * @param path 文件路径
  */
 export function exp_select_file(path: string) {
-    cli_exec(['start', 'explorer', '/select,', path]);
+    invoke('explorer_select_path', { path: path });
 }
 
 /**

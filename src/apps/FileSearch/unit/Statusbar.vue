@@ -46,7 +46,7 @@ listen<TaskProgress>('walk_files_process', async (e) => {
         task_status.value = '已完成数据缓存';
         emits('fun_process', false);
         clearInterval(timerInterval);
-        emits('fun_search', '', 'normal', 0);
+        emits('fun_search', '', '', 'normal', 0);
     }
 })
 </script>

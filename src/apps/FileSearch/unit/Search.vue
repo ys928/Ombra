@@ -37,7 +37,8 @@ function fun_keydown(e: KeyboardEvent) {
             emits('fun_exit');
         } else {
             search_content.value = "";
-            emits('fun_search', search_content.value, mode.value, 0);
+            let cnt = get_name_ext();
+            emits('fun_search', cnt.name, cnt.ext, mode.value, 0);
         }
     }
 }
@@ -49,7 +50,8 @@ function fun_switch_whole_word() {
     } else {
         mode.value = 'normal';
     }
-    emits('fun_search', search_content.value, mode.value, 0);
+    let cnt = get_name_ext();
+    emits('fun_search', cnt.name, cnt.ext, mode.value, 0);
 }
 
 function fun_compositionstart() {
@@ -57,18 +59,31 @@ function fun_compositionstart() {
 }
 function fun_compositionend() {
     is_inputing = false;
-    emits('fun_search', search_content.value, mode.value, 0);
+    let cnt = get_name_ext();
+    emits('fun_search', cnt.name, cnt.ext, mode.value, 0);
 }
 
 function fun_input() {
     if (is_inputing) return;
-    emits('fun_search', search_content.value, mode.value, 0);
+    let cnt = get_name_ext();
+    emits('fun_search', cnt.name, cnt.ext, mode.value, 0);
 }
 
 function set_content(cnt: string) {
     search_content.value = cnt;
 }
 
+
+function get_name_ext() {
+    let pos = search_content.value.lastIndexOf('.');
+    let name = search_content.value;
+    let ext = "";
+    if (pos != -1) {
+        name = search_content.value.substring(0, pos);
+        ext = search_content.value.substring(pos + 1);
+    }
+    return { name, ext };
+}
 defineExpose({
     set_content
 })

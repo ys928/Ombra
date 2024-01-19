@@ -17,22 +17,24 @@ use windows::{
         Storage::FileSystem::{GetDriveTypeW, GetLogicalDrives},
         System::{
             Com::{
-                CoCreateInstance, CoInitialize, CoTaskMemFree, CoUninitialize, CreateBindCtx,
-                IServiceProvider,
+                CoCreateInstance, CoInitialize, CoInitializeEx, CoTaskMemFree, CoUninitialize,
+                CreateBindCtx, IServiceProvider,
                 StructuredStorage::{PropVariantClear, PropVariantToString},
-                CLSCTX_LOCAL_SERVER,
+                CLSCTX_LOCAL_SERVER, COINIT_APARTMENTTHREADED, COINIT_DISABLE_OLE1DDE,
             },
             Variant::{VARIANT, VARIANT_0, VARIANT_0_0, VARIANT_0_0_0, VT_I4},
             WindowsProgramming,
         },
         UI::{
             Shell::{
-                BHID_EnumItems, BHID_PropertyStore, IEnumShellItems, IFolderView, IPersistFolder2,
-                IShellBrowser, IShellItem, IShellWindows, IWebBrowser2,
+                BHID_EnumItems, BHID_PropertyStore, IEnumShellItems, IFolderView,
+                ILCreateFromPathW, IPersistFolder2, IShellBrowser, IShellItem, IShellWindows,
+                IWebBrowser2,
                 PropertiesSystem::{IPropertyStore, PSGetNameFromPropertyKey, PROPERTYKEY},
-                SHCreateItemFromParsingName, SHGetNameFromIDList, ShellWindows, SIGDN_FILESYSPATH,
+                SHCreateItemFromParsingName, SHGetNameFromIDList, SHOpenFolderAndSelectItems,
+                ShellExecuteW, ShellWindows, SIGDN_FILESYSPATH,
             },
-            WindowsAndMessaging::{GetClassNameW, GetForegroundWindow},
+            WindowsAndMessaging::{GetClassNameW, GetForegroundWindow, SW_SHOWNORMAL},
         },
     },
 };
@@ -197,7 +199,7 @@ pub fn get_all_app(w: Window) {
                     } else if k == "System.AppUserModel.PackageInstallPath" {
                         pack = v;
                     } else if k == "System.Tile.Square150x150LogoPath" {
-                        if icon.len()==0{
+                        if icon.len() == 0 {
                             icon = v;
                         }
                     } else if k == "System.Tile.SmallLogoPath" {
@@ -362,4 +364,29 @@ pub fn get_explorer_show_path() -> String {
         CoUninitialize();
     };
     return folder_cur_path;
+}
+
+#[tauri::command]
+pub fn explorer_select_path(path: &str) {
+    debug!("enter explorer_select_path");
+    unsafe {
+        let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+        let mut p: Vec<u16> = path.encode_utf16().collect();
+        p.push(0);
+        let p = PCWSTR::from_raw(p.as_mut_ptr());
+        let it = ILCreateFromPathW(p);
+        let _ = SHOpenFolderAndSelectItems(it, None, 0);
+        CoUninitialize();
+    }
+}
+
+#[tauri::command]
+pub fn default_open_file(path: &str) {
+    debug!("enter default_open_file");
+    unsafe {
+        let mut p: Vec<u16> = path.encode_utf16().collect();
+        p.push(0);
+        let p = PCWSTR::from_raw(p.as_mut_ptr());
+        ShellExecuteW(None, w!("open"), p, None, None, SW_SHOWNORMAL);
+    }
 }

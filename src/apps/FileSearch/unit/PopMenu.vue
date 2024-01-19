@@ -9,7 +9,7 @@
 <script setup lang="ts">
 import { Ref, ref, onMounted } from 'vue';
 import { exp_select_file, exp_open_file, path_join, clip_set_text } from '~/ombra';
-const props = defineProps(['isdir', 'path', 'name', 'x', 'y']);
+const props = defineProps(['isdir', 'path', 'name', 'ext', 'x', 'y']);
 const emits = defineEmits(['hidden']);
 
 const div_pop_menu = ref() as Ref<HTMLElement>
@@ -26,17 +26,24 @@ onMounted(() => {
 async function fun_open_path() {
     emits('hidden');
     let p = props.name;
-    if (props.path.length != 0) {
-        p = await path_join(props.path, props.name);
+    if (props.ext.length > 0) {
+        p += '.' + props.ext;
     }
+    if (props.path.length != 0) {
+        p = await path_join(props.path, p);
+    }
+    console.log(p);
     exp_select_file(p);
 }
 
 async function fun_open_file() {
     emits('hidden');
     let p = props.name;
+    if (props.ext.length > 0) {
+        p += '.' + props.ext;
+    }
     if (props.path.length != 0) {
-        p = await path_join(props.path, props.name);
+        p = await path_join(props.path, p);
     }
     exp_open_file(p);
 }
@@ -44,8 +51,11 @@ async function fun_open_file() {
 async function fun_copy_path() {
     emits('hidden');
     let p = props.name;
+    if (props.ext.length > 0) {
+        p += '.' + props.ext;
+    }
     if (props.path.length != 0) {
-        p = await path_join(props.path, props.name);
+        p = await path_join(props.path, p);
     }
     clip_set_text(p);
 }

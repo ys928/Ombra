@@ -80,11 +80,7 @@ function handle_scroll(e: Event) {
     const { scrollTop, clientHeight, scrollHeight } = e.target as HTMLElement;
     if (Math.ceil(scrollTop) + clientHeight >= scrollHeight) {
         scroll_count++;
-        if (props.last_ext.length > 0) {
-            emits('fun_search', props.last_cnt + '.' + props.last_ext, props.last_mode, scroll_count * 50);
-        } else {
-            emits('fun_search', props.last_cnt, props.last_mode, scroll_count * 50);
-        }
+        emits('fun_search', props.last_cnt, props.last_ext, props.last_mode, scroll_count * 50);
     }
 }
 
@@ -115,8 +111,11 @@ function fun_show_file_name(name: string, ext: string) {
 }
 async function fun_dbclick(item: FileInfo) {
     let p = item.name;
+    if (item.ext.length > 0) {
+        p += '.' + item.ext;
+    }
     if (item.path.length != 0) {
-        p = await path_join(item.path, item.name);
+        p = await path_join(item.path, p);
     }
     exp_open_file(p);
 }

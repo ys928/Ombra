@@ -2,13 +2,13 @@
     <div class="FileSearch">
         <AppTitlebar :id="app_file_search.id" :text="search_content"></AppTitlebar>
         <Search ref="vue_search" @fun_search="fun_search" @fun_exit="fun_exit"></Search>
-        <Result ref="vue_result" :last_cnt="last_search.cnt" :last_mode="last_search.mode" :last_ext="last_search.ext"
+        <Result ref="vue_result" :last_cnt="last_search.name" :last_mode="last_search.mode" :last_ext="last_search.ext"
             @fun_set_pop_menu="fun_set_pop_menu" @fun_search="fun_search" @fun_complete_search="is_searching = false">
         </Result>
         <Statusbar @fun_begin_idx="fun_begin_idx" @fun_search="fun_search" @fun_process="fun_process">
         </Statusbar>
         <PopMenu ref="div_pop_menu" @hidden="pop_menu.is_show = false" :isdir="click_item.isdir" :name="click_item.name"
-            :path="click_item.path" :x="pop_menu.x" :y="pop_menu.y" v-if="pop_menu.is_show">
+            :path="click_item.path" :ext="click_item.ext" :x="pop_menu.x" :y="pop_menu.y" v-if="pop_menu.is_show">
         </PopMenu>
         <KLoading v-if="is_searching || is_processing"></KLoading>
     </div>
@@ -45,7 +45,7 @@ const vue_result = ref();
 
 //最后一次搜索状态，用于滚动事件重复发送
 const last_search = reactive({
-    cnt: '',
+    name: '',
     ext: '',
     mode: 'normal'
 });
@@ -63,14 +63,15 @@ let scroll_count = 0;
 let is_searching = ref(false);
 
 let searching_task = {
-    content: '',
+    name: '',
+    ext: '',
     mode: 'normal',
     deal: false
 };
 watch(is_searching, () => {
     if (is_searching.value) return;
     if (searching_task.deal == false) return;
-    fun_search(searching_task.content, searching_task.mode, 0);
+    fun_search(searching_task.name, searching_task.ext, searching_task.mode, 0);
     searching_task.deal = false;
 });
 
@@ -87,7 +88,7 @@ function fun_begin_idx() {
 onMounted(async () => {
     let text = om_get_text();
     vue_search.value.set_content(text);
-    fun_search(text, 'normal', 0);
+    fun_search(text, '', 'normal', 0);
 });
 let click_item: FileInfo;
 function fun_set_pop_menu(x: number, y: number, item: FileInfo) {
@@ -97,33 +98,28 @@ function fun_set_pop_menu(x: number, y: number, item: FileInfo) {
     pop_menu.is_show = true;
 }
 
-function fun_search(cnt: string, mode: string, offset: number) {
+function fun_search(name: string, ext: string, mode: string, offset: number) {
     if (is_processing.value) return; //缓存状态禁止搜索
-    let ext = "";
-    let pos = cnt.lastIndexOf(".");
-    if (pos != -1) {
-        ext = cnt.substring(pos + 1);
-        cnt = cnt.substring(0, pos);
-    }
 
     if (offset == 0) { //为首次搜索
         scroll_count == 0;
         vue_result.value.clear_result();
-        last_search.cnt = cnt;
+        last_search.name = name;
         last_search.mode = mode;
         last_search.ext = ext;
     }
 
     if (is_searching.value) { //正处于搜索状态，将本次搜索任务进行缓存
         searching_task.deal = true;
-        searching_task.content = cnt;
+        searching_task.name = name;
         searching_task.mode = mode;
+        searching_task.ext = ext;
         return;
     }
     is_searching.value = true;
 
     const searchContent = {
-        name: cnt,
+        name: name,
         ext: ext,
         mode: mode,
         limit: 50,
