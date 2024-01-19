@@ -13,7 +13,7 @@ edition = "2021"
 tauri-build = { version = "1.5", features = [] }
 
 [dependencies]
-tauri = { version = "1.5", features = ["system-tray", "api-all"] }
+tauri = { version = "1.5", features = ["system-tray", "api-all", "devtools"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 webbrowser = "0.8.12"
@@ -23,7 +23,7 @@ chrono = "0.4.31"
 base64 = "0.13"
 pelite = "0.10.0"
 # lnk_parser = "0.4.0"
-rusqlite = { version = "0.30.0", features = ["bundled", "load_extension"] }
+rusqlite = { version = "0.30.0", features = ["bundled"] }
 dirs = "5.0.1"
 libloading = "0.8"
 tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
@@ -35,10 +35,18 @@ log = "0.4.20"
 log4rs = "1.2.0"
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.52.0", features = [
-    "Win32_System_Com", "Win32_System_WindowsProgramming", "Win32_UI_Shell_Common",
-    "Win32_UI_Shell", "Win32_System_Com_StructuredStorage", "Win32_System_Variant",
-    "Win32", "Win32_Storage_FileSystem", "Win32_Foundation", "Win32_UI_Shell_PropertiesSystem",
-    "Win32_UI_WindowsAndMessaging", "Win32_System_Ole"
+    "Win32_System_Com",
+    "Win32_System_WindowsProgramming",
+    "Win32_UI_Shell_Common",
+    "Win32_UI_Shell",
+    "Win32_System_Com_StructuredStorage",
+    "Win32_System_Variant",
+    "Win32",
+    "Win32_Storage_FileSystem",
+    "Win32_Foundation",
+    "Win32_UI_Shell_PropertiesSystem",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_System_Ole",
 ] }
 known-folders = "1.1.0"
 [features]
@@ -47,8 +55,8 @@ known-folders = "1.1.0"
 custom-protocol = ["tauri/custom-protocol"]
 
 [profile.release]
-strip = true  # Automatically strip symbols from the binary.
-opt-level = "z"  # Optimize for size.
+strip = true      # Automatically strip symbols from the binary.
+opt-level = "z"   # Optimize for size.
 lto = true
 codegen-units = 1
 panic = "abort"

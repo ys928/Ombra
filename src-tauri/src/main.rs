@@ -119,7 +119,8 @@ fn main() {
             shadow_window,
             dir_or_file,
             walk_dir,
-            to_pinyin
+            to_pinyin,
+            open_devtools
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -266,4 +267,9 @@ fn dir_or_file(path: &str) -> String {
         return "file".to_string();
     }
     return "error".to_string();
+}
+
+#[tauri::command]
+fn open_devtools(w:Window){
+    w.open_devtools();
 }

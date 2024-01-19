@@ -4,6 +4,7 @@
         <iframe v-if="show_plugin_index" id="plugin" :src="plugin_index" frameborder="0"></iframe>
         <div class="menu">
             <div class="item" @click="fun_choose">选择</div>
+            <div class="item" @click="fun_open_dev">调试</div>
         </div>
     </div>
 </template>
@@ -14,7 +15,7 @@ import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import AppTitlebar from '~/components/AppTitlebar.vue';
-import { dlg_open, file_convert, file_read_text, file_write_text } from '~/ombra';
+import { dlg_open, file_convert, file_read_text, file_write_text, notif_is_grant, notif_request, notif_send, win_is_main } from '~/ombra';
 interface FileChange {
     kind: string,
     files: Array<string>,
@@ -81,6 +82,19 @@ listen<FileChange>('file_watch', async (e) => {
         show_plugin_index.value = true;
     }
 })
+async function fun_open_dev() {
+    if (win_is_main()) {
+        let permissionGranted = await notif_is_grant();
+        if (!permissionGranted) {
+            permissionGranted = await notif_request();
+        }
+        if (permissionGranted) {
+            notif_send("提示", '请先点击右上角分离窗口后再使用调试功能');
+        }
+    } else {
+        invoke('open_devtools');
+    }
+}
 
 </script>
 
@@ -102,6 +116,7 @@ listen<FileChange>('file_watch', async (e) => {
         bottom: 10px;
         left: 50%;
         transform: translateX(-50%);
+        display: flex;
 
         .item {
             background-color: #2a2a2a;
@@ -110,6 +125,7 @@ listen<FileChange>('file_watch', async (e) => {
             user-select: none;
             cursor: pointer;
             padding: 5px;
+            margin: 5px;
 
             &:hover {
                 background-color: #30363d;
