@@ -6,7 +6,8 @@
 </template>
 
 <script setup lang="ts">
-import { file_read_text, file_write_text, om_get_plugin_index } from '~/ombra';
+import { om_get_plugin_index } from '~/ombra';
+import File from '~/api/file'
 import AppTitlebar from '../components/AppTitlebar.vue'
 import { onMounted, onUnmounted, ref } from 'vue';
 
@@ -27,13 +28,13 @@ async function handle_plugin(e: MessageEvent) {
         switch (e.data.name) {
             case 'file_read_text':
                 {
-                    let text = await file_read_text(e.data.path);
+                    let text = await File.read_text(e.data.path);
                     iframe.contentWindow?.postMessage(text, '*');
                 }
                 break;
             case 'file_write_text':
                 {
-                    await file_write_text(e.data.path, e.data.content);
+                    await File.write_text(e.data.path, e.data.content);
                     iframe.contentWindow?.postMessage('', '*');
                 }
                 break;

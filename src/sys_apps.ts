@@ -1,5 +1,6 @@
 import { add_app } from "./global";
-import { app_get, cli_exec, dlg_confirm, file_convert, file_exists, om_get_features, om_get_text, win_label } from "./ombra";
+import { app_get, cli_exec, dlg_confirm, file_convert, om_get_features, om_get_text, win_label } from "./ombra";
+import File from '~/api/file'
 
 const list = [
     {
@@ -165,7 +166,7 @@ export async function load_sys_app() {
         if (apps[i].name == 'Visual Studio Code') {
             feature.push('explorer');
         }
-        let exist = await file_exists(apps[i].icon);
+        let exist = await File.exists(apps[i].icon);
         let icon_url = exist ? file_convert(apps[i].icon) : "/logo.png";
         add_app(apps[i].name, '', icon_url, feature, false, () => {
             let features = om_get_features();

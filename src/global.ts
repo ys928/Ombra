@@ -1,6 +1,7 @@
 import { reactive } from "vue";
-import { dir_config, file_read_text, file_write_text, gs_is_registered, gs_register, gs_unregister, path_exist, win_hide, win_set_resizable, win_set_size } from "./ombra";
+import { dir_config, gs_is_registered, gs_register, gs_unregister, path_exist, win_hide, win_set_resizable, win_set_size } from "./ombra";
 import { listen } from "@tauri-apps/api/event";
+import File from "~/api/file"
 
 export interface AppInfo {
     name: string, //应用名，将显示在应用菜单面板上
@@ -99,14 +100,14 @@ async function get_config_path() {
     let p = await dir_config();
     p += 'config.json';
     if (!await path_exist(p)) {
-        file_write_text(p, '{}');
+        File.write_text(p, '{}');
     }
     return p;
 }
 
 async function read_config() {
     let p = await get_config_path();
-    let config = await file_read_text(p);
+    let config = await File.read_text(p);
     let js_config = JSON.parse(config);
     return js_config;
 }
@@ -114,7 +115,7 @@ async function read_config() {
 async function write_config(config: any) {
     let p = await get_config_path();
     let str = JSON.stringify(config);
-    file_write_text(p, str);
+    File.write_text(p, str);
 }
 
 export async function read_config_item(item: string) {

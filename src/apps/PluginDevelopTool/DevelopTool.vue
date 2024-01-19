@@ -15,7 +15,9 @@ import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import AppTitlebar from '~/components/AppTitlebar.vue';
-import { dlg_open, file_convert, file_read_text, file_write_text, notif_is_grant, notif_request, notif_send, win_is_main } from '~/ombra';
+import { dlg_open, file_convert, notif_is_grant, notif_request, notif_send, win_is_main } from '~/ombra';
+import File from '~/api/file'
+
 interface FileChange {
     kind: string,
     files: Array<string>,
@@ -43,13 +45,13 @@ async function handle_plugin(e: MessageEvent) {
         switch (e.data.name) {
             case 'file_read_text':
                 {
-                    let text = await file_read_text(e.data.path);
+                    let text = await File.read_text(e.data.path);
                     iframe.contentWindow?.postMessage(text, '*');
                 }
                 break;
             case 'file_write_text':
                 {
-                    await file_write_text(e.data.path, e.data.content);
+                    await File.write_text(e.data.path, e.data.content);
                     iframe.contentWindow?.postMessage('', '*');
                 }
                 break;

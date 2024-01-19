@@ -11,7 +11,6 @@ import { isPermissionGranted, requestPermission, sendNotification } from '@tauri
  * 为了方便使用，api的命名规范采用 名词_动词 的形式，例如打开文件的函数为：file_open
  * 目前包含的名词有：
  * om：指代ombra，用于向插件传递数据
- * file：文件
  * path：路径
  * dir：目录
  * app：本程序中的app
@@ -124,32 +123,6 @@ export async function dlg_confirm(msg: string, title: string, type: "warning" | 
  */
 export async function dlg_open(option: OpenDialogOptions) {
     return dialog.open(option);
-}
-
-/**
- * @description 以utf-8编码读取文本所有内容并返回
- * @param filepath 文件路径
- * @returns 文本内容
- */
-export async function file_read_text(filepath: string) {
-    return fs.readTextFile(filepath);
-}
-
-/**
- * 
- * @param filepath 文件路径
- * @param content 要写入文本的内容
- */
-export function file_write_text(filepath: string, content: string) {
-    fs.writeTextFile(filepath, content);
-}
-/**
- * 
- * @param path 文件路径
- * @returns 文件是否存在
- */
-export function file_exists(path: string) {
-    return fs.exists(path);
 }
 
 /**

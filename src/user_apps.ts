@@ -5,8 +5,10 @@ import AppOpenFile from "./apps/OpenFile/App"
 import PluginWindow from './components/PluginWindow.vue'
 import PluginDevelopTool from './apps/PluginDevelopTool/App'
 import { add_app } from "./global";
-import { dir_walk, file_convert, file_read_text, win_is_main } from '~/ombra'
+import { dir_walk, file_convert, win_is_main } from '~/ombra'
 import { path } from "@tauri-apps/api";
+import File from '~/api/file'
+
 let user_apps_list = [
     AppFileSearch,
     AppOpenLink,
@@ -67,7 +69,7 @@ async function load_plugin_app() {
             } else if (f.name == 'index.html') {
                 plugin_index = file_convert(f.path + '\\' + f.name);
             } else if (f.name == 'config.json') {
-                let text = await file_read_text(f.path + '\\' + f.name);
+                let text = await File.read_text(f.path + '\\' + f.name);
                 let config = JSON.parse(text);
                 features = config.features;
                 id = config.id;
