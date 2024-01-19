@@ -12,6 +12,7 @@
 <script setup lang="ts">
 import { Ref, onMounted, ref } from 'vue';
 import { KIWholeWord } from '~/kui';
+import { om_get_text } from '~/ombra';
 
 const emits = defineEmits(['fun_search', 'fun_exit']);
 
@@ -29,6 +30,9 @@ onMounted(() => {
             search_input.value.focus();
         }
     });
+    search_content.value = om_get_text();
+    let cnt = get_name_ext();
+    emits('fun_search', cnt.name, cnt.ext, mode.value, 0);
 });
 
 function fun_keydown(e: KeyboardEvent) {
@@ -69,11 +73,6 @@ function fun_input() {
     emits('fun_search', cnt.name, cnt.ext, mode.value, 0);
 }
 
-function set_content(cnt: string) {
-    search_content.value = cnt;
-}
-
-
 function get_name_ext() {
     let pos = search_content.value.lastIndexOf('.');
     let name = search_content.value;
@@ -84,9 +83,6 @@ function get_name_ext() {
     }
     return { name, ext };
 }
-defineExpose({
-    set_content
-})
 
 </script>
 

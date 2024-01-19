@@ -16,7 +16,7 @@
 
 <script setup lang="ts">
 import { invoke } from '@tauri-apps/api/tauri';
-import { Ref, onMounted, reactive, ref, watch } from 'vue';
+import { Ref, reactive, ref, watch } from 'vue';
 import AppTitlebar from '~/components/AppTitlebar.vue'
 import app_file_search from './App'
 import PopMenu from './unit/PopMenu.vue'
@@ -24,7 +24,7 @@ import Search from './unit/Search.vue';
 import Statusbar from './unit/Statusbar.vue';
 import Result from './unit/Result.vue';
 import { KLoading } from '~/kui';
-import { om_get_text, win_close } from '~/ombra';
+import { win_close } from '~/ombra';
 type FileInfo = {
     name: string,
     ext: string,
@@ -85,11 +85,6 @@ function fun_begin_idx() {
     invoke('walk_all_files');
 }
 
-onMounted(async () => {
-    let text = om_get_text();
-    vue_search.value.set_content(text);
-    fun_search(text, '', 'normal', 0);
-});
 let click_item: FileInfo;
 function fun_set_pop_menu(x: number, y: number, item: FileInfo) {
     pop_menu.x = x;
