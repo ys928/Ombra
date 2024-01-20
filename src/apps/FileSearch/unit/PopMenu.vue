@@ -8,7 +8,9 @@
 
 <script setup lang="ts">
 import { Ref, ref, onMounted } from 'vue';
-import { exp_select_file, exp_open_file, path_join, clip_set_text } from '~/ombra';
+import { exp_select_file, exp_open_file, clip_set_text } from '~/ombra';
+import Path from '~/api/path'
+
 const props = defineProps(['isdir', 'path', 'name', 'ext', 'x', 'y']);
 const emits = defineEmits(['hidden']);
 
@@ -30,7 +32,7 @@ async function fun_open_path() {
         p += '.' + props.ext;
     }
     if (props.path.length != 0) {
-        p = await path_join(props.path, p);
+        p = await Path.join(props.path, p);
     }
     console.log(p);
     exp_select_file(p);
@@ -43,7 +45,7 @@ async function fun_open_file() {
         p += '.' + props.ext;
     }
     if (props.path.length != 0) {
-        p = await path_join(props.path, p);
+        p = await Path.join(props.path, p);
     }
     exp_open_file(p);
 }
@@ -55,7 +57,7 @@ async function fun_copy_path() {
         p += '.' + props.ext;
     }
     if (props.path.length != 0) {
-        p = await path_join(props.path, p);
+        p = await Path.join(props.path, p);
     }
     clip_set_text(p);
 }

@@ -1,4 +1,4 @@
-import { clipboard, dialog, fs, globalShortcut, invoke, path } from "@tauri-apps/api";
+import { clipboard, dialog, globalShortcut, invoke, path } from "@tauri-apps/api";
 import { listen } from "@tauri-apps/api/event";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 import { LogicalSize, WebviewWindow, appWindow } from "@tauri-apps/api/window";
@@ -11,7 +11,6 @@ import { isPermissionGranted, requestPermission, sendNotification } from '@tauri
  * 为了方便使用，api的命名规范采用 名词_动词 的形式，例如打开文件的函数为：file_open
  * 目前包含的名词有：
  * om：指代ombra，用于向插件传递数据
- * path：路径
  * dir：目录
  * app：本程序中的app
  * cli：命令行接口（command line interface）
@@ -23,33 +22,6 @@ import { isPermissionGranted, requestPermission, sendNotification } from '@tauri
  * gs：全局快捷键（Global Shortcut）
  * notif：系统提示（notification）
  */
-
-/**
- * @description 判断路径是文件还是目录
- * @param path 要判断文件的路径
- * @returns dir、file、or error
- */
-export async function path_judge(path: string) {
-    return await invoke<string>('dir_or_file', { path: path });
-}
-
-/**
- * 
- * @param path 路径
- * @returns 返回该路径是否存在
- */
-export async function path_exist(path: string) {
-    return fs.exists(path);
-}
-
-/**
- * 
- * @param paths 多个路径
- * @returns 返回拼接好的路径
- */
-export function path_join(...paths: string[]) {
-    return path.join(...paths);
-}
 
 /**
  * @description 启动可执行文件

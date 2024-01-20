@@ -1,7 +1,8 @@
 import { reactive } from "vue";
-import { dir_config, gs_is_registered, gs_register, gs_unregister, path_exist, win_hide, win_set_resizable, win_set_size } from "./ombra";
+import { dir_config, gs_is_registered, gs_register, gs_unregister, win_hide, win_set_resizable, win_set_size } from "./ombra";
 import { listen } from "@tauri-apps/api/event";
 import File from "~/api/file"
+import Path from '~/api/path'
 
 export interface AppInfo {
     name: string, //应用名，将显示在应用菜单面板上
@@ -99,7 +100,7 @@ export function time_to_str(timestamp: number) {
 async function get_config_path() {
     let p = await dir_config();
     p += 'config.json';
-    if (!await path_exist(p)) {
+    if (!await Path.exists(p)) {
         File.write_text(p, '{}');
     }
     return p;

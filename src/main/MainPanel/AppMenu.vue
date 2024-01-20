@@ -34,7 +34,8 @@
 <script setup lang="ts">
 import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 import { get_app_list, write_config_item, type AppInfo, read_config_item, get_span } from '~/global'
-import { om_set_appid, om_set_features, om_set_plugin_index, om_set_text, om_to_pinyin, path_judge, win_set_size, win_to_app } from '~/ombra';
+import { om_set_appid, om_set_features, om_set_plugin_index, om_set_text, om_to_pinyin, win_set_size, win_to_app } from '~/ombra';
+import Path from '~/api/path'
 const props = defineProps(['main_input', 'search_content', 'cur_focus_app']);
 const emit = defineEmits(['update:cur_focus_app']);
 
@@ -555,7 +556,7 @@ async function match_feature(cnt: string) {
 
     let r_path = /^[a-zA-Z]:\\([^\/\\:\*\?"<>|]+\\)*[^\/\\:\*\?"<>|]*\\?$/
     if (r_path.test(cnt)) {
-        let t = await path_judge(cnt);
+        let t = await Path.judge(cnt);
         if (t == 'dir') {
             tmp_feature.push('dir_path');
         } else if (t == 'file') {

@@ -33,7 +33,9 @@ import { listen } from '@tauri-apps/api/event';
 import { KIDll, KIText, KIFolder, KITypeScript, KIHtml, KIPdf, KIJs, KIJson } from '~/kui'
 import { reactive, ref } from 'vue';
 import { get_span, time_to_str } from '~/global';
-import { exp_open_file, path_join } from '~/ombra';
+import { exp_open_file } from '~/ombra';
+import Path from '~/api/path'
+
 type FileInfo = {
     name: string,
     ext: string,
@@ -115,7 +117,7 @@ async function fun_dbclick(item: FileInfo) {
         p += '.' + item.ext;
     }
     if (item.path.length != 0) {
-        p = await path_join(item.path, p);
+        p = await Path.join(item.path, p);
     }
     exp_open_file(p);
 }
