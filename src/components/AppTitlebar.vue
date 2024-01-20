@@ -16,8 +16,9 @@
 <script setup lang="ts">
 import { KIMinus, KIFullScreen, KIClose, KISeparate } from '~/kui'
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { gs_is_registered, gs_unregister, win_close, win_min, win_new_app, win_shadow, win_toggle_max, app_is_embed, om_get_appid, win_is_main, win_event_blur, win_event_focus, win_is_visible, win_focus, win_hide, win_show } from '~/ombra';
+import { gs_is_registered, gs_unregister, app_is_embed, om_get_appid } from '~/ombra';
 import { read_config_item, set_shortcut, write_config_item } from '~/global';
+import Window from '~/api/window';
 //窗口是否显示
 const is_show = ref(true);
 const callout_short_key = ref('');
@@ -25,29 +26,29 @@ const callout_short_key = ref('');
 async function winSeparate() {
     let appid = om_get_appid();
     if (appid.length > 0) {
-        win_new_app(appid);
+        Window.new_app(appid);
     }
 }
 let fun_eve_blur: Promise<Function>;
 let fun_eve_focus: Promise<Function>;
-if (win_is_main()) {
-    fun_eve_blur = win_event_blur('MainWindow', () => {
+if (Window.is_main()) {
+    fun_eve_blur = Window.event_blur('MainWindow', () => {
         is_show.value = false;
     })
-    fun_eve_focus = win_event_focus('MainWindow', () => {
+    fun_eve_focus = Window.event_focus('MainWindow', () => {
         is_show.value = true;
     });
     let timer: NodeJS.Timeout | undefined;
     watch(is_show, () => {
         if (timer) clearTimeout(timer);
         timer = setTimeout(async () => {
-            let is_visible = await win_is_visible();
+            let is_visible = await Window.is_visible();
             if (is_visible != is_show.value) {
                 if (is_show.value) {
-                    win_show();
-                    win_focus();
+                    Window.show();
+                    Window.focus();
                 } else {
-                    win_hide();
+                    Window.hide();
                 }
             }
         }, 100);
@@ -56,8 +57,8 @@ if (win_is_main()) {
 
 
 onMounted(async () => {
-    win_shadow();
-    if (win_is_main()) {
+    Window.shadow();
+    if (Window.is_main()) {
         //读取唤出面板的快捷键
         callout_short_key.value = await read_config_item('callout');
         if (callout_short_key.value == undefined) {
@@ -69,7 +70,7 @@ onMounted(async () => {
     }
 });
 onUnmounted(() => {
-    if (win_is_main()) {
+    if (Window.is_main()) {
         fun_eve_blur.then((fun) => {
             fun();
         });
@@ -80,13 +81,13 @@ onUnmounted(() => {
 });
 //处理程序退出时的情况
 async function WinClose() {
-    win_close();
+    Window.close();
 }
 async function WinMin() {
-    win_min();
+    Window.min();
 }
 async function WinTogMax() {
-    win_toggle_max();
+    Window.toggle_max();
 }
 
 async function set_callout_shortkey(shortkey: string) {

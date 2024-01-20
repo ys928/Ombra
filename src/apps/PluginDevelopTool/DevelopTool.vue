@@ -15,8 +15,9 @@ import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import AppTitlebar from '~/components/AppTitlebar.vue';
-import { dlg_open, file_convert, notif_is_grant, notif_request, notif_send, win_is_main } from '~/ombra';
+import { dlg_open, file_convert, notif_is_grant, notif_request, notif_send } from '~/ombra';
 import File from '~/api/file'
+import Window from '~/api/window';
 
 interface FileChange {
     kind: string,
@@ -85,7 +86,7 @@ listen<FileChange>('file_watch', async (e) => {
     }
 })
 async function fun_open_dev() {
-    if (win_is_main()) {
+    if (Window.is_main()) {
         let permissionGranted = await notif_is_grant();
         if (!permissionGranted) {
             permissionGranted = await notif_request();

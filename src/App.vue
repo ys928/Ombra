@@ -5,10 +5,10 @@
 </template>
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import { win_focus, win_is_main } from '~/ombra'
+import Window from './api/window';
 onMounted(() => {
-  if (win_is_main()) {
-    win_focus();
+  if (Window.is_main()) {
+    Window.focus();
   }
   document.oncontextmenu = function (e) {
     e.preventDefault();

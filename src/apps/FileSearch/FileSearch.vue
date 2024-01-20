@@ -24,7 +24,7 @@ import Search from './unit/Search.vue';
 import Statusbar from './unit/Statusbar.vue';
 import Result from './unit/Result.vue';
 import { KLoading } from '~/kui';
-import { win_close } from '~/ombra';
+import Window from '~/api/window';
 type FileInfo = {
     name: string,
     ext: string,
@@ -124,7 +124,7 @@ function fun_search(name: string, ext: string, mode: string, offset: number) {
 }
 
 function fun_exit() {
-    win_close();
+    Window.close();
 }
 
 function fun_process(status: boolean) {

@@ -1,8 +1,9 @@
 import { reactive } from "vue";
-import { dir_config, gs_is_registered, gs_register, gs_unregister, win_hide, win_set_resizable, win_set_size } from "./ombra";
+import { dir_config, gs_is_registered, gs_register, gs_unregister} from "./ombra";
 import { listen } from "@tauri-apps/api/event";
 import File from "~/api/file"
 import Path from '~/api/path'
+import Window from "./api/window";
 
 export interface AppInfo {
     name: string, //应用名，将显示在应用菜单面板上
@@ -34,10 +35,10 @@ export function add_app(name: string, id: string, icon: string, feature: Array<s
         self: self,
         setup: () => {
             if (self) {
-                win_set_size(600);
-                win_set_resizable(true);
+                Window.set_size(600);
+                Window.set_resizable(true);
             } else {
-                win_hide();
+                Window.hide();
             }
             callback();
         }

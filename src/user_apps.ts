@@ -5,10 +5,10 @@ import AppOpenFile from "./apps/OpenFile/App"
 import PluginWindow from './components/PluginWindow.vue'
 import PluginDevelopTool from './apps/PluginDevelopTool/App'
 import { add_app } from "./global";
-import { dir_walk, file_convert, win_is_main } from '~/ombra'
+import { dir_walk, file_convert } from '~/ombra'
 import { path } from "@tauri-apps/api";
 import File from '~/api/file'
-
+import Window from "./api/window";
 let user_apps_list = [
     AppFileSearch,
     AppOpenLink,
@@ -29,7 +29,7 @@ export async function load_user_app() {
     for (let app of user_apps_list) {
         let url = '/apps/' + app.id;
         //仅限主窗口执行加载app代码
-        if (win_is_main()) {
+        if (Window.is_main()) {
             if (is_init != 'true') {
                 //@ts-ignore
                 if (app.preload) {
@@ -76,7 +76,7 @@ async function load_plugin_app() {
                 name = config.name;
             }
         }
-        if (win_is_main()) {
+        if (Window.is_main()) {
             add_app(name, id, icon, features, true, () => { }, false, plugin_index);
         }
         app_route.push({

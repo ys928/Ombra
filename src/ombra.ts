@@ -1,7 +1,7 @@
 import { clipboard, dialog, globalShortcut, invoke, path } from "@tauri-apps/api";
 import { listen } from "@tauri-apps/api/event";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
-import { LogicalSize, WebviewWindow, appWindow } from "@tauri-apps/api/window";
+import { appWindow } from "@tauri-apps/api/window";
 import { os } from '@tauri-apps/api'
 import { OpenDialogOptions } from "@tauri-apps/api/dialog";
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/api/notification';
@@ -16,7 +16,6 @@ import { isPermissionGranted, requestPermission, sendNotification } from '@tauri
  * cli：命令行接口（command line interface）
  * url：网址链接
  * dlg：对话框（dialog）
- * win：当前窗口（window）
  * exp：资源管理器（explorer）
  * clip：剪切板（clipboard）
  * gs：全局快捷键（Global Shortcut）
@@ -138,165 +137,6 @@ export async function dir_walk(path: string, level = 1) {
         level: level
     });
     return result;
-}
-
-/**
- * 当前窗口的label
- */
-export const win_label = appWindow.label;
-/**
- * 关闭当前窗口
- */
-export function win_close() {
-    if (appWindow.label == 'MainWindow') {
-        win_set_size(170);
-        window.location.href = "/";
-    } else {
-        appWindow.close();
-    }
-}
-/**
- * @description 显示当前窗口
- */
-export function win_show() {
-    appWindow.show();
-}
-
-/**
- * 最小化当前窗口
- */
-export function win_min() {
-    appWindow.minimize();
-}
-
-/**
- * 切换到最大化或恢复正常
- */
-export function win_toggle_max() {
-    appWindow.toggleMaximize();
-}
-/**
- * 从插件面板退出、切换回主搜索面板（仅限嵌入模式下可用）
- */
-export function win_to_main() {
-    if (appWindow.label == 'MainWindow') {
-        win_set_size(170);
-        win_set_resizable(false);
-        window.location.href = "/";
-    }
-}
-/**
- * 
- */
-/**
- * @description 从主搜索面板切换到app面板（大部分情况下应仅限ombra内部使用，且仅嵌入模式下可用）
- * @param appid app的id
- */
-export function win_to_app(appid: string) {
-    if (appWindow.label == 'MainWindow') {
-        win_set_size(600);
-        win_set_resizable(true);
-        window.location.href = '/apps/' + appid;
-    }
-}
-/**
- * @description 从主搜索面板窗口中新开一个app窗口（大部分情况下应仅限ombra内部使用）
- * @param appid app的id
- */
-export function win_new_app(appid: string) {
-    if (appWindow.label == 'MainWindow') {
-        appWindow.hide();
-        window.location.href = '/';
-        let w = new WebviewWindow(appid, {
-            url: '/apps/' + appid,
-            decorations: false,
-            transparent: true
-        });
-        w.setSize(new LogicalSize(800, 600));
-        w.setResizable(true);
-    }
-}
-/**
- * 窗口阴影、圆滑边框模式，仅限非主窗口使用
- */
-export function win_shadow() {
-    if (appWindow.label != 'MainWindow') {
-        invoke('shadow_window');
-    }
-}
-
-/**
- * @description 隐藏当前窗口
- */
-export function win_hide() {
-    appWindow.hide();
-}
-/**
- * @description 聚焦当前窗口
- */
-export function win_focus() {
-    appWindow.setFocus();
-}
-/**
- * 
- * @returns 当前窗口是否可见
- */
-export async function win_is_visible() {
-    return appWindow.isVisible();
-}
-
-/**
- * 
- * @returns 判断当前窗口是否是主搜索窗口
- */
-export function win_is_main() {
-    return appWindow.label == 'MainWindow';
-}
-
-/**
- * @description 设置当前窗口的大小
- * @param h 窗口的高度，默认主窗口高度170，app窗口推荐设置为600
- * @param w 窗口的宽度，默认800
- */
-export function win_set_size(h = 170, w = 800) {
-    appWindow.setSize({
-        type: 'Logical',
-        width: w,
-        height: h,
-    });
-}
-/**
- * 
- * @param resizable 当前窗口是否可调整大小
- */
-export function win_set_resizable(resizable: boolean) {
-    appWindow.setResizable(resizable);
-}
-
-/**
- * 
- * @param label 窗口label
- * @param callback 当该窗口失去聚焦时执行函数，
- */
-export function win_event_blur(label: string, callback: Function) {
-    return listen('tauri://blur', (e) => {
-        if (e.windowLabel == label) {
-            callback();
-        }
-    });
-}
-
-/**
- * 
- * @param label 窗口label
- * @param callback 当该窗口聚焦时执行函数，
- */
-export function win_event_focus(label: string, callback: Function) {
-    return listen('tauri://focus', (e) => {
-        if (e.windowLabel == label) {
-            callback();
-        }
-    });
 }
 
 /**

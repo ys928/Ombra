@@ -24,10 +24,10 @@ import { Ref, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import AppMenu from "./MainPanel/AppMenu.vue";
 import { read_config_item, set_shortcut, write_config_item } from '~/global'
 import Setting from './MainPanel/Setting.vue';
-import { exp_get_path, win_event_blur, win_event_focus, win_is_visible, win_show, win_focus, win_hide, win_set_size, gs_is_registered, gs_unregister } from '~/ombra'
+import { exp_get_path, gs_is_registered, gs_unregister } from '~/ombra'
 import { onTextUpdate, readText, startListening } from "tauri-plugin-clipboard-api";
 import { UnlistenFn, listen } from "@tauri-apps/api/event";
-
+import Window from "~/api/window";
 const main_input = ref() as Ref<HTMLInputElement>;
 const measure = ref() as Ref<HTMLElement>;
 const search_content = ref("");
@@ -39,10 +39,10 @@ const search_input_placeholder = ref('');
 const is_show = ref(true);
 const callout_short_key = ref('');
 
-let fun_eve_blur = win_event_blur('MainWindow', () => {
+let fun_eve_blur = Window.event_blur('MainWindow', () => {
     is_show.value = false;
 })
-let fun_eve_focus = win_event_focus('MainWindow', () => {
+let fun_eve_focus = Window.event_focus('MainWindow', () => {
     is_show.value = true;
 });
 
@@ -56,7 +56,7 @@ let timer: NodeJS.Timeout | undefined;
 watch(is_show, () => {
     if (timer) clearTimeout(timer);
     timer = setTimeout(async () => {
-        let is_visible = await win_is_visible();
+        let is_visible = await Window.is_visible();
         if (is_visible != is_show.value) {
             if (is_show.value) {
                 let p = await exp_get_path();
@@ -65,10 +65,10 @@ watch(is_show, () => {
                 } else {
                     apps_menu.value.init_feature(['explorer'], p);
                 }
-                win_show();
-                win_focus();
+                Window.show();
+                Window.focus();
             } else {
-                win_hide();
+                Window.hide();
             }
         }
     }, 100);
@@ -80,7 +80,7 @@ let unlistenClipboard: () => Promise<void>;
 let clip_board_time = 999;
 let timing_fun: string | number | NodeJS.Timeout | undefined;
 onMounted(async () => {
-    win_set_size(170);
+    Window.set_size(170);
     main_input.value.focus();
     //读取唤出面板的快捷键
     callout_short_key.value = await read_config_item('callout');
@@ -187,7 +187,7 @@ async function fun_keydown(e: KeyboardEvent) {
             await nextTick();
             fun_input();
         } else {
-            win_hide();
+            Window.hide();
         }
     }
 }
@@ -235,7 +235,7 @@ function fun_click_space() {
 
 function fun_open_setting() {
     is_show_setting.value = !is_show_setting.value;
-    win_set_size(600);
+    Window.set_size(600);
 }
 function fun_ompositionstart() {
     is_ompositioning = true;

@@ -34,8 +34,9 @@
 <script setup lang="ts">
 import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 import { get_app_list, write_config_item, type AppInfo, read_config_item, get_span } from '~/global'
-import { om_set_appid, om_set_features, om_set_plugin_index, om_set_text, om_to_pinyin, win_set_size, win_to_app } from '~/ombra';
+import { om_set_appid, om_set_features, om_set_plugin_index, om_set_text, om_to_pinyin } from '~/ombra';
 import Path from '~/api/path'
+import Window from '~/api/window'
 const props = defineProps(['main_input', 'search_content', 'cur_focus_app']);
 const emit = defineEmits(['update:cur_focus_app']);
 
@@ -257,7 +258,7 @@ function adjust_height() {
         search_resule_height = 430;
     }
     // console.log(search_box_height + search_resule_height + recommand_height);
-    win_set_size(search_box_height + search_resule_height + recommand_height);
+    Window.set_size(search_box_height + search_resule_height + recommand_height);
 }
 
 async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
@@ -302,7 +303,7 @@ async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
     }
     app.setup();
     if (!app.self) return;
-    win_to_app(app.id);
+    Window.to_app(app.id);
 }
 let old_search_content = "";
 //由父组件触发搜索事件

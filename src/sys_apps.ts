@@ -1,7 +1,7 @@
 import { add_app } from "./global";
-import { app_get, cli_exec, dlg_confirm, file_convert, om_get_features, om_get_text, win_label } from "./ombra";
+import { app_get, cli_exec, dlg_confirm, file_convert, om_get_features, om_get_text } from "./ombra";
 import File from '~/api/file'
-
+import Window from "./api/window";
 const list = [
     {
         name: '检测系统更新',
@@ -152,7 +152,7 @@ const list = [
 
 export async function load_sys_app() {
     //仅限主窗口执行加载app代码
-    if (win_label != "MainWindow") {
+    if (Window.label != "MainWindow") {
         return;
     }
     //加载系统应用功能
