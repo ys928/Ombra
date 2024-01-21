@@ -20,7 +20,9 @@ import KIWholeWord from './icon/KIWholeWord.vue'
 import KISeparate from './icon/KISeparate.vue'
 import KITypeScript from './icon/KITypeScript.vue'
 import KIHtml from './icon/KIHtml.vue'
+import KIUnknowFile from './icon/KIUnknowFile.vue'
 import KIPdf from './icon/KIPdf.vue'
+import KIImage from './icon/KIImage.vue'
 import KIJson from './icon/KIJson.vue'
 import KIJs from './icon/KIJs.vue'
 
@@ -50,6 +52,8 @@ export {
   KITypeScript,
   KIHtml,
   KIPdf,
+  KIUnknowFile,
+  KIImage,
   KIJs,
   KIJson,
   KLoading

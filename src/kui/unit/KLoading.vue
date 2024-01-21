@@ -24,8 +24,8 @@
         height: 100%;
 
         div {
-            height: 10px;
-            width: 10px;
+            height: 7px;
+            width: 7px;
             background-color: #4ba3ff;
             border-radius: 50%;
             position: absolute;
