@@ -15,10 +15,10 @@ import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import AppTitlebar from '~/components/AppTitlebar.vue';
-import { dlg_open, file_convert, notif_is_grant, notif_request, notif_send } from '~/ombra';
+import { dlg_open, file_convert } from '~/ombra';
 import File from '~/api/file'
 import Window from '~/api/window';
-
+import Notification from '~/api/notification';
 interface FileChange {
     kind: string,
     files: Array<string>,
@@ -87,12 +87,12 @@ listen<FileChange>('file_watch', async (e) => {
 })
 async function fun_open_dev() {
     if (Window.is_main()) {
-        let permissionGranted = await notif_is_grant();
+        let permissionGranted = await Notification.is_grant();
         if (!permissionGranted) {
-            permissionGranted = await notif_request();
+            permissionGranted = await Notification.request();
         }
         if (permissionGranted) {
-            notif_send("提示", '请先点击右上角分离窗口后再使用调试功能');
+            Notification.send("提示", '请先点击右上角分离窗口后再使用调试功能');
         }
     } else {
         invoke('open_devtools');

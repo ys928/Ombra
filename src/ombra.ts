@@ -4,7 +4,6 @@ import { convertFileSrc } from "@tauri-apps/api/tauri";
 import { appWindow } from "@tauri-apps/api/window";
 import { os } from '@tauri-apps/api'
 import { OpenDialogOptions } from "@tauri-apps/api/dialog";
-import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/api/notification';
 
 /**
  * 说明：本文件为ombra的全局接口文件，包含了目前所有可用的api。
@@ -19,7 +18,6 @@ import { isPermissionGranted, requestPermission, sendNotification } from '@tauri
  * exp：资源管理器（explorer）
  * clip：剪切板（clipboard）
  * gs：全局快捷键（Global Shortcut）
- * notif：系统提示（notification）
  */
 
 /**
@@ -283,27 +281,3 @@ export async function om_to_pinyin(hans: string) {
     return await invoke<Array<string>>('to_pinyin', { hans: hans });
 }
 
-/**
- * 
- * @returns 当前是否允许发送提示消息
- */
-export async function notif_is_grant() {
-    return await isPermissionGranted();
-}
-/**
- * 
- * @returns 尝试请求获取发送系统提示的权限
- */
-export async function notif_request() {
-    const permission = await requestPermission();
-    return permission === 'granted';
-}
-
-/**
- * @description 发送系统提示消息
- * @param title 标题
- * @param content 内容
- */
-export function notif_send(title: string, content: string) {
-    sendNotification({ title: title, body: content });
-}
