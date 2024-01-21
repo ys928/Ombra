@@ -1,5 +1,6 @@
 use std::{
     ffi::OsString,
+    fs,
     mem::ManuallyDrop,
     os::windows::{ffi::OsStringExt, process::CommandExt},
     process::Command,
@@ -190,6 +191,9 @@ pub fn get_all_app(w: Window) {
                     let pos = arr.iter().position(|c| *c == 0).unwrap();
                     let v = String::from_utf16_lossy(&arr[0..pos]);
                     // println!("{}={}", &k, &v);
+                    // if app.name.starts_with("卸载") {
+                    //     println!("{}={}", &k, &v);
+                    // }
                     if k == "System.ItemNameDisplay" {
                         app.name = v;
                     } else if k == "System.AppUserModel.ID" {
@@ -206,6 +210,10 @@ pub fn get_all_app(w: Window) {
                         icon = v;
                     }
                 }
+                //跳过卸载软件
+                if exe.to_lowercase().contains("uninstall") {
+                    continue;
+                }
                 if exe.len() > 0
                     && !(exe.ends_with(".exe") || exe.ends_with(".msc") || exe.ends_with(".bat"))
                 {
@@ -219,11 +227,12 @@ pub fn get_all_app(w: Window) {
                     }
                     app.icon = icon_save_path.to_string_lossy().to_string();
                 } else if icon.len() > 0 && pack.len() > 0 {
-                    app.icon = std::path::Path::new(&pack)
-                        .join(icon)
-                        .to_string_lossy()
-                        .to_string();
+                    let icon = std::path::Path::new(&pack).join(icon);
+                    app.icon = match_icon_path(icon.as_path());
                 }
+                // if !std::path::Path::new(&app.icon).exists() {
+                //     println!("{}:{}", app.name, app.icon);
+                // }
                 app_list.push(app);
             }
             CoUninitialize();
@@ -231,6 +240,41 @@ pub fn get_all_app(w: Window) {
             debug!("send event:get_all_app_result {}", app_list.len());
         };
     });
+}
+
+fn match_icon_path(icon: &std::path::Path) -> String {
+    if icon.exists() {
+        return icon.to_string_lossy().to_string();
+    }
+    let parent = icon.parent().unwrap();
+    let name_ext = icon.file_name().unwrap().to_str().unwrap();
+    let name = icon.file_stem().unwrap().to_str().unwrap();
+    let ext = icon.extension().unwrap().to_str().unwrap();
+    // 获取目录下的所有文件
+    if let Ok(entries) = fs::read_dir(parent) {
+        for entry in entries {
+            if entry.is_err() {
+                continue;
+            }
+            let entry = entry.unwrap();
+            let file_path = entry.path();
+            if file_path.is_dir() {
+                let file_name = file_path.file_name().unwrap().to_str().unwrap();
+                let p = parent.join(file_name).join(name_ext);
+                let ret = match_icon_path(p.as_path());
+                if ret.len() > 0 {
+                    return ret;
+                }
+            } else {
+                let file_name = file_path.file_name().unwrap().to_string_lossy().to_string();
+                let file_ext = file_path.extension().unwrap().to_str().unwrap();
+                if file_name.starts_with(name) && ext == file_ext {
+                    return file_path.to_string_lossy().to_string();
+                }
+            }
+        }
+    }
+    return String::new();
 }
 
 pub fn get_logical_drives() -> Result<Vec<String>, std::io::Error> {
