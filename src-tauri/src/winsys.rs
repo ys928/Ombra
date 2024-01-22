@@ -108,13 +108,6 @@ fn get_icon_to_path(path: &str, save_path: &str) -> bool {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct InstallApp {
-    name: String,
-    path: String,
-    icon: String,
-}
-
 #[derive(Serialize, Deserialize, Default)]
 struct AppInfo {
     name: String,
@@ -191,9 +184,9 @@ pub fn get_all_app(w: Window) {
                     let pos = arr.iter().position(|c| *c == 0).unwrap();
                     let v = String::from_utf16_lossy(&arr[0..pos]);
                     // println!("{}={}", &k, &v);
-                    // if app.name.starts_with("卸载") {
-                    //     println!("{}={}", &k, &v);
-                    // }
+                    if app.name == "记事本" {
+                        println!("{}={}", &k, &v);
+                    }
                     if k == "System.ItemNameDisplay" {
                         app.name = v;
                     } else if k == "System.AppUserModel.ID" {
@@ -243,38 +236,68 @@ pub fn get_all_app(w: Window) {
 }
 
 fn match_icon_path(icon: &std::path::Path) -> String {
-    if icon.exists() {
-        return icon.to_string_lossy().to_string();
-    }
     let parent = icon.parent().unwrap();
     let name_ext = icon.file_name().unwrap().to_str().unwrap();
     let name = icon.file_stem().unwrap().to_str().unwrap();
     let ext = icon.extension().unwrap().to_str().unwrap();
-    // 获取目录下的所有文件
-    if let Ok(entries) = fs::read_dir(parent) {
-        for entry in entries {
-            if entry.is_err() {
+    let mut image_size = 0;
+    let r_size = regex::Regex::new(r"(\d+)").unwrap();
+
+    let mut ret_image_path = String::new();
+    // 获取目录下的所有文件，找到图标尺寸最大的图标
+    let entries = fs::read_dir(parent);
+    if entries.is_err() {
+        return ret_image_path;
+    }
+    let entries = entries.unwrap();
+    for entry in entries {
+        if entry.is_err() {
+            continue;
+        }
+        let entry = entry.unwrap();
+        let file_path = entry.path();
+        //跳过对比图
+        if file_path.to_str().unwrap().contains("contrast"){
+            continue;
+        }
+        if file_path.is_dir() {
+            let dir_name = file_path.file_name().unwrap().to_str().unwrap();
+            let p = parent.join(dir_name).join(name_ext);
+            let ret_img_path = match_icon_path(p.as_path());
+            if ret_img_path.len() == 0 {
                 continue;
             }
-            let entry = entry.unwrap();
-            let file_path = entry.path();
-            if file_path.is_dir() {
-                let file_name = file_path.file_name().unwrap().to_str().unwrap();
-                let p = parent.join(file_name).join(name_ext);
-                let ret = match_icon_path(p.as_path());
-                if ret.len() > 0 {
-                    return ret;
-                }
-            } else {
-                let file_name = file_path.file_name().unwrap().to_string_lossy().to_string();
-                let file_ext = file_path.extension().unwrap().to_str().unwrap();
-                if file_name.starts_with(name) && ext == file_ext {
-                    return file_path.to_string_lossy().to_string();
-                }
+            let p = std::path::Path::new(&ret_img_path);
+            let file_name = p.file_name().unwrap().to_str().unwrap();
+            let cap = r_size.captures(&file_name);
+            if cap.is_none() {
+                continue;
+            }
+            let cap = cap.unwrap();
+            let s = cap.get(0).map_or("0", |s| s.as_str());
+            let size: u32 = s.parse().unwrap();
+            let file_ext = p.extension().unwrap().to_str().unwrap();
+            if size >= image_size && file_name.starts_with(name) && ext == file_ext {
+                image_size = size;
+                ret_image_path = ret_img_path;
+            }
+        } else {
+            let file_name = file_path.file_name().unwrap().to_string_lossy().to_string();
+            let cap = r_size.captures(&file_name);
+            if cap.is_none() {
+                continue;
+            }
+            let cap = cap.unwrap();
+            let s = cap.get(0).map_or("0", |s| s.as_str());
+            let size: u32 = s.parse().unwrap();
+            let file_ext = file_path.extension().unwrap().to_str().unwrap();
+            if size >= image_size && file_name.starts_with(name) && ext == file_ext {
+                image_size = size;
+                ret_image_path = file_path.to_string_lossy().to_string();
             }
         }
     }
-    return String::new();
+    return ret_image_path;
 }
 
 pub fn get_logical_drives() -> Result<Vec<String>, std::io::Error> {
