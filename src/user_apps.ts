@@ -2,8 +2,9 @@ import AppFileSearch from "./apps/FileSearch/App";
 import AppOpenLink from "./apps/OpenLink/App"
 import AppOpenPath from "./apps/OpenPath/App"
 import AppOpenFile from "./apps/OpenFile/App"
+import AppWebQuickOpen from './apps/WebQuickOpen/App'
+import AppPluginDevelopTool from './apps/PluginDevelopTool/App'
 import PluginWindow from './components/PluginWindow.vue'
-import PluginDevelopTool from './apps/PluginDevelopTool/App'
 import { add_app } from "./global";
 import { dir_walk, file_convert } from '~/ombra'
 import { path } from "@tauri-apps/api";
@@ -14,7 +15,8 @@ let user_apps_list = [
     AppOpenLink,
     AppOpenPath,
     AppOpenFile,
-    PluginDevelopTool
+    AppWebQuickOpen,
+    AppPluginDevelopTool
 ]
 
 let app_route = [] as Array<{

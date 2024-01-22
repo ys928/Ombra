@@ -500,9 +500,18 @@ async function test_name_match(app: AppInfo, search = '') {
                 return appExt;
             }
         }
-        //如果appName完全由汉字组成，则尝试拼音首字母匹配
-        if (/^[\u4e00-\u9fa5]+$/.test(appName)) {
-            let pys = await om_to_pinyin(appName); //将其转化为拼音
+        //如果appName由汉字开头，则尝试拼音首字母匹配
+        if (/^[\u4e00-\u9fa5]+.*$/.test(appName)) {
+            let han_pos = appName.length;
+            for (let i = 0; i < appName.length; i++) {
+                let c = appName.charAt(i);
+                if (!/[\u4e00-\u9fa5]/.test(c)) {
+                    han_pos = i;
+                    break;
+                }
+            }
+            let hans = appName.substring(0, han_pos);
+            let pys = await om_to_pinyin(hans); //将汉字转化为拼音
             //获取所有拼音首字母组成的序列
             const initials_str = pys.map(py => py[0]).join('').toLowerCase();
             let pos = initials_str.indexOf(search.toLowerCase());
