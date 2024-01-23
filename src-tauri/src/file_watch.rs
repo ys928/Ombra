@@ -1,5 +1,6 @@
 use std::{path::{Path, PathBuf}, sync::Mutex, time::Duration};
 
+use log::debug;
 use notify::{ReadDirectoryChangesWatcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
 use tauri::Window;
@@ -92,6 +93,7 @@ pub fn unwatch_dir(path: &str) {
 static FILE_SYSTEM_WATCHER: Mutex<Option<ReadDirectoryChangesWatcher>> = Mutex::new(None);
 
 pub fn watch_all_files() {
+    debug!("enter watch_all_files");
     let drives = winsys::get_logical_drives().unwrap();
 
     let mut fs_watcher = FILE_SYSTEM_WATCHER.lock().unwrap();
@@ -101,7 +103,7 @@ pub fn watch_all_files() {
     } else {
         //且只在第一次调用时启动监视线程
         std::thread::spawn(|| loop {
-            std::thread::sleep(Duration::from_secs(8));
+            std::thread::sleep(Duration::from_secs(3));
             let cf = CHANGE_FILES.lock();
             if cf.is_err() {
                 continue;

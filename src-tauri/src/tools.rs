@@ -41,12 +41,8 @@ pub fn get_data_dir(dir: Option<&str>) -> PathBuf {
     return path;
 }
 
-pub fn get_file_info(path: &std::path::Path) -> Option<FileInfo> {
-    let meta = path.metadata();
-    if meta.is_err() {
-        return None;
-    }
-    let meta = meta.unwrap();
+pub fn get_file_info(path: &std::path::Path) -> Result<FileInfo,std::io::Error> {
+    let meta= path.metadata()?;
 
     let isdir = meta.is_dir();
     let time = meta.modified().unwrap();
@@ -79,7 +75,7 @@ pub fn get_file_info(path: &std::path::Path) -> Option<FileInfo> {
         .to_string_lossy()
         .to_string();
 
-    Some(FileInfo {
+    Ok(FileInfo {
         name: name,
         path: parent_path,
         ext: ext,

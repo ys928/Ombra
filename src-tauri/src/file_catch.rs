@@ -1,4 +1,4 @@
-use std::{collections::LinkedList, io::ErrorKind, path::PathBuf, sync::Mutex};
+use std::{collections::LinkedList,path::PathBuf, sync::Mutex, time::Duration};
 
 use crate::{tools, FileInfo};
 
@@ -70,7 +70,7 @@ pub fn search_file(name: &str, ext: &str, limit: i32, offset: i32) -> Vec<FileIn
     debug!("enter search_file");
     let db = DB_CONNECT.try_lock();
     if db.is_err() {
-        info!("lock db failed");
+        info!("search_file lock db failed");
         return Vec::new();
     }
     let db = db.unwrap();
@@ -159,10 +159,16 @@ pub fn search_file_as_exact(name: &str, ext: &str, limit: i32, offset: i32) -> V
 
 //更新文件
 pub fn update_file(path: &Vec<PathBuf>) {
-    let db = DB_CONNECT.lock();
-    if db.is_err() {
-        return;
+    let mut db;
+    loop {
+        db = DB_CONNECT.try_lock();
+        if db.is_err() {
+            std::thread::sleep(Duration::from_millis(200));
+            continue;
+        }
+        break;
     }
+
     let db = db.unwrap();
     let mut update: rusqlite::Statement<'_> = db
         .as_ref()
@@ -172,56 +178,49 @@ pub fn update_file(path: &Vec<PathBuf>) {
     let mut remove = db
         .as_ref()
         .unwrap()
-        .prepare("delete from files where (path=? and name=?) or (path=?);")
+        .prepare("delete from files where (path=? and name=? and ext=?) or (path=?);")
         .unwrap();
     let _ = db.as_ref().unwrap().execute("BEGIN TRANSACTION", []);
     for file_full_path in path.iter() {
-        let meta = file_full_path.metadata();
-
-        let name = file_full_path
-            .file_name()
-            .unwrap()
-            .to_string_lossy()
-            .to_string();
-
-        let parent_path = file_full_path
-            .parent()
-            .unwrap_or(&PathBuf::new())
-            .to_string_lossy()
-            .to_string();
-
-        if let Err(e) = meta {
-            //删除文件事件处理
-            if e.kind() == ErrorKind::NotFound {
-                remove
-                    .execute([
-                        parent_path,
-                        name,
-                        file_full_path.to_string_lossy().to_string(),
-                    ])
-                    .unwrap();
-            }
-            continue;
-        }
-        let meta = meta.unwrap();
-
-        let time = meta.modified().unwrap();
-        let time = tools::sys_time_to_seconds(time);
-
-        let ext;
-        let mut t = 0;
-        if meta.is_dir() {
-            t = 1;
-            ext = String::new();
-        } else {
-            ext = file_full_path
+        //删除文件事件处理
+        if !file_full_path.exists() {
+            let name = file_full_path
                 .file_stem()
+                .unwrap_or_else(|| file_full_path.file_name().unwrap_or_default())
+                .to_string_lossy()
+                .to_string();
+            let ext = file_full_path
+                .extension()
                 .unwrap_or_default()
                 .to_string_lossy()
                 .to_string();
+            let parent_path = file_full_path
+                .parent()
+                .unwrap()
+                .to_string_lossy()
+                .to_string();
+            remove
+                .execute([
+                    parent_path,
+                    name,
+                    ext,
+                    file_full_path.to_string_lossy().to_string(),
+                ])
+                .unwrap();
+        }
+        let fi = tools::get_file_info(&file_full_path);
+        if fi.is_err() {
+            continue;
+        }
+        let fi = fi.unwrap();
+        let t;
+        if fi.isdir {
+            t = 1;
+        } else {
+            t = 0;
         }
         update
-            .insert([name, ext, parent_path, time.to_string(), t.to_string()])
+            .insert([fi.name, fi.ext, fi.path, fi.time.to_string(), t.to_string()])
             .unwrap();
     }
     let _ = db.as_ref().unwrap().execute("COMMIT", []);
@@ -230,12 +229,12 @@ pub fn update_file(path: &Vec<PathBuf>) {
 pub fn get_file_num() -> i32 {
     let db = DB_CONNECT.try_lock();
     if db.is_err() {
-        info!("lock db failed");
+        info!("get_file_num lock db failed");
         return 0;
     }
     let db = db.unwrap();
     if db.is_none() {
-        info!("db is none failed");
+        info!("get_file_num db is none");
         return 0;
     }
     let num: Result<i32, rusqlite::Error> =

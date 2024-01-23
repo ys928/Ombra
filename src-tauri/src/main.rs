@@ -167,7 +167,7 @@ fn walk_all_files(w: Window) {
         let mut files: LinkedList<FileInfo> = LinkedList::new();
         for file in re {
             let fi = tools::get_file_info(file.path());
-            if fi.is_none() {
+            if fi.is_err() {
                 continue;
             }
             files.push_back(fi.unwrap());
@@ -204,6 +204,7 @@ fn walk_all_files(w: Window) {
         IS_IN_WALKDIR.store(false, Ordering::Relaxed);
         //遍历完成后，启动监视
         file_watch::watch_all_files();
+        debug!("leave walk_all_files");
     });
 }
 
@@ -224,10 +225,10 @@ fn walk_dir(w: Window, path: String, level: usize) {
                 continue;
             }
             let fi = tools::get_file_info(entry.path());
-            if fi.is_none() {
+            if fi.is_err() {
                 continue;
             }
-            files_list.push(fi);
+            files_list.push(fi.unwrap());
         }
         let _ = w.emit("walk_dir_result", files_list);
     });
