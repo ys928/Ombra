@@ -56,12 +56,15 @@ function handle_scroll(e: Event) {
     }
 }
 
-function fun_show_file_name(name: string, ext: string) {
+function fun_show_file_name(name: string, ext: string, isdir: boolean) {
     if (props.last_mode == 'normal') {
         let pos = name.toLowerCase().indexOf(props.last_cnt.toLowerCase());
         let s = get_span(name.substring(0, pos), 'normal');
         s += get_span(name.substring(pos, pos + props.last_cnt.length), 'light');
         s += get_span(name.substring(pos + props.last_cnt.length), 'normal');
+        if (isdir) {
+            return s;
+        }
         if (props.last_ext.length > 0) {
             let pos = ext.toLocaleLowerCase().indexOf(props.last_ext);
             s += get_span(".", 'normal');
@@ -144,7 +147,7 @@ const file_type = computed(() => (ext: string) => {
                     v-else-if="file_type(item.ext) == 'image'">
                 </KIImage>
                 <KIUnknowFile :w="logo_size.w" :h="logo_size.h" v-else></KIUnknowFile>
-                <span v-html="fun_show_file_name(item.name, item.ext)"></span>
+                <span v-html="fun_show_file_name(item.name, item.ext, item.isdir)"></span>
             </span>
             <span class="path" :title="item.path">{{ item.path }}</span>
             <span class="time">{{ time_to_str(item.time) }}</span>

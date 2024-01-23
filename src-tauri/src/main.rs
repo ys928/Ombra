@@ -156,23 +156,21 @@ fn walk_all_files(w: Window) {
 
         let (se, re) = std::sync::mpsc::channel();
 
-        for d in drives {
-            let t_se = se.clone();
-            //每个盘都单开一个线程遍历，提高速度
-            std::thread::spawn(move || {
+        std::thread::spawn(move || {
+            for d in drives {
                 for entry in WalkDir::new(d).into_iter().filter_map(|e| e.ok()) {
-                    let fi = tools::get_file_info(entry.path());
-                    if fi.is_none() {
-                        continue;
-                    }
-                    t_se.send(fi.unwrap()).unwrap();
+                    se.send(entry).unwrap();
                 }
-            });
-        }
-        drop(se);
+            }
+        });
+
         let mut files: LinkedList<FileInfo> = LinkedList::new();
         for file in re {
-            files.push_back(file);
+            let fi = tools::get_file_info(file.path());
+            if fi.is_none() {
+                continue;
+            }
+            files.push_back(fi.unwrap());
 
             if files.len() % 10000 != 0 {
                 continue;
@@ -271,6 +269,6 @@ fn dir_or_file(path: &str) -> String {
 }
 
 #[tauri::command]
-fn open_devtools(w:Window){
+fn open_devtools(w: Window) {
     w.open_devtools();
 }
