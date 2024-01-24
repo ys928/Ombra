@@ -16,9 +16,10 @@
 <script setup lang="ts">
 import { KIMinus, KIFullScreen, KIClose, KISeparate } from '~/kui'
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { gs_is_registered, gs_unregister, app_is_embed, om_get_appid } from '~/ombra';
+import { app_is_embed, om_get_appid } from '~/ombra';
 import { read_config_item, set_shortcut, write_config_item } from '~/global';
 import Window from '~/api/window';
+import GlobalShortcut from '~/api/globalShortcut';
 //窗口是否显示
 const is_show = ref(true);
 const callout_short_key = ref('');
@@ -104,9 +105,9 @@ async function set_callout_shortkey(shortkey: string) {
 }
 
 async function unset_callout_shortkey() {
-    const isreg = await gs_is_registered(callout_short_key.value);
+    const isreg = await GlobalShortcut.is_registered(callout_short_key.value);
     if (isreg) {
-        await gs_unregister(callout_short_key.value);
+        await GlobalShortcut.unregister(callout_short_key.value);
     }
 }
 </script>

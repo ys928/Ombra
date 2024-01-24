@@ -1,4 +1,4 @@
-import { clipboard, dialog, globalShortcut, invoke, path } from "@tauri-apps/api";
+import { clipboard, dialog, invoke, path } from "@tauri-apps/api";
 import { listen } from "@tauri-apps/api/event";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 import { appWindow } from "@tauri-apps/api/window";
@@ -17,7 +17,6 @@ import { OpenDialogOptions } from "@tauri-apps/api/dialog";
  * dlg：对话框（dialog）
  * exp：资源管理器（explorer）
  * clip：剪切板（clipboard）
- * gs：全局快捷键（Global Shortcut）
  */
 
 /**
@@ -177,32 +176,6 @@ export async function clip_set_text(text: string) {
 
 /**
  * 
- * @param shortkey 要注册的全局快捷键
- * @param callback 相应的回调函数
- */
-export function gs_register(shortkey: string, callback: Function) {
-    globalShortcut.register(shortkey, () => {
-        callback();
-    })
-}
-/**
- * 
- * @param shortkey 取消注册的全局快捷键
- */
-export function gs_unregister(shortkey: string) {
-    globalShortcut.unregister(shortkey);
-}
-/**
- * 
- * @param shortkey 全局快捷键
- * @returns 是否已经被注册
- */
-export async function gs_is_registered(shortkey: string) {
-    return globalShortcut.isRegistered(shortkey);
-}
-
-/**
- * 
  * @returns 获取输入插件的文本内容（大部分情况下都是用户输入搜索框中的内容）
  */
 export function om_get_text() {
@@ -281,4 +254,3 @@ export async function om_to_pinyin(hans: string) {
     return await invoke<Array<string>>('to_pinyin', { hans: hans });
 }
 
-                                                              

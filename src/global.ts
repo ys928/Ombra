@@ -1,9 +1,10 @@
 import { reactive } from "vue";
-import { dir_config, gs_is_registered, gs_register, gs_unregister} from "./ombra";
+import { dir_config } from "./ombra";
 import { listen } from "@tauri-apps/api/event";
 import File from "~/api/file"
 import Path from '~/api/path'
 import Window from "./api/window";
+import GlobalShortcut from "./api/globalShortcut";
 
 export interface AppInfo {
     name: string, //应用名，将显示在应用菜单面板上
@@ -133,12 +134,12 @@ export async function write_config_item(item: string, cnt: any) {
 
 //设置面板呼出快捷键
 export async function set_shortcut(shortkey: string, func: Function) {
-    const isreg = await gs_is_registered(shortkey);
+    const isreg = await GlobalShortcut.is_registered(shortkey);
     if (isreg) {
-        await gs_unregister(shortkey);
+        await GlobalShortcut.unregister(shortkey);
     }
     //注册全局快捷键
-    gs_register(shortkey, () => {
+    GlobalShortcut.register(shortkey, () => {
         func();
     })
 }

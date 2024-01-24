@@ -24,10 +24,11 @@ import { Ref, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import AppMenu from "./MainPanel/AppMenu.vue";
 import { read_config_item, set_shortcut, write_config_item } from '~/global'
 import Setting from './MainPanel/Setting.vue';
-import { exp_get_path, gs_is_registered, gs_unregister } from '~/ombra'
+import { exp_get_path } from '~/ombra'
 import { onTextUpdate, readText, startListening } from "tauri-plugin-clipboard-api";
 import { UnlistenFn, listen } from "@tauri-apps/api/event";
 import Window from "~/api/window";
+import GlobalShortcut from "~/api/globalShortcut";
 const main_input = ref() as Ref<HTMLInputElement>;
 const measure = ref() as Ref<HTMLElement>;
 const search_content = ref("");
@@ -143,9 +144,9 @@ async function set_callout_shortkey(shortkey: string) {
 }
 
 async function unset_callout_shortkey() {
-    const isreg = await gs_is_registered(callout_short_key.value);
+    const isreg = await GlobalShortcut.is_registered(callout_short_key.value);
     if (isreg) {
-        await gs_unregister(callout_short_key.value);
+        await GlobalShortcut.unregister(callout_short_key.value);
     }
 }
 async function set_search_input_placeholder(placeholder: string) {
