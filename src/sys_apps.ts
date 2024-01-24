@@ -1,51 +1,53 @@
 import { add_app } from "./global";
-import { app_get, cli_exec, file_convert} from "./ombra";
 import File from '~/api/file'
 import Window from "./api/window";
 import Dialog from "./api/dialog";
 import Ombra from "./api/ombra";
+import Url from "./api/url";
+import CLI from "./api/cli";
+import App from "./api/app";
 const list = [
     {
         name: '检测系统更新',
         icon: '/imgs/windows-setting.png',
         feature: [],
         setup: () => {
-            cli_exec(['start', 'ms-settings:windowsupdate']);
+            CLI.exec(['start', 'ms-settings:windowsupdate']);
         }
     }, {
         name: 'WLAN',
         icon: '/imgs/windows-setting.png',
         feature: [],
         setup: () => {
-            cli_exec(['start', 'ms-settings:network-wifi']);
+            CLI.exec(['start', 'ms-settings:network-wifi']);
         }
     }, {
         name: 'VPN',
         icon: '/imgs/windows-setting.png',
         feature: [],
         setup: () => {
-            cli_exec(['start', 'ms-settings:network-vpn']);
+            CLI.exec(['start', 'ms-settings:network-vpn']);
         }
     }, {
         name: '日期与时间',
         icon: '/imgs/windows-setting.png',
         feature: [],
         setup: () => {
-            cli_exec(['start', 'ms-settings:dateandtime']);
+            CLI.exec(['start', 'ms-settings:dateandtime']);
         }
     }, {
         name: '语言与区域',
         icon: '/imgs/windows-setting.png',
         feature: [],
         setup: () => {
-            cli_exec(['start', 'ms-settings:regionlanguage']);
+            CLI.exec(['start', 'ms-settings:regionlanguage']);
         }
     }, {
         name: '通知',
         icon: '/imgs/windows-setting.png',
         feature: [],
         setup: () => {
-            cli_exec(['start', 'ms-settings:notifications']);
+            CLI.exec(['start', 'ms-settings:notifications']);
         }
     }
     , {
@@ -53,7 +55,7 @@ const list = [
         icon: '/imgs/sleep.png',
         feature: [],
         setup: () => {
-            cli_exec(['shutdown', '-h']);
+            CLI.exec(['shutdown', '-h']);
         }
     }, {
         name: '关机',
@@ -62,7 +64,7 @@ const list = [
         setup: async () => {
             let ret = await Dialog.confirm('确定要执行【关机】？', "Ombra", 'warning');
             if (ret) {
-                cli_exec(['shutdown', '-s', '-t', '0']);
+                CLI.exec(['shutdown', '-s', '-t', '0']);
             }
         }
     }, {
@@ -72,7 +74,7 @@ const list = [
         setup: async () => {
             let ret = await Dialog.confirm('确定要执行【重启】？', "Ombra", 'warning');
             if (ret) {
-                cli_exec(['shutdown', '-r']);
+                CLI.exec(['shutdown', '-r']);
             }
         }
     }, {
@@ -82,7 +84,7 @@ const list = [
         setup: async () => {
             let ret = await Dialog.confirm('确定执行【注销】，退出当前账户登录？', "Ombra", 'warning');
             if (ret) {
-                cli_exec(['shutdown', '-l']);
+                CLI.exec(['shutdown', '-l']);
             }
         }
     },
@@ -91,21 +93,21 @@ const list = [
         icon: '/imgs/explorer.png',
         feature: [],
         setup: () => {
-            cli_exec(['explorer']);
+            CLI.exec(['explorer']);
         }
     }, {
         name: '锁屏',
         icon: '/imgs/lock.png',
         feature: [],
         setup: () => {
-            cli_exec(['rundll32.exe', 'user32.dll,LockWorkStation']);
+            CLI.exec(['rundll32.exe', 'user32.dll,LockWorkStation']);
         }
     }, {
         name: '回收站',
         icon: '/imgs/recyclebin.png',
         feature: [],
         setup: () => {
-            cli_exec(['start', 'shell:RecycleBinFolder']);
+            CLI.exec(['start', 'shell:RecycleBinFolder']);
         }
     }, {
         name: 'CMD',
@@ -115,9 +117,9 @@ const list = [
             let features = Ombra.get_features();
             let text = Ombra.get_text();
             if (features.includes('explorer')) {
-                cli_exec(['start', 'cmd', '/k', 'cd', '/d', text])
+                CLI.exec(['start', 'cmd', '/k', 'cd', '/d', text])
             } else {
-                cli_exec(['start', 'cmd'])
+                CLI.exec(['start', 'cmd'])
             }
         }
     }, {
@@ -128,9 +130,9 @@ const list = [
             let features = Ombra.get_features();
             let text = Ombra.get_text();
             if (features.includes('explorer')) {
-                cli_exec(['powershell', '-Command', 'Set-Location', '-Path ', text, ';Start-Process', 'PowerShell'])
+                CLI.exec(['powershell', '-Command', 'Set-Location', '-Path ', text, ';Start-Process', 'PowerShell'])
             } else {
-                cli_exec(['powershell', '-Command', 'Start-Process', 'PowerShell'])
+                CLI.exec(['powershell', '-Command', 'Start-Process', 'PowerShell'])
             }
         }
     },
@@ -139,7 +141,7 @@ const list = [
         icon: '/imgs/rundll32.png',
         feature: [''],
         setup: () => {
-            cli_exec(['start', 'SystemPropertiesAdvanced'])
+            CLI.exec(['start', 'SystemPropertiesAdvanced'])
         }
     },
     {
@@ -147,7 +149,7 @@ const list = [
         icon: '/imgs/rundll32.png',
         feature: [''],
         setup: () => {
-            cli_exec(['start', 'rundll32', 'sysdm.cpl,EditEnvironmentVariables'])
+            CLI.exec(['start', 'rundll32', 'sysdm.cpl,EditEnvironmentVariables'])
         }
     }
 ];
@@ -162,21 +164,21 @@ export async function load_sys_app() {
         add_app(app.name, '', app.icon, app.feature, false, app.setup, false, '');
     }
     //加载用户安装的应用
-    let apps = await app_get();
+    let apps = await App.get_all();
     for (let i = 0; i < apps.length; i++) {
         let feature: string[] = [];
         if (apps[i].name == 'Visual Studio Code') {
             feature.push('explorer');
         }
         let exist = await File.exists(apps[i].icon);
-        let icon_url = exist ? file_convert(apps[i].icon) : "/logo.png";
+        let icon_url = exist ? Url.convert(apps[i].icon) : "/logo.png";
         add_app(apps[i].name, '', icon_url, feature, false, () => {
             let features = Ombra.get_features();
             let text = Ombra.get_text();
             if (features.includes('explorer')) {
-                cli_exec(['start', apps[i].start, text])
+                CLI.exec(['start', apps[i].start, text])
             } else {
-                cli_exec(['start', apps[i].start])
+                CLI.exec(['start', apps[i].start])
             }
         }, false, '');
 

@@ -15,11 +15,11 @@ import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import AppTitlebar from '~/components/AppTitlebar.vue';
-import { file_convert } from '~/ombra';
 import File from '~/api/file'
 import Window from '~/api/window';
 import Notification from '~/api/notification';
 import Dialog from '~/api/dialog';
+import Url from '~/api/url';
 interface FileChange {
     kind: string,
     files: Array<string>,
@@ -74,7 +74,7 @@ async function fun_choose() {
         invoke('unwatch_dir', { path: raw_plugin_index });
     }
     raw_plugin_index = paths;
-    plugin_index.value = file_convert(paths);
+    plugin_index.value = Url.convert(paths);
     invoke("watch_dir", { path: paths });
 }
 

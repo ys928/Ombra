@@ -4,7 +4,7 @@
             <img src="/logo.png">
         </div>
         <div class="mmc">
-            <KISeparate class="sep" :w="12" :h="12" @click="winSeparate" v-if="app_is_embed()" title="分离窗口">
+            <KISeparate class="sep" :w="12" :h="12" @click="winSeparate" v-if="App.is_embed()" title="分离窗口">
             </KISeparate>
             <KIMinus class="min" w="12" h="12" @click="WinMin"></KIMinus>
             <KIFullScreen class="max" w="12" h="12" @click="WinTogMax"></KIFullScreen>
@@ -16,11 +16,11 @@
 <script setup lang="ts">
 import { KIMinus, KIFullScreen, KIClose, KISeparate } from '~/kui'
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { app_is_embed} from '~/ombra';
 import { read_config_item, set_shortcut, write_config_item } from '~/global';
 import Window from '~/api/window';
 import GlobalShortcut from '~/api/globalShortcut';
 import Ombra from '~/api/ombra';
+import App from '~/api/app';
 //窗口是否显示
 const is_show = ref(true);
 const callout_short_key = ref('');

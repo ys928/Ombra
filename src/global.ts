@@ -1,11 +1,10 @@
 import { reactive } from "vue";
-import { dir_config } from "./ombra";
 import { listen } from "@tauri-apps/api/event";
 import File from "~/api/file"
 import Path from '~/api/path'
 import Window from "./api/window";
 import GlobalShortcut from "./api/globalShortcut";
-
+import Directory from "./api/directory";
 export interface AppInfo {
     name: string, //应用名，将显示在应用菜单面板上
     id: string, //应用id，如果self属性为true，那么该选项必填，否则可选，将被用于独立窗口label、以及vue中的路由
@@ -100,7 +99,7 @@ export function time_to_str(timestamp: number) {
 }
 
 async function get_config_path() {
-    let p = await dir_config();
+    let p = await Directory.config();
     p += 'config.json';
     if (!await Path.exists(p)) {
         File.write_text(p, '{}');

@@ -1,5 +1,5 @@
-import { url_open } from "~/ombra";
 import Ombra from "~/api/ombra";
+import Url from "~/api/url";
 //导出app注册信息对象
 export default {
     name: '打开网址',
@@ -14,9 +14,9 @@ export default {
         let feature = Ombra.get_features();
         if (!feature.includes('url')) return;
         if (text.startsWith('http://') || text.startsWith('https://')) {
-            url_open(text);
+            Url.open(text);
         } else {
-            url_open('http://' + text);
+            Url.open('http://' + text);
         }
     }
 }

@@ -6,10 +6,11 @@ import AppWebQuickOpen from './apps/WebQuickOpen/App'
 import AppPluginDevelopTool from './apps/PluginDevelopTool/App'
 import PluginWindow from './components/PluginWindow.vue'
 import { add_app } from "./global";
-import { dir_walk, file_convert } from '~/ombra'
 import { path } from "@tauri-apps/api";
 import File from '~/api/file'
 import Window from "./api/window";
+import Directory from "./api/directory";
+import Url from "./api/url";
 let user_apps_list = [
     AppFileSearch,
     AppOpenLink,
@@ -58,19 +59,19 @@ export async function load_user_app() {
 
 async function load_plugin_app() {
     let plugin_path = await path.resolve('./plugin');
-    let plugin_dirs = await dir_walk(plugin_path);
+    let plugin_dirs = await Directory.walk(plugin_path);
     for (let i = 0; i < plugin_dirs.length; i++) {
         let name = '';
         let icon = '';
         let plugin_index = '';
         let id = ''
         let features = [];
-        let plugin_files = await dir_walk(plugin_dirs[i].path + '\\' + plugin_dirs[i].name);
+        let plugin_files = await Directory.walk(plugin_dirs[i].path + '\\' + plugin_dirs[i].name);
         for (let f of plugin_files) {
             if (f.name.startsWith('icon')) { //icon图标
-                icon = file_convert(f.path + '\\' + f.name);
+                icon = Url.convert(f.path + '\\' + f.name);
             } else if (f.name == 'index.html') {
-                plugin_index = file_convert(f.path + '\\' + f.name);
+                plugin_index = Url.convert(f.path + '\\' + f.name);
             } else if (f.name == 'config.json') {
                 let text = await File.read_text(f.path + '\\' + f.name);
                 let config = JSON.parse(text);

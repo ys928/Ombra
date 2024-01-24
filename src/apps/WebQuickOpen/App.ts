@@ -1,7 +1,7 @@
-import { url_open } from "~/ombra";
 import MainPanel from "./MainPanel.vue"
 import { add_app } from "~/global";
 import Ombra from "~/api/ombra";
+import Url from "~/api/url";
 export interface WebUrlObj {
     name: string,//网站名
     url: string,//网页路径
@@ -48,11 +48,11 @@ export default {
                 if (feature.includes('text')) {
                     let url = recommand_urls[i].url;
                     url = url.replace('{query}', text);
-                    url_open(url);
+                    Url.open(url);
                 } else {
                     let url = recommand_urls[i].url;
                     url = url.replace('{query}', '');
-                    url_open(url);
+                    Url.open(url);
                 }
 
             });
