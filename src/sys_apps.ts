@@ -1,7 +1,8 @@
 import { add_app } from "./global";
-import { app_get, cli_exec, dlg_confirm, file_convert, om_get_features, om_get_text } from "./ombra";
+import { app_get, cli_exec, file_convert, om_get_features, om_get_text } from "./ombra";
 import File from '~/api/file'
 import Window from "./api/window";
+import Dialog from "./api/dialog";
 const list = [
     {
         name: '检测系统更新',
@@ -58,7 +59,7 @@ const list = [
         icon: '/imgs/shutdown.png',
         feature: [],
         setup: async () => {
-            let ret = await dlg_confirm('确定要执行【关机】？', "Ombra", 'warning');
+            let ret = await Dialog.confirm('确定要执行【关机】？', "Ombra", 'warning');
             if (ret) {
                 cli_exec(['shutdown', '-s', '-t', '0']);
             }
@@ -68,7 +69,7 @@ const list = [
         icon: '/imgs/reboot.png',
         feature: [],
         setup: async () => {
-            let ret = await dlg_confirm('确定要执行【重启】？', "Ombra", 'warning');
+            let ret = await Dialog.confirm('确定要执行【重启】？', "Ombra", 'warning');
             if (ret) {
                 cli_exec(['shutdown', '-r']);
             }
@@ -78,7 +79,7 @@ const list = [
         icon: '/imgs/logout.png',
         feature: [],
         setup: async () => {
-            let ret = await dlg_confirm('确定执行【注销】，退出当前账户登录？', "Ombra", 'warning');
+            let ret = await Dialog.confirm('确定执行【注销】，退出当前账户登录？', "Ombra", 'warning');
             if (ret) {
                 cli_exec(['shutdown', '-l']);
             }
