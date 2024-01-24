@@ -1,4 +1,4 @@
-import { clipboard, dialog, invoke, path } from "@tauri-apps/api";
+import { dialog, invoke, path } from "@tauri-apps/api";
 import { listen } from "@tauri-apps/api/event";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 import { appWindow } from "@tauri-apps/api/window";
@@ -16,7 +16,6 @@ import { OpenDialogOptions } from "@tauri-apps/api/dialog";
  * url：网址链接
  * dlg：对话框（dialog）
  * exp：资源管理器（explorer）
- * clip：剪切板（clipboard）
  */
 
 /**
@@ -157,21 +156,6 @@ export function exp_select_file(path: string) {
  */
 export async function exp_get_path() {
     return await invoke<string>('get_explorer_show_path')
-}
-
-/**
- * 
- * @returns 返回剪切板中的文本
- */
-export async function clip_get_text() {
-    return clipboard.readText();
-}
-/**
- * 
- * @param text 设置剪切板的文本
- */
-export async function clip_set_text(text: string) {
-    clipboard.writeText(text);
 }
 
 /**

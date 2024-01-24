@@ -8,8 +8,9 @@
 
 <script setup lang="ts">
 import { Ref, ref, onMounted } from 'vue';
-import { exp_select_file, exp_open_file, clip_set_text } from '~/ombra';
+import { exp_select_file, exp_open_file } from '~/ombra';
 import Path from '~/api/path'
+import Clipboard from '~/api/clipboard';
 
 const props = defineProps(['isdir', 'path', 'name', 'ext', 'x', 'y']);
 const emits = defineEmits(['hidden']);
@@ -59,7 +60,7 @@ async function fun_copy_path() {
     if (props.path.length != 0) {
         p = await Path.join(props.path, p);
     }
-    clip_set_text(p);
+    Clipboard.set_text(p);
 }
 </script>
 
