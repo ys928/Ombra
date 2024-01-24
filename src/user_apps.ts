@@ -35,6 +35,7 @@ export async function load_user_app() {
             if (is_init != 'true') {
                 //@ts-ignore
                 if (app.preload) {
+                    console.log(app.name);
                     //@ts-ignore
                     app.preload();
                 }

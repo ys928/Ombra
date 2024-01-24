@@ -555,6 +555,7 @@ async function test_name_match(app: AppInfo, search = '') {
 async function match_feature(cnt: string) {
     let tmp_feature = [] as Array<string>
     if (cnt.length == 0) return tmp_feature;
+    tmp_feature.push('text');
     let re_sep = /^[^\/\\:\*\?"<>|]*$/g;
     if (re_sep.test(cnt)) {
         tmp_feature.push('filename');
