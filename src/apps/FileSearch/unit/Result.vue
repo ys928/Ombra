@@ -3,8 +3,8 @@ import { listen } from '@tauri-apps/api/event';
 import { KIDll, KIText, KIFolder, KITypeScript, KIHtml, KIPdf, KIJs, KIJson, KIUnknowFile, KIImage } from '~/kui'
 import { computed, reactive, ref } from 'vue';
 import { get_span, time_to_str } from '~/global';
-import { exp_open_file } from '~/ombra';
 import Path from '~/api/path'
+import Explorer from '~/api/explorer';
 
 type FileInfo = {
     name: string,
@@ -92,7 +92,7 @@ async function fun_dbclick(item: FileInfo) {
     if (item.path.length != 0) {
         p = await Path.join(item.path, p);
     }
-    exp_open_file(p);
+    Explorer.open_file(p);
 }
 //得到文件类型的计算属性
 const file_type = computed(() => (ext: string) => {

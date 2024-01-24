@@ -24,11 +24,11 @@ import { Ref, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import AppMenu from "./MainPanel/AppMenu.vue";
 import { read_config_item, set_shortcut, write_config_item } from '~/global'
 import Setting from './MainPanel/Setting.vue';
-import { exp_get_path } from '~/ombra'
 import { onTextUpdate, readText, startListening } from "tauri-plugin-clipboard-api";
 import { UnlistenFn, listen } from "@tauri-apps/api/event";
 import Window from "~/api/window";
 import GlobalShortcut from "~/api/globalShortcut";
+import Explorer from "~/api/explorer";
 const main_input = ref() as Ref<HTMLInputElement>;
 const measure = ref() as Ref<HTMLElement>;
 const search_content = ref("");
@@ -60,7 +60,7 @@ watch(is_show, () => {
         let is_visible = await Window.is_visible();
         if (is_visible != is_show.value) {
             if (is_show.value) {
-                let p = await exp_get_path();
+                let p = await Explorer.get_path();
                 if (p == 'none') {
                     apps_menu.value.init_feature([], '');
                 } else {

@@ -8,8 +8,8 @@
 
 <script setup lang="ts">
 import { Ref, ref, onMounted } from 'vue';
-import { exp_select_file, exp_open_file } from '~/ombra';
 import Path from '~/api/path'
+import Explorer from '~/api/explorer';
 import Clipboard from '~/api/clipboard';
 
 const props = defineProps(['isdir', 'path', 'name', 'ext', 'x', 'y']);
@@ -36,7 +36,7 @@ async function fun_open_path() {
         p = await Path.join(props.path, p);
     }
     console.log(p);
-    exp_select_file(p);
+    Explorer.select_file(p);
 }
 
 async function fun_open_file() {
@@ -48,7 +48,7 @@ async function fun_open_file() {
     if (props.path.length != 0) {
         p = await Path.join(props.path, p);
     }
-    exp_open_file(p);
+    Explorer.open_file(p);
 }
 
 async function fun_copy_path() {

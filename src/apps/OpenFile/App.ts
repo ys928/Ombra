@@ -1,4 +1,5 @@
-import { exp_open_file, om_get_features, om_get_text } from "~/ombra";
+import { om_get_features, om_get_text } from "~/ombra";
+import Explorer from "~/api/explorer";
 //导出app注册信息对象
 export default {
     name: '打开文件',
@@ -12,7 +13,7 @@ export default {
         let text = om_get_text();
         let feature = om_get_features();
         if (feature.includes('file_path')) {
-            exp_open_file(text)
+            Explorer.open_file(text)
         }
     }
 }
