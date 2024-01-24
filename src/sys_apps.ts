@@ -1,8 +1,9 @@
 import { add_app } from "./global";
-import { app_get, cli_exec, file_convert, om_get_features, om_get_text } from "./ombra";
+import { app_get, cli_exec, file_convert} from "./ombra";
 import File from '~/api/file'
 import Window from "./api/window";
 import Dialog from "./api/dialog";
+import Ombra from "./api/ombra";
 const list = [
     {
         name: '检测系统更新',
@@ -111,8 +112,8 @@ const list = [
         icon: '/imgs/cmd.png',
         feature: ['explorer'],
         setup: () => {
-            let features = om_get_features();
-            let text = om_get_text();
+            let features = Ombra.get_features();
+            let text = Ombra.get_text();
             if (features.includes('explorer')) {
                 cli_exec(['start', 'cmd', '/k', 'cd', '/d', text])
             } else {
@@ -124,8 +125,8 @@ const list = [
         icon: '/imgs/powershell.png',
         feature: ['explorer'],
         setup: () => {
-            let features = om_get_features();
-            let text = om_get_text();
+            let features = Ombra.get_features();
+            let text = Ombra.get_text();
             if (features.includes('explorer')) {
                 cli_exec(['powershell', '-Command', 'Set-Location', '-Path ', text, ';Start-Process', 'PowerShell'])
             } else {
@@ -170,8 +171,8 @@ export async function load_sys_app() {
         let exist = await File.exists(apps[i].icon);
         let icon_url = exist ? file_convert(apps[i].icon) : "/logo.png";
         add_app(apps[i].name, '', icon_url, feature, false, () => {
-            let features = om_get_features();
-            let text = om_get_text();
+            let features = Ombra.get_features();
+            let text = Ombra.get_text();
             if (features.includes('explorer')) {
                 cli_exec(['start', apps[i].start, text])
             } else {

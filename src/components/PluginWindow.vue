@@ -6,11 +6,10 @@
 </template>
 
 <script setup lang="ts">
-import { om_get_plugin_index } from '~/ombra';
 import File from '~/api/file'
 import AppTitlebar from '../components/AppTitlebar.vue'
 import { onMounted, onUnmounted, ref } from 'vue';
-
+import Ombra from '~/api/ombra';
 let plugin_index = ref('');
 
 
@@ -18,7 +17,7 @@ let iframe: HTMLIFrameElement;
 onMounted(() => {
     iframe = document.querySelector('#plugin') as HTMLIFrameElement;
     window.addEventListener('message', handle_plugin);
-    plugin_index.value = om_get_plugin_index();
+    plugin_index.value = Ombra.get_plugin_index();
 });
 onUnmounted(() => {
     window.removeEventListener('message', handle_plugin);

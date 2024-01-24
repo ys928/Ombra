@@ -34,9 +34,9 @@
 <script setup lang="ts">
 import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 import { get_app_list, write_config_item, type AppInfo, read_config_item, get_span } from '~/global'
-import { om_set_appid, om_set_features, om_set_plugin_index, om_set_text, om_to_pinyin } from '~/ombra';
 import Path from '~/api/path'
 import Window from '~/api/window'
+import Ombra from '~/api/ombra';
 const props = defineProps(['main_input', 'search_content', 'cur_focus_app']);
 const emit = defineEmits(['update:cur_focus_app']);
 
@@ -287,19 +287,19 @@ async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
     write_config_item('appinfo', appinfo);
 
     if (sea_of_rec) {
-        om_set_text('');
-        om_set_features([]);
+        Ombra.set_text('');
+        Ombra.set_features([]);
     } else {
-        om_set_text(app_setup_content);
-        om_set_features(features_list);
+        Ombra.set_text(app_setup_content);
+        Ombra.set_features(features_list);
     }
 
-    om_set_appid(app.id);
+    Ombra.set_appid(app.id);
     //如果是插件应用，保存插件代码文件位置
     if (app.plugin_index.length == 0) {
-        om_set_plugin_index('');
+        Ombra.set_plugin_index('');
     } else {
-        om_set_plugin_index(app.plugin_index);
+        Ombra.set_plugin_index(app.plugin_index);
     }
     app.setup();
     if (!app.self) return;
@@ -464,7 +464,7 @@ async function test_name_match(app: AppInfo, search = '') {
                 let c = appName.charAt(index);
                 //如果某个字符为汉字
                 if (/[\u4e00-\u9fa5]/.test(c)) {
-                    let py = await om_to_pinyin(c); //将其转化为拼音
+                    let py = await Ombra.to_pinyin(c); //将其转化为拼音
                     //如果该汉字的拼音以搜索的字符串作为开头，则表示匹配成功
                     if (py[0].indexOf(search.toLocaleLowerCase()) == 0) {
                         s += get_span(appName.substring(0, index), 'normal');
@@ -511,7 +511,7 @@ async function test_name_match(app: AppInfo, search = '') {
                 }
             }
             let hans = appName.substring(0, han_pos);
-            let pys = await om_to_pinyin(hans); //将汉字转化为拼音
+            let pys = await Ombra.to_pinyin(hans); //将汉字转化为拼音
             //获取所有拼音首字母组成的序列
             const initials_str = pys.map(py => py[0]).join('').toLowerCase();
             let pos = initials_str.indexOf(search.toLowerCase());

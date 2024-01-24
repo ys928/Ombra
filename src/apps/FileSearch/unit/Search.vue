@@ -12,8 +12,7 @@
 <script setup lang="ts">
 import { Ref, onMounted, ref } from 'vue';
 import { KIWholeWord } from '~/kui';
-import { om_get_text } from '~/ombra';
-
+import Ombra from '~/api/ombra';
 const emits = defineEmits(['fun_search', 'fun_exit']);
 
 const use_whole_word = ref(false) as Ref<Boolean>;
@@ -30,7 +29,7 @@ onMounted(() => {
             search_input.value.focus();
         }
     });
-    search_content.value = om_get_text();
+    search_content.value = Ombra.get_text();
     let cnt = get_name_ext();
     emits('fun_search', cnt.name, cnt.ext, mode.value, 0);
 });

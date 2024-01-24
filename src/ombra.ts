@@ -8,7 +8,6 @@ import { os } from '@tauri-apps/api'
  * 说明：本文件为ombra的全局接口文件，包含了目前所有可用的api。
  * 为了方便使用，api的命名规范采用 名词_动词 的形式，例如打开文件的函数为：file_open
  * 目前包含的名词有：
- * om：指代ombra，用于向插件传递数据
  * dir：目录
  * app：本程序中的app
  * cli：命令行接口（command line interface）
@@ -109,83 +108,3 @@ export async function dir_walk(path: string, level = 1) {
     });
     return result;
 }
-/**
- * 
- * @returns 获取输入插件的文本内容（大部分情况下都是用户输入搜索框中的内容）
- */
-export function om_get_text() {
-    let text = localStorage.getItem('search_text');
-    if (text == null) return '';
-    return text;
-}
-
-/**
- * 
- * @returns 获取此时的feature列表，可被用于判断执行何种操作
- */
-export function om_get_features() {
-    let text = localStorage.getItem('search_features');
-    if (text == null) return [] as Array<string>;
-    return JSON.parse(text) as Array<string>;
-}
-
-/**
- * 
- * @returns 设置输入插件的内容（仅限ombra内部使用，插件使用无效）
- */
-export function om_set_text(text: string) {
-    localStorage.setItem('search_text', text);
-}
-
-/**
- * 
- * @returns 设置此时的feature列表（仅限ombra内部使用，插件使用无效）
- */
-export function om_set_features(features: Array<string>) {
-    localStorage.setItem('search_features', JSON.stringify(features));
-}
-
-/**
- * 
- * @param appid 设置当前将要打开的app id（仅限ombra内部使用，插件使用无效）
- */
-export function om_set_appid(appid: string) {
-    localStorage.setItem('appid', appid);
-}
-
-/**
- * 
- * @param appid 设置当前将要打开的app id（仅限ombra内部使用，插件使用无效）
- */
-export function om_get_appid() {
-    let appid = localStorage.getItem('appid');
-    if (appid == null) return '';
-    return appid;
-}
-/**
- * 
- * @param index 设置当前要打开的插件代码文件index.html位置
- */
-export function om_set_plugin_index(index: string) {
-    localStorage.setItem('plugin_index', index);
-}
-
-/**
- * 
- * @returns 获取当前要打开的插件代码文件index.html位置
- */
-export function om_get_plugin_index() {
-    let appid = localStorage.getItem('plugin_index');
-    if (appid == null) return '';
-    return appid;
-}
-
-/**
- * 
- * @param hans 汉字，如“世界”
- * @returns 返回汉字对应的拼音数组，如['shi','jie']
- */
-export async function om_to_pinyin(hans: string) {
-    return await invoke<Array<string>>('to_pinyin', { hans: hans });
-}
-
