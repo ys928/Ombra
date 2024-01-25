@@ -13,7 +13,7 @@ export default class Window {
     static close() {
         if (appWindow.label == 'MainWindow') {
             Window.set_size(170);
-            window.location.href = "/";
+            window.location.href = '/';
         } else {
             appWindow.close();
         }
@@ -45,7 +45,7 @@ export default class Window {
         if (appWindow.label == 'MainWindow') {
             Window.set_size(170);
             Window.set_resizable(false);
-            window.location.href = "/";
+            window.location.href = '/';
         }
     }
     /**
@@ -59,7 +59,7 @@ export default class Window {
         if (appWindow.label == 'MainWindow') {
             Window.set_size(600);
             Window.set_resizable(true);
-            window.location.href = '/apps/' + appid;
+            window.location.href = `/app?id=${appid}`;
         }
     }
     /**
@@ -71,7 +71,7 @@ export default class Window {
             appWindow.hide();
             window.location.href = '/';
             let w = new WebviewWindow(appid, {
-                url: '/apps/' + appid,
+                url: `/app?id=${appid}`,
                 decorations: false,
                 transparent: true
             });

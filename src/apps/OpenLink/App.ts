@@ -7,7 +7,7 @@ export default {
     icon: '/imgs/link.png',
     feature: ['url'],
     only_feature: true,
-    component: undefined,
+    component: null,
     self: false,
     setup: () => {
         let text = Ombra.get_text();

@@ -1,7 +1,7 @@
 import MainPanel from "./MainPanel.vue"
-import { add_app } from "~/global";
 import Ombra from "~/api/ombra";
 import Url from "~/api/url";
+import App from "~/api/app";
 export interface WebUrlObj {
     name: string,//网站名
     url: string,//网页路径
@@ -42,7 +42,7 @@ export default {
         // }
         for (let i = 0; i < recommand_urls.length; i++) {
             console.log(recommand_urls[i])
-            add_app(recommand_urls[i].name, recommand_urls[i].id, recommand_urls[i].icon, recommand_urls[i].features, false, () => {
+            App.add(recommand_urls[i].name, recommand_urls[i].id, recommand_urls[i].icon, recommand_urls[i].features, false, null, () => {
                 let feature = Ombra.get_features();
                 let text = Ombra.get_text();
                 if (feature.includes('text')) {
@@ -54,7 +54,6 @@ export default {
                     url = url.replace('{query}', '');
                     Url.open(url);
                 }
-
             });
         }
     }

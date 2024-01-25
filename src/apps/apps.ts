@@ -1,16 +1,103 @@
-import { add_app } from "./global";
+import AppFileSearch from "./FileSearch/App";
+import AppOpenLink from "./OpenLink/App"
+import AppOpenPath from "./OpenPath/App"
+import AppOpenFile from "./OpenFile/App"
+import AppWebQuickOpen from './WebQuickOpen/App'
+import AppPluginDevelopTool from './PluginDevelopTool/App'
+import { path } from "@tauri-apps/api";
 import File from '~/api/file'
-import Window from "./api/window";
-import Dialog from "./api/dialog";
-import Ombra from "./api/ombra";
-import Url from "./api/url";
-import CLI from "./api/cli";
-import App from "./api/app";
-const list = [
+import Directory from "../api/directory";
+import Url from "../api/url";
+import Dialog from "../api/dialog";
+import Ombra from "../api/ombra";
+import CLI from "../api/cli";
+import App from "../api/app";
+
+let user_apps_list = [
+    AppFileSearch,
+    AppOpenLink,
+    AppOpenPath,
+    AppOpenFile,
+    AppWebQuickOpen,
+    AppPluginDevelopTool
+]
+
+export async function load_apps() {
+    //加载内嵌应用
+    let is_init = localStorage.getItem('is_init');
+    //加载内嵌应用
+    for (let app of user_apps_list) {
+        if (is_init != 'true') {
+            //@ts-ignore
+            if (app.preload) {
+                //@ts-ignore
+                app.preload();
+            }
+        }
+        App.add(app.name, app.id, app.icon, app.feature, app.self, app.component, app.setup, app.only_feature);
+    }
+    localStorage.setItem('is_init', 'true');
+
+    //加载插件应用
+
+    let plugin_path = await path.resolve('./plugin');
+    let plugin_dirs = await Directory.walk(plugin_path);
+    for (let i = 0; i < plugin_dirs.length; i++) {
+        let name = '';
+        let icon = '';
+        let plugin_index = '';
+        let id = ''
+        let features = [];
+        let plugin_files = await Directory.walk(plugin_dirs[i].path + '\\' + plugin_dirs[i].name);
+        for (let f of plugin_files) {
+            if (f.name.startsWith('icon')) { //icon图标
+                icon = Url.convert(f.path + '\\' + f.name);
+            } else if (f.name == 'index.html') {
+                plugin_index = Url.convert(f.path + '\\' + f.name);
+            } else if (f.name == 'config.json') {
+                let text = await File.read_text(f.path + '\\' + f.name);
+                let config = JSON.parse(text);
+                features = config.features;
+                id = config.id;
+                name = config.name;
+            }
+        }
+        App.add(name, id, icon, features, true, plugin_index, () => { }, false);
+    }
+
+    //加载系统应用、功能
+
+    for (let app of sys_seting_list) {
+        App.add(app.name, '', app.icon, app.feature, app.self, null, app.setup, false);
+    }
+    //加载用户安装的应用
+    let apps = await App.get_all();
+    for (let i = 0; i < apps.length; i++) {
+        let feature: string[] = [];
+        if (apps[i].name == 'Visual Studio Code') {
+            feature.push('explorer');
+        }
+        let exist = await File.exists(apps[i].icon);
+        let icon_url = exist ? Url.convert(apps[i].icon) : "/logo.png";
+        App.add(apps[i].name, '', icon_url, feature, false, null, () => {
+            let features = Ombra.get_features();
+            let text = Ombra.get_text();
+            if (features.includes('explorer')) {
+                CLI.exec(['start', apps[i].start, text])
+            } else {
+                CLI.exec(['start', apps[i].start])
+            }
+        }, false);
+
+    }
+}
+
+const sys_seting_list = [
     {
         name: '检测系统更新',
         icon: '/imgs/windows-setting.png',
         feature: [],
+        self: false,
         setup: () => {
             CLI.exec(['start', 'ms-settings:windowsupdate']);
         }
@@ -18,6 +105,7 @@ const list = [
         name: 'WLAN',
         icon: '/imgs/windows-setting.png',
         feature: [],
+        self: false,
         setup: () => {
             CLI.exec(['start', 'ms-settings:network-wifi']);
         }
@@ -25,6 +113,7 @@ const list = [
         name: 'VPN',
         icon: '/imgs/windows-setting.png',
         feature: [],
+        self: false,
         setup: () => {
             CLI.exec(['start', 'ms-settings:network-vpn']);
         }
@@ -32,6 +121,7 @@ const list = [
         name: '日期与时间',
         icon: '/imgs/windows-setting.png',
         feature: [],
+        self: false,
         setup: () => {
             CLI.exec(['start', 'ms-settings:dateandtime']);
         }
@@ -39,6 +129,7 @@ const list = [
         name: '语言与区域',
         icon: '/imgs/windows-setting.png',
         feature: [],
+        self: false,
         setup: () => {
             CLI.exec(['start', 'ms-settings:regionlanguage']);
         }
@@ -46,6 +137,7 @@ const list = [
         name: '通知',
         icon: '/imgs/windows-setting.png',
         feature: [],
+        self: false,
         setup: () => {
             CLI.exec(['start', 'ms-settings:notifications']);
         }
@@ -54,6 +146,7 @@ const list = [
         name: '睡眠',
         icon: '/imgs/sleep.png',
         feature: [],
+        self: false,
         setup: () => {
             CLI.exec(['shutdown', '-h']);
         }
@@ -61,6 +154,7 @@ const list = [
         name: '关机',
         icon: '/imgs/shutdown.png',
         feature: [],
+        self: false,
         setup: async () => {
             let ret = await Dialog.confirm('确定要执行【关机】？', "Ombra", 'warning');
             if (ret) {
@@ -71,6 +165,7 @@ const list = [
         name: '重启',
         icon: '/imgs/reboot.png',
         feature: [],
+        self: false,
         setup: async () => {
             let ret = await Dialog.confirm('确定要执行【重启】？', "Ombra", 'warning');
             if (ret) {
@@ -81,6 +176,7 @@ const list = [
         name: '注销',
         icon: '/imgs/logout.png',
         feature: [],
+        self: false,
         setup: async () => {
             let ret = await Dialog.confirm('确定执行【注销】，退出当前账户登录？', "Ombra", 'warning');
             if (ret) {
@@ -92,6 +188,7 @@ const list = [
         name: '文件资源管理器',
         icon: '/imgs/explorer.png',
         feature: [],
+        self: false,
         setup: () => {
             CLI.exec(['explorer']);
         }
@@ -99,6 +196,7 @@ const list = [
         name: '锁屏',
         icon: '/imgs/lock.png',
         feature: [],
+        self: false,
         setup: () => {
             CLI.exec(['rundll32.exe', 'user32.dll,LockWorkStation']);
         }
@@ -106,6 +204,7 @@ const list = [
         name: '回收站',
         icon: '/imgs/recyclebin.png',
         feature: [],
+        self: false,
         setup: () => {
             CLI.exec(['start', 'shell:RecycleBinFolder']);
         }
@@ -113,6 +212,7 @@ const list = [
         name: 'CMD',
         icon: '/imgs/cmd.png',
         feature: ['explorer'],
+        self: false,
         setup: () => {
             let features = Ombra.get_features();
             let text = Ombra.get_text();
@@ -126,6 +226,7 @@ const list = [
         name: 'PowerShell',
         icon: '/imgs/powershell.png',
         feature: ['explorer'],
+        self: false,
         setup: () => {
             let features = Ombra.get_features();
             let text = Ombra.get_text();
@@ -140,6 +241,7 @@ const list = [
         name: '系统属性环境变量',
         icon: '/imgs/rundll32.png',
         feature: [''],
+        self: false,
         setup: () => {
             CLI.exec(['start', 'SystemPropertiesAdvanced'])
         }
@@ -148,39 +250,9 @@ const list = [
         name: '编辑用户环境变量',
         icon: '/imgs/rundll32.png',
         feature: [''],
+        self: false,
         setup: () => {
             CLI.exec(['start', 'rundll32', 'sysdm.cpl,EditEnvironmentVariables'])
         }
     }
 ];
-
-export async function load_sys_app() {
-    //仅限主窗口执行加载app代码
-    if (Window.label != "MainWindow") {
-        return;
-    }
-    //加载系统应用功能
-    for (let app of list) {
-        add_app(app.name, '', app.icon, app.feature, false, app.setup, false, '');
-    }
-    //加载用户安装的应用
-    let apps = await App.get_all();
-    for (let i = 0; i < apps.length; i++) {
-        let feature: string[] = [];
-        if (apps[i].name == 'Visual Studio Code') {
-            feature.push('explorer');
-        }
-        let exist = await File.exists(apps[i].icon);
-        let icon_url = exist ? Url.convert(apps[i].icon) : "/logo.png";
-        add_app(apps[i].name, '', icon_url, feature, false, () => {
-            let features = Ombra.get_features();
-            let text = Ombra.get_text();
-            if (features.includes('explorer')) {
-                CLI.exec(['start', apps[i].start, text])
-            } else {
-                CLI.exec(['start', apps[i].start])
-            }
-        }, false, '');
-
-    }
-};

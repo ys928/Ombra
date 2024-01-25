@@ -1,6 +1,5 @@
 <template>
     <div class="FileSearch">
-        <AppTitlebar :id="app_file_search.id" :text="search_content"></AppTitlebar>
         <Search ref="vue_search" @fun_search="fun_search" @fun_exit="fun_exit"></Search>
         <Result ref="vue_result" :last_cnt="last_search.name" :last_mode="last_search.mode" :last_ext="last_search.ext"
             @fun_set_pop_menu="fun_set_pop_menu" @fun_search="fun_search" @fun_complete_search="is_searching = false">
@@ -17,8 +16,6 @@
 <script setup lang="ts">
 import { invoke } from '@tauri-apps/api/tauri';
 import { Ref, reactive, ref, watch } from 'vue';
-import AppTitlebar from '~/components/AppTitlebar.vue'
-import app_file_search from './App'
 import PopMenu from './unit/PopMenu.vue'
 import Search from './unit/Search.vue';
 import Statusbar from './unit/Statusbar.vue';
@@ -33,7 +30,6 @@ type FileInfo = {
     isdir: boolean,
 }
 
-const search_content = ref("");
 const div_pop_menu = ref() as Ref<HTMLElement>
 //当前是否处于缓存数据状态
 const is_processing = ref(false);
@@ -135,8 +131,8 @@ function fun_process(status: boolean) {
   
 <style scoped lang="less">
 .FileSearch {
-    height: 100vh;
-    width: 100vw;
+    height: 100%;
+    width: 100%;
     overflow: hidden;
     display: flex;
     flex-direction: column;

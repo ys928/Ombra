@@ -1,17 +1,10 @@
 <script setup lang="ts">
-import AppTitlebar from '~/components/AppTitlebar.vue'
-import App from './App'
 import { recommand_urls } from './App'
-import { ref } from 'vue';
-
-const search_content = ref('');
-
 
 </script>
 
 <template>
     <div class="WebQuickOpen">
-        <AppTitlebar :id="App.id" :text="search_content"></AppTitlebar>
         <div class="Content">
             <div class="cate">
                 <div class="item">通用</div>

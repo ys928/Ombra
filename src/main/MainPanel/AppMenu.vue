@@ -1,42 +1,12 @@
-<template>
-    <div class="AppMenu" @click="props.main_input.focus()">
-        <div class="SearchResult" v-if="search_result_list.length != 0">
-            <div class="title" @click="fun_expand">
-                <span>查找工具</span>
-                <span>
-                    <span>{{ search_result_is_expand ? '折叠' : '展开' }}</span>
-                    <span>({{ search_count }})</span>
-                </span>
-            </div>
-            <div class="items">
-                <div v-for="(item, index) in search_result_list" class="item"
-                    :class="{ 'active': index == props.cur_focus_app }" @click="fun_open_app(item, true)">
-                    <img :src="item.icon" draggable="false">
-                    <div class="name" v-html="item.show_name"></div>
-                </div>
-            </div>
-        </div>
-        <div class="RecommandResult" v-if="recommend_list.length != 0">
-            <div class="title">
-                <span>推荐工具</span>
-            </div>
-            <div class="items">
-                <div v-for="(item, index) in recommend_list" class="item"
-                    :class="{ 'active': recommand_item_is_active(index) }" @click="fun_open_app(item, false)">
-                    <img :src="item.icon" draggable="false">
-                    <div class="name"> <span>{{ item.name }}</span> </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</template>
-
 <script setup lang="ts">
-import { nextTick, onMounted, reactive, ref, watch } from 'vue';
-import { get_app_list, write_config_item, type AppInfo, read_config_item, get_span } from '~/global'
+import { nextTick, onMounted, reactive, ref } from 'vue';
 import Path from '~/api/path'
 import Window from '~/api/window'
 import Ombra from '~/api/ombra';
+import Config from '~/api/config';
+import Tools from '~/api/tools';
+import { type AppInfo } from '~/api/app';
+import App from '~/api/app'
 const props = defineProps(['main_input', 'search_content', 'cur_focus_app']);
 const emit = defineEmits(['update:cur_focus_app']);
 
@@ -45,7 +15,6 @@ interface AppInfoExt extends AppInfo {
     show_name: string, //要显示的名字
 }
 
-const app_list = get_app_list(); //所有应用列表
 
 const search_result_list = reactive([]) as Array<AppInfoExt>; //每次的搜索结果
 
@@ -60,7 +29,8 @@ let search_result_is_expand = ref(false); //记录搜索结果是否为展开状
 let app_setup_content = ''; //点击app时向其中传入的文本内容
 
 onMounted(async () => {
-    let appinfo = await read_config_item('appinfo');
+    let appinfo = await Config.read_item('appinfo');
+    const app_list = await App.get_applist();
     if (appinfo == undefined) {
         appinfo = [];
         for (let i = 0; i < app_list.length; i++) {
@@ -88,19 +58,19 @@ onMounted(async () => {
             }
         }
     }
-    write_config_item('appinfo', appinfo);
+    Config.write_item('appinfo', appinfo);
     app_list.sort((a, b) => {
         return a.weight - b.weight;
     });
     search(); //初始化操作
 });
 
-//解决本地应用延迟加载未显示的问题
-let app_load_timer: string | number | NodeJS.Timeout | undefined;
-watch(() => app_list.length, () => {
-    if (app_load_timer) clearTimeout(app_load_timer);
-    app_load_timer = setTimeout(search, 100);
-})
+// //解决本地应用延迟加载未显示的问题
+// let app_load_timer: string | number | NodeJS.Timeout | undefined;
+// watch(() => app_list.length, () => {
+//     if (app_load_timer) clearTimeout(app_load_timer);
+//     app_load_timer = setTimeout(search, 100);
+// })
 
 function click_app() {
     if (search_result_list.length == 0) {
@@ -262,6 +232,7 @@ function adjust_height() {
 }
 
 async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
+    const app_list = await App.get_applist();
     for (let i = 0; i < app_list.length; i++) {
         if (app_list[i].name == app.name) {
             app_list[i].weight += 1;
@@ -284,7 +255,7 @@ async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
             appinfo[i - 1].weight = appinfo[i].weight + 3;
         }
     }
-    write_config_item('appinfo', appinfo);
+    Config.write_item('appinfo', appinfo);
 
     if (sea_of_rec) {
         Ombra.set_text('');
@@ -295,12 +266,6 @@ async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
     }
 
     Ombra.set_appid(app.id);
-    //如果是插件应用，保存插件代码文件位置
-    if (app.plugin_index.length == 0) {
-        Ombra.set_plugin_index('');
-    } else {
-        Ombra.set_plugin_index(app.plugin_index);
-    }
     app.setup();
     if (!app.self) return;
     Window.to_app(app.id);
@@ -308,6 +273,7 @@ async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
 let old_search_content = "";
 //由父组件触发搜索事件
 async function search(init = false) {
+    const app_list = await App.get_applist();
     //如果搜索内容变化，则重新折叠面板
     if (old_search_content != props.search_content) {
         old_search_content = props.search_content;
@@ -376,7 +342,7 @@ async function test_name_match(app: AppInfo, search = '') {
     if (search.length == 0) {
         let appExt: AppInfoExt = {
             is_match: true,
-            show_name: get_span(appName, 'normal'),
+            show_name: Tools.get_span(appName, 'normal'),
             ...app
         };
         return appExt;
@@ -385,9 +351,9 @@ async function test_name_match(app: AppInfo, search = '') {
     //直接搜索
     let pos = appName.toLocaleLowerCase().indexOf(search.toLocaleLowerCase());
     if (pos != -1) {
-        let s = get_span(appName.substring(0, pos), 'normal');
-        s += get_span(appName.substring(pos, pos + search.length), 'match');
-        s += get_span(appName.substring(pos + search.length), 'normal');
+        let s = Tools.get_span(appName.substring(0, pos), 'normal');
+        s += Tools.get_span(appName.substring(pos, pos + search.length), 'match');
+        s += Tools.get_span(appName.substring(pos + search.length), 'normal');
         let weight = app.weight;
         if (pos == 0) { //if in header
             weight += 3;
@@ -406,7 +372,7 @@ async function test_name_match(app: AppInfo, search = '') {
             icon: app.icon,
             feature: app.feature,
             only_feature: app.only_feature,
-            plugin_index: app.plugin_index,
+            component: app.component,
             setup: app.setup
         };
         return appExt;
@@ -425,10 +391,10 @@ async function test_name_match(app: AppInfo, search = '') {
                 let s = '';
                 for (let i = 0; i < words.length; i++) {
                     if (i >= pos && i < pos + props.search_content.length) {
-                        s += get_span(words[i][0], 'match');
-                        s += get_span(words[i].substring(1) + ' ', 'normal');
+                        s += Tools.get_span(words[i][0], 'match');
+                        s += Tools.get_span(words[i].substring(1) + ' ', 'normal');
                     } else {
-                        s += get_span(words[i] + ' ', 'normal');
+                        s += Tools.get_span(words[i] + ' ', 'normal');
                     }
                 }
                 let weight = app.weight;
@@ -449,7 +415,7 @@ async function test_name_match(app: AppInfo, search = '') {
                     icon: app.icon,
                     feature: app.feature,
                     only_feature: app.only_feature,
-                    plugin_index: app.plugin_index,
+                    component: app.component,
                     setup: app.setup
                 };
                 return appExt;
@@ -467,9 +433,9 @@ async function test_name_match(app: AppInfo, search = '') {
                     let py = await Ombra.to_pinyin(c); //将其转化为拼音
                     //如果该汉字的拼音以搜索的字符串作为开头，则表示匹配成功
                     if (py[0].indexOf(search.toLocaleLowerCase()) == 0) {
-                        s += get_span(appName.substring(0, index), 'normal');
-                        s += get_span(appName.substring(index, index + 1), 'match');
-                        s += get_span(appName.substring(index + 1), 'normal');
+                        s += Tools.get_span(appName.substring(0, index), 'normal');
+                        s += Tools.get_span(appName.substring(index, index + 1), 'match');
+                        s += Tools.get_span(appName.substring(index + 1), 'normal');
                         f = true;
                         break;
                     }
@@ -494,7 +460,7 @@ async function test_name_match(app: AppInfo, search = '') {
                     icon: app.icon,
                     feature: app.feature,
                     only_feature: app.only_feature,
-                    plugin_index: app.plugin_index,
+                    component: app.component,
                     setup: app.setup
                 };
                 return appExt;
@@ -517,9 +483,9 @@ async function test_name_match(app: AppInfo, search = '') {
             let pos = initials_str.indexOf(search.toLowerCase());
             let s = '';
             if (pos != -1) { //如果匹配到了
-                s += get_span(appName.substring(0, pos), 'normal');
-                s += get_span(appName.substring(pos, pos + search.length), 'match');
-                s += get_span(appName.substring(pos + search.length), 'normal');
+                s += Tools.get_span(appName.substring(0, pos), 'normal');
+                s += Tools.get_span(appName.substring(pos, pos + search.length), 'match');
+                s += Tools.get_span(appName.substring(pos + search.length), 'normal');
                 let weight = app.weight;
                 if (pos == 0) { //if in header
                     weight += 3;
@@ -534,7 +500,7 @@ async function test_name_match(app: AppInfo, search = '') {
                     icon: app.icon,
                     feature: app.feature,
                     only_feature: app.only_feature,
-                    plugin_index: app.plugin_index,
+                    component: app.component,
                     setup: app.setup
                 };
                 return appExt;
@@ -545,7 +511,7 @@ async function test_name_match(app: AppInfo, search = '') {
     //没有匹配项的返回结果
     let appExt: AppInfoExt = {
         is_match: false,
-        show_name: get_span(appName, 'normal'),
+        show_name: Tools.get_span(appName, 'normal'),
         ...app
     };
     return appExt;
@@ -600,6 +566,39 @@ defineExpose({
 });
 
 </script>
+
+<template>
+    <div class="AppMenu" @click="props.main_input.focus()">
+        <div class="SearchResult" v-if="search_result_list.length != 0">
+            <div class="title" @click="fun_expand">
+                <span>查找工具</span>
+                <span>
+                    <span>{{ search_result_is_expand ? '折叠' : '展开' }}</span>
+                    <span>({{ search_count }})</span>
+                </span>
+            </div>
+            <div class="items">
+                <div v-for="(item, index) in search_result_list" class="item"
+                    :class="{ 'active': index == props.cur_focus_app }" @click="fun_open_app(item, true)">
+                    <img :src="item.icon" draggable="false">
+                    <div class="name" v-html="item.show_name"></div>
+                </div>
+            </div>
+        </div>
+        <div class="RecommandResult" v-if="recommend_list.length != 0">
+            <div class="title">
+                <span>推荐工具</span>
+            </div>
+            <div class="items">
+                <div v-for="(item, index) in recommend_list" class="item"
+                    :class="{ 'active': recommand_item_is_active(index) }" @click="fun_open_app(item, false)">
+                    <img :src="item.icon" draggable="false">
+                    <div class="name"> <span>{{ item.name }}</span> </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
 
 <style scoped lang="less">
 .AppMenu {

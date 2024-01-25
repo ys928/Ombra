@@ -2,9 +2,9 @@
 import { listen } from '@tauri-apps/api/event';
 import { KIDll, KIText, KIFolder, KITypeScript, KIHtml, KIPdf, KIJs, KIJson, KIUnknowFile, KIImage } from '~/kui'
 import { computed, reactive, ref } from 'vue';
-import { get_span, time_to_str } from '~/global';
 import Path from '~/api/path'
 import Explorer from '~/api/explorer';
+import Tools from '~/api/tools';
 
 type FileInfo = {
     name: string,
@@ -59,20 +59,20 @@ function handle_scroll(e: Event) {
 function fun_show_file_name(name: string, ext: string, isdir: boolean) {
     if (props.last_mode == 'normal') {
         let pos = name.toLowerCase().indexOf(props.last_cnt.toLowerCase());
-        let s = get_span(name.substring(0, pos), 'normal');
-        s += get_span(name.substring(pos, pos + props.last_cnt.length), 'light');
-        s += get_span(name.substring(pos + props.last_cnt.length), 'normal');
+        let s = Tools.get_span(name.substring(0, pos), 'normal');
+        s += Tools.get_span(name.substring(pos, pos + props.last_cnt.length), 'light');
+        s += Tools.get_span(name.substring(pos + props.last_cnt.length), 'normal');
         if (isdir) {
             return s;
         }
         if (props.last_ext.length > 0) {
             let pos = ext.toLocaleLowerCase().indexOf(props.last_ext);
-            s += get_span(".", 'normal');
-            s += get_span(ext.substring(0, pos), 'normal');
-            s += get_span(ext.substring(pos, pos + props.last_ext.length), 'light');
-            s += get_span(ext.substring(pos + props.last_ext.length), 'normal');
+            s += Tools.get_span(".", 'normal');
+            s += Tools.get_span(ext.substring(0, pos), 'normal');
+            s += Tools.get_span(ext.substring(pos, pos + props.last_ext.length), 'light');
+            s += Tools.get_span(ext.substring(pos + props.last_ext.length), 'normal');
         } else {
-            s += get_span('.' + ext, 'normal');
+            s += Tools.get_span('.' + ext, 'normal');
         }
         return s;
     } else if (props.last_mode == 'exact') {
@@ -80,9 +80,9 @@ function fun_show_file_name(name: string, ext: string, isdir: boolean) {
         if (props.last_ext.length > 0) {
             show_name += '.' + ext;
         }
-        return get_span(show_name, 'light');
+        return Tools.get_span(show_name, 'light');
     }
-    return get_span(name, 'normal');
+    return Tools.get_span(name, 'normal');
 }
 async function fun_dbclick(item: FileInfo) {
     let p = item.name;
@@ -150,7 +150,7 @@ const file_type = computed(() => (ext: string) => {
                 <span v-html="fun_show_file_name(item.name, item.ext, item.isdir)"></span>
             </span>
             <span class="path" :title="item.path">{{ item.path }}</span>
-            <span class="time">{{ time_to_str(item.time) }}</span>
+            <span class="time">{{ Tools.time_to_str(item.time) }}</span>
         </div>
     </div>
 </template>

@@ -22,13 +22,13 @@
 <script setup lang="ts">
 import { Ref, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import AppMenu from "./MainPanel/AppMenu.vue";
-import { read_config_item, set_shortcut, write_config_item } from '~/global'
 import Setting from './MainPanel/Setting.vue';
 import { onTextUpdate, readText, startListening } from "tauri-plugin-clipboard-api";
 import { UnlistenFn, listen } from "@tauri-apps/api/event";
 import Window from "~/api/window";
 import GlobalShortcut from "~/api/globalShortcut";
 import Explorer from "~/api/explorer";
+import Config from "~/api/config";
 const main_input = ref() as Ref<HTMLInputElement>;
 const measure = ref() as Ref<HTMLElement>;
 const search_content = ref("");
@@ -84,7 +84,7 @@ onMounted(async () => {
     Window.set_size(170);
     main_input.value.focus();
     //读取唤出面板的快捷键
-    callout_short_key.value = await read_config_item('callout');
+    callout_short_key.value = await Config.read_item('callout');
     if (callout_short_key.value == undefined) {
         callout_short_key.value = 'CommandOrControl+Shift+A';
         set_callout_shortkey('CommandOrControl+Shift+A');
@@ -92,7 +92,7 @@ onMounted(async () => {
         set_callout_shortkey(callout_short_key.value);
     }
     //读取搜索栏占位符
-    let placeholder = await read_config_item('placeholder');
+    let placeholder = await Config.read_item('placeholder');
     if (placeholder == undefined || placeholder.length == 0) {
         placeholder = 'Hi，Ombra！';
         search_input_placeholder.value = 'Hi，Ombra！';
@@ -125,8 +125,7 @@ onUnmounted(async () => {
 })
 
 async function set_callout_shortkey(shortkey: string) {
-    await unset_callout_shortkey();
-    set_shortcut(shortkey, async () => {
+    GlobalShortcut.auto_set(shortkey, async () => {
         if (is_show.value) {
             is_show.value = false;
         } else {
@@ -138,20 +137,14 @@ async function set_callout_shortkey(shortkey: string) {
                 main_input.value.select();
             }
         }
-    })
-    write_config_item('callout', shortkey);
+    });
+    Config.write_item('callout', shortkey);
     callout_short_key.value = shortkey;
 }
 
-async function unset_callout_shortkey() {
-    const isreg = await GlobalShortcut.is_registered(callout_short_key.value);
-    if (isreg) {
-        await GlobalShortcut.unregister(callout_short_key.value);
-    }
-}
 async function set_search_input_placeholder(placeholder: string) {
     search_input_placeholder.value = placeholder;
-    write_config_item('placeholder', search_input_placeholder.value);
+    Config.write_item('placeholder', search_input_placeholder.value);
 }
 
 async function fun_keydown(e: KeyboardEvent) {

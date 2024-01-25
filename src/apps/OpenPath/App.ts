@@ -7,7 +7,7 @@ export default {
     icon: '/imgs/fileexplorer.png',
     feature: ['dir_path', 'file_path'],
     only_feature: true,
-    component: undefined,
+    component: null,
     self: false,
     setup: () => {
         let text = Ombra.get_text();

@@ -88,6 +88,7 @@ function get_name_ext() {
 <style scoped lang="less">
 .Search {
     position: relative;
+    background-color: #191919;
 
     input {
         width: 100%;

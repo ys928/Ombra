@@ -1,6 +1,5 @@
 <template>
     <div class="DevelopTool">
-        <AppTitlebar></AppTitlebar>
         <iframe v-if="show_plugin_index" id="plugin" :src="plugin_index" frameborder="0"></iframe>
         <div class="menu">
             <div class="item" @click="fun_choose">选择</div>
@@ -14,7 +13,6 @@
 import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
-import AppTitlebar from '~/components/AppTitlebar.vue';
 import File from '~/api/file'
 import Window from '~/api/window';
 import Notification from '~/api/notification';

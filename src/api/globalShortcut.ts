@@ -26,4 +26,16 @@ export default class GlobalShortcut {
     static is_registered(shortkey: string) {
         return globalShortcut.isRegistered(shortkey);
     }
+    /**
+     * @description 自动注册全局快捷键，如果该快捷键已被注册，会尝试先将其取消注册、然后再注册
+     * @param shortkey 要注册的快捷键
+     * @param func 当快捷键按下后的回调函数
+     */
+    static async auto_set(shortkey: string, func: Function) {
+        const isreg = await GlobalShortcut.is_registered(shortkey);
+        if (isreg) {
+            await GlobalShortcut.unregister(shortkey);
+        }
+        GlobalShortcut.register(shortkey, func);
+    }
 }

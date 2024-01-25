@@ -1,26 +1,11 @@
-<template>
-    <div class="AppTitlebar" data-tauri-drag-region>
-        <div class="Icon">
-            <img src="/logo.png">
-        </div>
-        <div class="mmc">
-            <KISeparate class="sep" :w="12" :h="12" @click="winSeparate" v-if="App.is_embed()" title="分离窗口">
-            </KISeparate>
-            <KIMinus class="min" w="12" h="12" @click="WinMin"></KIMinus>
-            <KIFullScreen class="max" w="12" h="12" @click="WinTogMax"></KIFullScreen>
-            <KIClose class="close" w="12" h="12" @click="WinClose"></KIClose>
-        </div>
-    </div>
-</template>
-
 <script setup lang="ts">
 import { KIMinus, KIFullScreen, KIClose, KISeparate } from '~/kui'
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import { read_config_item, set_shortcut, write_config_item } from '~/global';
 import Window from '~/api/window';
 import GlobalShortcut from '~/api/globalShortcut';
 import Ombra from '~/api/ombra';
 import App from '~/api/app';
+import Config from '~/api/config';
 //窗口是否显示
 const is_show = ref(true);
 const callout_short_key = ref('');
@@ -62,7 +47,7 @@ onMounted(async () => {
     Window.shadow();
     if (Window.is_main()) {
         //读取唤出面板的快捷键
-        callout_short_key.value = await read_config_item('callout');
+        callout_short_key.value = await Config.read_item('callout');
         if (callout_short_key.value == undefined) {
             callout_short_key.value = 'CommandOrControl+Shift+A';
             set_callout_shortkey('CommandOrControl+Shift+A');
@@ -93,28 +78,36 @@ async function WinTogMax() {
 }
 
 async function set_callout_shortkey(shortkey: string) {
-    await unset_callout_shortkey();
-    set_shortcut(shortkey, async () => {
+    GlobalShortcut.auto_set(shortkey, async () => {
         if (is_show.value) {
             is_show.value = false;
         } else {
             is_show.value = true;
         }
     })
-    write_config_item('callout', shortkey);
+    Config.write_item('callout', shortkey);
     callout_short_key.value = shortkey;
 }
 
-async function unset_callout_shortkey() {
-    const isreg = await GlobalShortcut.is_registered(callout_short_key.value);
-    if (isreg) {
-        await GlobalShortcut.unregister(callout_short_key.value);
-    }
-}
 </script>
 
+<template>
+    <div class="Titlebar" data-tauri-drag-region>
+        <div class="Icon">
+            <img src="/logo.png">
+        </div>
+        <div class="mmc">
+            <KISeparate class="sep" :w="12" :h="12" @click="winSeparate" v-if="App.is_embed()" title="分离窗口">
+            </KISeparate>
+            <KIMinus class="min" w="12" h="12" @click="WinMin"></KIMinus>
+            <KIFullScreen class="max" w="12" h="12" @click="WinTogMax"></KIFullScreen>
+            <KIClose class="close" w="12" h="12" @click="WinClose"></KIClose>
+        </div>
+    </div>
+</template>
+
 <style scoped lang="less">
-.AppTitlebar {
+.Titlebar {
     height: 35px;
     line-height: 35px;
     display: flex;
