@@ -112,6 +112,7 @@ async function set_callout_shortkey(shortkey: string) {
     line-height: 35px;
     display: flex;
     justify-content: space-between;
+    background-color: #191919;
 
     .Icon {
         height: 35px;

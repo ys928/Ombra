@@ -23,22 +23,29 @@ type SysAppInfo = {
 
 //所有可用的应用列表
 const app_list = reactive([]) as Array<AppInfo>
-
 export default class App {
 
     /**
      * @description 获取当前系统所有已安装的app
      * @returns 返回app列表数据，每一项包含名称：name、路径：path、图标位置：icon
      */
-    static async get_all() {
-        const get_apps_result = new Promise<Array<SysAppInfo>>((resolve) => {
-            //获取所有遍历到的程序
-            listen<Array<SysAppInfo>>('get_all_app_result', (e) => {
-                resolve(e.payload)
+    static async get_sys_app(reload = false) {
+        let app_sys_list = localStorage.getItem('app_sys_list');
+        if (app_sys_list == null || reload) {
+            const get_apps_result = new Promise<Array<SysAppInfo>>((resolve) => {
+                //获取所有遍历到的程序
+                listen<Array<SysAppInfo>>('get_all_app_result', (e) => {
+                    resolve(e.payload)
+                });
             });
-        });
-        invoke('get_all_app');
-        return await get_apps_result;
+            invoke('get_all_app');
+            let apps_sys = await get_apps_result;
+            let str_apps_sys = JSON.stringify(apps_sys);
+            localStorage.setItem('app_sys_list', str_apps_sys);
+            return apps_sys;
+        } else {
+            return JSON.parse(app_sys_list) as Array<SysAppInfo>;
+        }
     }
 
     /**

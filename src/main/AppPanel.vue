@@ -12,9 +12,7 @@ let iframe: HTMLIFrameElement;
 
 onMounted(async () => {
     let id = route.query.id;
-    console.log(id);
     let app_list = await App.get_applist();
-    console.log(app_list)
     for (let a of app_list) {
         if (a.id != id) continue;
         console.log(a);
@@ -31,7 +29,6 @@ onMounted(async () => {
             window.addEventListener('message', handle_plugin);
 
         } else {
-            console.log(11);
             const el = h(a.component);
             render(el, app_content.value);
         }

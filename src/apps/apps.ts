@@ -71,7 +71,7 @@ export async function load_apps() {
         App.add(app.name, '', app.icon, app.feature, app.self, null, app.setup, false);
     }
     //加载用户安装的应用
-    let apps = await App.get_all();
+    let apps = await App.get_sys_app();
     for (let i = 0; i < apps.length; i++) {
         let feature: string[] = [];
         if (apps[i].name == 'Visual Studio Code') {
