@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 
-import { listen } from '@tauri-apps/api/event';
+import { UnlistenFn, listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
 import File from '~/api/file'
@@ -28,9 +28,20 @@ const show_plugin_index = ref(true);
 
 let iframe: HTMLIFrameElement;
 
-onMounted(() => {
+let unlisten: UnlistenFn | undefined;
+
+onMounted(async () => {
     iframe = document.querySelector('#plugin') as HTMLIFrameElement;
     window.addEventListener('message', handle_plugin);
+
+    unlisten = await listen<FileChange>('file_watch', async (e) => {
+        if (e.payload.kind == 'modify' && e.payload.files.includes(raw_plugin_index)) {
+            //文件一旦变化，则自动刷新页面数据
+            show_plugin_index.value = false;
+            await nextTick();
+            show_plugin_index.value = true;
+        }
+    })
 });
 
 onUnmounted(() => {
@@ -38,6 +49,7 @@ onUnmounted(() => {
     if (raw_plugin_index.length > 0) {
         invoke('unwatch_dir', { path: raw_plugin_index });
     }
+    if (unlisten) unlisten();
 });
 
 async function handle_plugin(e: MessageEvent) {
@@ -76,14 +88,7 @@ async function fun_choose() {
     invoke("watch_dir", { path: paths });
 }
 
-listen<FileChange>('file_watch', async (e) => {
-    if (e.payload.kind == 'modify' && e.payload.files.includes(raw_plugin_index)) {
-        //文件一旦变化，则自动刷新页面数据
-        show_plugin_index.value = false;
-        await nextTick();
-        show_plugin_index.value = true;
-    }
-})
+
 async function fun_open_dev() {
     if (Window.is_main()) {
         let permissionGranted = await Notification.is_grant();

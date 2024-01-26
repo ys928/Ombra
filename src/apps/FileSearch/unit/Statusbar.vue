@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { invoke } from '@tauri-apps/api';
-import { listen } from '@tauri-apps/api/event';
+import { UnlistenFn, listen } from '@tauri-apps/api/event';
 import { onMounted, onUnmounted, ref } from 'vue';
 const emits = defineEmits(['fun_begin_idx', 'fun_search', 'fun_process'])
 type TaskProgress = {
@@ -20,35 +20,41 @@ const file_num = ref(0);
 const use_seconds = ref();
 const task_status = ref();
 
+let timerInterval: NodeJS.Timeout | undefined;
+let unlisten: UnlistenFn | undefined;
 onMounted(async () => {
-    setInterval(async () => {
+    file_num.value = await invoke<number>('get_file_catch_info');
+
+    timerInterval = setInterval(async () => {
         let num = await invoke<number>('get_file_catch_info');
         if (file_num.value != 0 && num == 0) {
             return;
         }
         file_num.value = num;
-    }, 15000);
+    }, 10 * 1000);
+
+    //获取遍历进度
+    unlisten = await listen<TaskProgress>('walk_files_process', async (e) => {
+        // 初始化计时器变量
+        if (e.payload.status == 'walking') { //正在遍历文件夹
+            task_status.value = '正在索引文件：' + e.payload.data;
+            emits('fun_process', true);
+        } else if (e.payload.status == 'begin_save') {
+            task_status.value = '正在缓存：' + e.payload.data;
+        } else if (e.payload.status == 'end') {
+            task_status.value = '已完成数据缓存';
+            emits('fun_process', false);
+            emits('fun_search', '', '', 'normal', 0);
+        }
+    })
 });
 
 onUnmounted(() => {
+    clearInterval(timerInterval);
+    if (unlisten) unlisten();
 });
 
-let timerInterval: string | number | NodeJS.Timeout | undefined;
-//获取遍历进度
-listen<TaskProgress>('walk_files_process', async (e) => {
-    // 初始化计时器变量
-    if (e.payload.status == 'walking') { //正在遍历文件夹
-        task_status.value = '正在索引文件：' + e.payload.data;
-        emits('fun_process', true);
-    } else if (e.payload.status == 'begin_save') {
-        task_status.value = '正在缓存：' + e.payload.data;
-    } else if (e.payload.status == 'end') {
-        task_status.value = '已完成数据缓存';
-        emits('fun_process', false);
-        clearInterval(timerInterval);
-        emits('fun_search', '', '', 'normal', 0);
-    }
-})
+
 </script>
 
 

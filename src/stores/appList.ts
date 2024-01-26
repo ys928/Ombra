@@ -1,4 +1,4 @@
-import { Component, reactive } from "vue";
+import { Component, markRaw, reactive } from "vue";
 import Window from "~/api/window";
 import { load_apps } from '~/apps/apps'
 export interface AppInfo {
@@ -35,6 +35,7 @@ export default class AppListStore {
     * @param only_feature //是否只在触发特点时才显示
     */
     static add(name: string, id: string, icon: string, feature: Array<string>, self: boolean, component: Component | string | null, setup_callback: Function, only_feature = false) {
+
         applist.push({
             name: name,
             icon: icon,
@@ -42,7 +43,7 @@ export default class AppListStore {
             only_feature: only_feature,
             weight: 0,
             id: id,
-            component: component,
+            component: component == null || typeof component == 'string' ? component : markRaw(component),
             self: self,
             setup: () => {
                 if (self) {

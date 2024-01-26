@@ -1,4 +1,4 @@
-import Directory from "./directory";
+import Directory from "./dir";
 import Path from "./path";
 import File from "./file";
 async function read_config() {

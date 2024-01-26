@@ -7,6 +7,10 @@ import Window from "~/api/window";
 import GlobalShortcut from "~/api/globalShortcut";
 import Explorer from "~/api/explorer";
 import Config from "~/api/config";
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
 const main_input = ref() as Ref<HTMLInputElement>;
 const measure = ref() as Ref<HTMLElement>;
 const search_content = ref("");
@@ -25,11 +29,7 @@ let fun_eve_focus = Window.event_focus('MainWindow', () => {
     is_show.value = true;
 });
 
-listen('single-instance', () => {
-    if (is_show.value = false) {
-        is_show.value = true;
-    }
-})
+let unlisten_single_instance: UnlistenFn | undefined;
 
 let timer: NodeJS.Timeout | undefined;
 watch(is_show, () => {
@@ -89,6 +89,12 @@ onMounted(async () => {
         }, 1000);
     });
     unlistenClipboard = await startListening();
+
+    unlisten_single_instance = await listen('single-instance', () => {
+        if (is_show.value = false) {
+            is_show.value = true;
+        }
+    })
 });
 
 onUnmounted(async () => {
@@ -100,6 +106,7 @@ onUnmounted(async () => {
     fun_eve_focus.then((fun) => {
         fun();
     });
+    if (unlisten_single_instance) unlisten_single_instance();
 })
 
 async function set_callout_shortkey(shortkey: string) {
@@ -202,7 +209,7 @@ function fun_click_space() {
 
 function fun_open_setting() {
     Window.set_size(600);
-    window.location.href = "/setting";
+    router.push('/setting');
 }
 function fun_ompositionstart() {
     is_ompositioning = true;

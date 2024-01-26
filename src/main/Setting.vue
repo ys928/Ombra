@@ -1,14 +1,20 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import Window from '~/api/window';
 
+const router = useRouter();
 
 onMounted(() => {
 });
 
 
 function fun_to_main() {
-    Window.to_main();
+
+    //跳转到主页面
+    Window.set_size(170);
+    Window.set_resizable(false);
+    router.push(`/`);
 }
 
 </script>

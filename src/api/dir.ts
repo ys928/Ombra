@@ -1,5 +1,5 @@
 import { invoke, path } from "@tauri-apps/api";
-import { listen } from "@tauri-apps/api/event";
+import { UnlistenFn, listen } from "@tauri-apps/api/event";
 type FileInfo = {
     name: string,
     path: string,
@@ -24,8 +24,9 @@ export default class Directory {
      * @returns 返回文件信息列表
      */
     static async walk(path: string, level = 1) {
-        let result = new Promise<Array<FileInfo>>((resolve) => {
-            listen<Array<FileInfo>>('walk_dir_result', (e) => {
+        let unlisten: UnlistenFn | undefined;
+        let result = new Promise<Array<FileInfo>>(async (resolve) => {
+            unlisten = await listen<Array<FileInfo>>('walk_dir_result', (e) => {
                 resolve(e.payload);
             })
         });
@@ -33,6 +34,8 @@ export default class Directory {
             path: path,
             level: level
         });
-        return result;
+        let ret = await result;
+        if (unlisten) unlisten();
+        return ret;
     }
 }

@@ -6,6 +6,10 @@ import GlobalShortcut from '~/api/globalShortcut';
 import Ombra from '~/api/ombra';
 import App from '~/api/app';
 import Config from '~/api/config';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
 //窗口是否显示
 const is_show = ref(true);
 const callout_short_key = ref('');
@@ -13,6 +17,8 @@ const callout_short_key = ref('');
 async function winSeparate() {
     let appid = Ombra.get_appid();
     if (appid.length > 0) {
+        Window.hide();
+        router.push('/');
         Window.new_app(appid);
     }
 }
@@ -68,7 +74,12 @@ onUnmounted(() => {
 });
 //处理程序退出时的情况
 async function WinClose() {
-    Window.close();
+    if (Window.is_main()) {
+        Window.set_size(170);
+        router.push('/');
+    } else {
+        Window.close();
+    }
 }
 async function WinMin() {
     Window.min();

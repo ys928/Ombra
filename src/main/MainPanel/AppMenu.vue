@@ -7,6 +7,7 @@ import Config from '~/api/config';
 import Tools from '~/api/tools';
 import { type AppInfo } from '~/stores/appList';
 import AppListStore from '~/stores/appList';
+import { useRouter } from 'vue-router';
 const props = defineProps(['main_input', 'search_content', 'cur_focus_app']);
 const emit = defineEmits(['update:cur_focus_app']);
 
@@ -14,6 +15,7 @@ interface AppInfoExt extends AppInfo {
     is_match: boolean, //当前是否被匹配上了
     show_name: string, //要显示的名字
 }
+const router = useRouter();
 
 const search_result_list = reactive([]) as Array<AppInfoExt>; //每次的搜索结果
 
@@ -260,7 +262,10 @@ async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
     Ombra.set_appid(app.id);
     app.setup();
     if (!app.self) return;
-    Window.to_app(app.id);
+    //跳转到app页面
+    Window.set_size(600);
+    Window.set_resizable(true);
+    router.push(`/app?id=${app.id}`);
 }
 let old_search_content = "";
 //由父组件触发搜索事件

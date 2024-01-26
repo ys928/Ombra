@@ -16,7 +16,7 @@ onMounted(async () => {
     Window.set_size(600);
     let id = route.query.id;
     let app_list = await AppListStore.get();
-    console.log(app_list);
+    // console.log(app_list);
     for (let a of app_list) {
         if (a.id != id) continue;
         console.log(a);

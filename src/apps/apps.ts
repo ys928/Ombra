@@ -5,7 +5,7 @@ import AppOpenFile from "./OpenFile/App"
 import AppPluginDevelopTool from './PluginDevelopTool/App'
 import { path } from "@tauri-apps/api";
 import File from '~/api/file'
-import Directory from "../api/directory";
+import Directory from "../api/dir";
 import Url from "../api/url";
 import Dialog from "../api/dialog";
 import Ombra from "../api/ombra";

@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { listen } from '@tauri-apps/api/event';
+import { UnlistenFn, listen } from '@tauri-apps/api/event';
 import { KIDll, KIText, KIFolder, KITypeScript, KIHtml, KIPdf, KIJs, KIJson, KIUnknowFile, KIImage } from '~/kui'
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
 import Path from '~/api/path'
 import Explorer from '~/api/explorer';
 import Tools from '~/api/tools';
@@ -39,12 +39,21 @@ function fun_file_item_contextmenu(e: MouseEvent, item: FileInfo) {
 
 let scroll_count = 0;
 
-//获取搜索结果
-listen<Array<FileInfo>>('search_file_result', (e) => {
-    if (e.payload.length < 50) scroll_count = -1;// 到底部了
-    search_result.push(...e.payload);
-    emits('fun_complete_search');
-})
+let unlisten: UnlistenFn | undefined;
+
+onMounted(async () => {
+    //获取搜索结果
+    unlisten = await listen<Array<FileInfo>>('search_file_result', (e) => {
+        if (e.payload.length < 50) scroll_count = -1;// 到底部了
+        search_result.push(...e.payload);
+        emits('fun_complete_search');
+    })
+});
+
+onUnmounted(() => {
+    if (unlisten) unlisten();
+});
+
 
 
 function handle_scroll(e: Event) {

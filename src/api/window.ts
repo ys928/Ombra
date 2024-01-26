@@ -11,12 +11,7 @@ export default class Window {
      * 关闭当前窗口
      */
     static close() {
-        if (appWindow.label == 'MainWindow') {
-            Window.set_size(170);
-            window.location.href = '/';
-        } else {
-            appWindow.close();
-        }
+        appWindow.close();
     }
     /**
      * @description 显示当前窗口
@@ -39,37 +34,11 @@ export default class Window {
         appWindow.toggleMaximize();
     }
     /**
-     * 从插件面板退出、切换回主搜索面板（仅限嵌入模式下可用）
-     */
-    static to_main() {
-        if (appWindow.label == 'MainWindow') {
-            Window.set_size(170);
-            Window.set_resizable(false);
-            window.location.href = '/';
-        }
-    }
-    /**
-     * 
-     */
-    /**
-     * @description 从主搜索面板切换到app面板（大部分情况下应仅限ombra内部使用，且仅嵌入模式下可用）
-     * @param appid app的id
-     */
-    static to_app(appid: string) {
-        if (appWindow.label == 'MainWindow') {
-            Window.set_size(600);
-            Window.set_resizable(true);
-            window.location.href = `/app?id=${appid}`;
-        }
-    }
-    /**
      * @description 从主搜索面板窗口中新开一个app窗口（大部分情况下应仅限ombra内部使用）
      * @param appid app的id
      */
     static new_app(appid: string) {
         if (appWindow.label == 'MainWindow') {
-            appWindow.hide();
-            window.location.href = '/';
             let w = new WebviewWindow(appid, {
                 url: `/app?id=${appid}`,
                 decorations: false,
