@@ -2,7 +2,6 @@ import AppFileSearch from "./FileSearch/App";
 import AppOpenLink from "./OpenLink/App"
 import AppOpenPath from "./OpenPath/App"
 import AppOpenFile from "./OpenFile/App"
-import AppWebQuickOpen from './WebQuickOpen/App'
 import AppPluginDevelopTool from './PluginDevelopTool/App'
 import { path } from "@tauri-apps/api";
 import File from '~/api/file'
@@ -12,31 +11,31 @@ import Dialog from "../api/dialog";
 import Ombra from "../api/ombra";
 import CLI from "../api/cli";
 import App from "../api/app";
+import AppListStore from '~/stores/appList';
+import AppIsinit from "~/stores/appIsInit";
 
 let user_apps_list = [
     AppFileSearch,
     AppOpenLink,
     AppOpenPath,
     AppOpenFile,
-    AppWebQuickOpen,
     AppPluginDevelopTool
 ]
 
 export async function load_apps() {
-    //加载内嵌应用
-    let is_init = localStorage.getItem('is_init');
+    let isinit = AppIsinit.get();
     //加载内嵌应用
     for (let app of user_apps_list) {
-        if (is_init != 'true') {
+        if (!isinit) {
             //@ts-ignore
             if (app.preload) {
                 //@ts-ignore
                 app.preload();
             }
         }
-        App.add(app.name, app.id, app.icon, app.feature, app.self, app.component, app.setup, app.only_feature);
+        AppListStore.add(app.name, app.id, app.icon, app.feature, app.self, app.component, app.setup, app.only_feature);
     }
-    localStorage.setItem('is_init', 'true');
+    AppIsinit.set(true);
 
     //加载插件应用
 
@@ -62,13 +61,13 @@ export async function load_apps() {
                 name = config.name;
             }
         }
-        App.add(name, id, icon, features, true, plugin_index, () => { }, false);
+        AppListStore.add(name, id, icon, features, true, plugin_index, () => { }, false);
     }
 
     //加载系统应用、功能
 
     for (let app of sys_seting_list) {
-        App.add(app.name, '', app.icon, app.feature, app.self, null, app.setup, false);
+        AppListStore.add(app.name, '', app.icon, app.feature, app.self, null, app.setup, false);
     }
     //加载用户安装的应用
     let apps = await App.get_sys_app();
@@ -79,7 +78,7 @@ export async function load_apps() {
         }
         let exist = await File.exists(apps[i].icon);
         let icon_url = exist ? Url.convert(apps[i].icon) : "/logo.png";
-        App.add(apps[i].name, '', icon_url, feature, false, null, () => {
+        AppListStore.add(apps[i].name, '', icon_url, feature, false, null, () => {
             let features = Ombra.get_features();
             let text = Ombra.get_text();
             if (features.includes('explorer')) {

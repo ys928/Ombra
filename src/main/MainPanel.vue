@@ -1,28 +1,6 @@
-<template>
-    <div class="MainPanel">
-        <div class="InputArea">
-            <input class="search" v-model="search_content" ref="main_input" @input="fun_input"
-                @keydown="fun_keydown($event)" @compositionstart="fun_ompositionstart" @compositionend="fun_ompositionend"
-                :placeholder="search_input_placeholder">
-            <div class="space" @mousedown="main_input.focus()" @dblclick="fun_click_space" data-tauri-drag-region></div>
-            <div class="Icon" @click="fun_open_setting">
-                <img src="/logo.png" draggable="false">
-            </div>
-        </div>
-        <Setting v-if="is_show_setting" :set_callout_shortkey="set_callout_shortkey"
-            :set_search_input_placeholder="set_search_input_placeholder" :callout_short_key="callout_short_key"
-            :search_input_placeholder="search_input_placeholder"></Setting>
-        <AppMenu v-else ref="apps_menu" :main_input="main_input" :search_content="search_content"
-            v-model:cur_focus_app="cur_focus_app">
-        </AppMenu>
-        <div class="measure" ref="measure" style="visibility: hidden;"></div>
-    </div>
-</template>
-
 <script setup lang="ts">
 import { Ref, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
 import AppMenu from "./MainPanel/AppMenu.vue";
-import Setting from './MainPanel/Setting.vue';
 import { onTextUpdate, readText, startListening } from "tauri-plugin-clipboard-api";
 import { UnlistenFn, listen } from "@tauri-apps/api/event";
 import Window from "~/api/window";
@@ -142,11 +120,6 @@ async function set_callout_shortkey(shortkey: string) {
     callout_short_key.value = shortkey;
 }
 
-async function set_search_input_placeholder(placeholder: string) {
-    search_input_placeholder.value = placeholder;
-    Config.write_item('placeholder', search_input_placeholder.value);
-}
-
 async function fun_keydown(e: KeyboardEvent) {
     if (e.key == 'ArrowUp') {
         apps_menu.value.move('up');
@@ -228,8 +201,8 @@ function fun_click_space() {
 }
 
 function fun_open_setting() {
-    is_show_setting.value = !is_show_setting.value;
     Window.set_size(600);
+    window.location.href = "/setting";
 }
 function fun_ompositionstart() {
     is_ompositioning = true;
@@ -240,6 +213,24 @@ function fun_ompositionend() {
 }
 
 </script>
+
+<template>
+    <div class="MainPanel">
+        <div class="InputArea">
+            <input class="search" v-model="search_content" ref="main_input" @input="fun_input"
+                @keydown="fun_keydown($event)" @compositionstart="fun_ompositionstart" @compositionend="fun_ompositionend"
+                :placeholder="search_input_placeholder">
+            <div class="space" @mousedown="main_input.focus()" @dblclick="fun_click_space" data-tauri-drag-region></div>
+            <div class="Icon" @click="fun_open_setting">
+                <img src="/logo.png" draggable="false">
+            </div>
+        </div>
+        <AppMenu ref="apps_menu" :main_input="main_input" :search_content="search_content"
+            v-model:cur_focus_app="cur_focus_app">
+        </AppMenu>
+        <div class="measure" ref="measure" style="visibility: hidden;"></div>
+    </div>
+</template>
 
 <style scoped lang="less">
 .MainPanel {

@@ -1,25 +1,16 @@
-<template>
-    <div class="Setting">
-        <div class="callout">
-            <span>快捷键</span> <input v-model="short_key" @keydown="fun_shortkey_input($event)">
-        </div>
-        <div class="placeholder">
-            <span>搜索框占位符</span> <input v-model="search_input_placeholder" @blur="set_placeholder">
-        </div>
-    </div>
-</template>
-
 <script setup lang="ts">
-
 import { onMounted, ref } from 'vue';
-const props = defineProps(['set_callout_shortkey', 'set_search_input_placeholder', 'callout_short_key', 'search_input_placeholder']);
+import Config from '~/api/config';
 
 const short_key = ref('');
 const search_input_placeholder = ref('');
 
 onMounted(async () => {
-    short_key.value = props.callout_short_key.replace('CommandOrControl', 'Ctrl');
-    search_input_placeholder.value = props.search_input_placeholder;
+    //读取唤出面板的快捷键
+    let callout_shortkey = await Config.read_item('callout');
+    short_key.value = callout_shortkey.replace('CommandOrControl', 'Ctrl');
+    //读取搜索栏占位符
+    search_input_placeholder.value = await Config.read_item('placeholder');
 });
 
 async function fun_shortkey_input(e: KeyboardEvent) {
@@ -32,7 +23,7 @@ async function fun_shortkey_input(e: KeyboardEvent) {
     //使用F1-F12注册快捷键
     let rf = /F[1-9][0-2]/g
     if (rf.test(e.key)) {
-        props.set_callout_shortkey(e.key);
+        Config.write_item('callout', e.key);
         return;
     }
     //使用Ctrl+shift+Alt注册快捷键
@@ -46,15 +37,27 @@ async function fun_shortkey_input(e: KeyboardEvent) {
         short_key.value += e.key.toUpperCase();
     }
     let sk = short_key.value.replace('Ctrl', 'CommandOrControl');
-    props.set_callout_shortkey(sk);
+    Config.write_item('callout', sk);
     return;
 }
 
 async function set_placeholder() {
-    props.set_search_input_placeholder(search_input_placeholder.value);
+    Config.write_item('placeholder', search_input_placeholder.value);
 }
 
 </script>
+
+<template>
+    <div class="Setting">
+        <div class="callout">
+            <span>快捷键</span> <input v-model="short_key" @keydown="fun_shortkey_input($event)">
+        </div>
+        <div class="placeholder">
+            <span>搜索框占位符</span> <input v-model="search_input_placeholder" @blur="set_placeholder">
+        </div>
+    </div>
+</template>
+
 
 <style scoped lang="less">
 .Setting {

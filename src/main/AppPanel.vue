@@ -2,17 +2,21 @@
 import { useRoute } from 'vue-router';
 import Titlebar from './AppPanel/Titlebar.vue'
 import { Ref, onMounted, onUnmounted, ref, h, render, nextTick } from 'vue';
-import App from '~/api/app';
 import File from '~/api/file';
+import Window from '~/api/window';
+import AppListStore from '~/stores/appList';
 const route = useRoute();
+
 
 const app_content = ref() as Ref<HTMLElement>;
 
 let iframe: HTMLIFrameElement;
 
 onMounted(async () => {
+    Window.set_size(600);
     let id = route.query.id;
-    let app_list = await App.get_applist();
+    let app_list = await AppListStore.get();
+    console.log(app_list);
     for (let a of app_list) {
         if (a.id != id) continue;
         console.log(a);

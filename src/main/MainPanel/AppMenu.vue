@@ -5,8 +5,8 @@ import Window from '~/api/window'
 import Ombra from '~/api/ombra';
 import Config from '~/api/config';
 import Tools from '~/api/tools';
-import { type AppInfo } from '~/api/app';
-import App from '~/api/app'
+import { type AppInfo } from '~/stores/appList';
+import AppListStore from '~/stores/appList';
 const props = defineProps(['main_input', 'search_content', 'cur_focus_app']);
 const emit = defineEmits(['update:cur_focus_app']);
 
@@ -14,7 +14,6 @@ interface AppInfoExt extends AppInfo {
     is_match: boolean, //当前是否被匹配上了
     show_name: string, //要显示的名字
 }
-
 
 const search_result_list = reactive([]) as Array<AppInfoExt>; //每次的搜索结果
 
@@ -30,7 +29,7 @@ let app_setup_content = ''; //点击app时向其中传入的文本内容
 
 onMounted(async () => {
     let appinfo = await Config.read_item('appinfo');
-    const app_list = await App.get_applist();
+    const app_list = await AppListStore.get();
     if (appinfo == undefined) {
         appinfo = [];
         for (let i = 0; i < app_list.length; i++) {
@@ -64,13 +63,6 @@ onMounted(async () => {
     });
     search(); //初始化操作
 });
-
-// //解决本地应用延迟加载未显示的问题
-// let app_load_timer: string | number | NodeJS.Timeout | undefined;
-// watch(() => app_list.length, () => {
-//     if (app_load_timer) clearTimeout(app_load_timer);
-//     app_load_timer = setTimeout(search, 100);
-// })
 
 function click_app() {
     if (search_result_list.length == 0) {
@@ -232,7 +224,7 @@ function adjust_height() {
 }
 
 async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
-    const app_list = await App.get_applist();
+    const app_list = await AppListStore.get();
     for (let i = 0; i < app_list.length; i++) {
         if (app_list[i].name == app.name) {
             app_list[i].weight += 1;
@@ -273,7 +265,7 @@ async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
 let old_search_content = "";
 //由父组件触发搜索事件
 async function search(init = false) {
-    const app_list = await App.get_applist();
+    const app_list = await AppListStore.get();
     //如果搜索内容变化，则重新折叠面板
     if (old_search_content != props.search_content) {
         old_search_content = props.search_content;

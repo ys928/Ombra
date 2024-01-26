@@ -3,6 +3,7 @@ import App from "./App.vue";
 import { createRouter, createWebHistory } from "vue-router"
 import MainPanel from "./main/MainPanel.vue";
 import AppPanel from "./main/AppPanel.vue";
+import Setting from "./main/Setting.vue";
 import { listen } from "@tauri-apps/api/event";
 
 const router = createRouter({
@@ -15,6 +16,10 @@ const router = createRouter({
         {
             path: '/app',
             component: AppPanel
+        },
+        {
+            path: '/setting',
+            component: Setting
         }
     ]
 });
