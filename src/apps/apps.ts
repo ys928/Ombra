@@ -82,9 +82,17 @@ export async function load_apps() {
             let features = Ombra.get_features();
             let text = Ombra.get_text();
             if (features.includes('explorer')) {
-                CLI.exec(['start', apps[i].start, text])
+                if (apps[i].start.startsWith('shell')) {
+                    CLI.exec(['start', apps[i].start, text])
+                } else {
+                    CLI.exec(['start', '', apps[i].start, text])
+                }
             } else {
-                CLI.exec(['start', apps[i].start])
+                if (apps[i].start.startsWith('shell')) {
+                    CLI.exec(['start', apps[i].start])
+                } else {
+                    CLI.exec(['start', '', apps[i].start])
+                }
             }
         }, false);
 

@@ -212,6 +212,9 @@ pub fn get_all_app(w: Window) {
                 {
                     continue;
                 }
+                if exe.ends_with(".exe") {
+                    app.start = exe.clone();
+                }
                 if exe.ends_with(".exe") && !std::path::Path::new(&icon).exists() {
                     let icon_save_path = std::path::Path::new(&ico_path);
                     let icon_save_path = icon_save_path.join(&app.name);
@@ -257,7 +260,7 @@ fn match_icon_path(icon: &std::path::Path) -> String {
         let entry = entry.unwrap();
         let file_path = entry.path();
         //跳过对比图
-        if file_path.to_str().unwrap().contains("contrast"){
+        if file_path.to_str().unwrap().contains("contrast") {
             continue;
         }
         if file_path.is_dir() {
