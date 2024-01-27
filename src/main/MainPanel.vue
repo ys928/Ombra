@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import { Ref, nextTick, onMounted, onUnmounted, ref } from "vue";
 import AppMenu from "./MainPanel/AppMenu.vue";
 import { onTextUpdate, readText, startListening } from "tauri-plugin-clipboard-api";
 import { UnlistenFn, listen } from "@tauri-apps/api/event";
@@ -16,40 +16,26 @@ const apps_menu = ref();
 const cur_focus_app = ref(0);
 const is_show_setting = ref(false);
 const search_input_placeholder = ref('');
-const is_show = ref(true);
 const callout_short_key = ref('');
 
+//由于tauri中移动窗口也会相继触发blur、focus，因此使用该变量判断
+let is_hide = false;
+
 let fun_eve_blur = Window.event_blur('MainWindow', () => {
-    is_show.value = false;
-})
-let fun_eve_focus = Window.event_focus('MainWindow', () => {
-    is_show.value = true;
-});
-
-let unlisten_single_instance: UnlistenFn | undefined;
-
-let timer: NodeJS.Timeout | undefined;
-watch(is_show, () => {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(async () => {
-        let is_visible = await Window.is_visible();
-        if (is_visible != is_show.value) {
-            if (is_show.value) {
-                let p = await Explorer.get_path();
-                if (p == 'none') {
-                    apps_menu.value.init_feature([], '');
-                } else {
-                    apps_menu.value.init_feature(['explorer'], p);
-                }
-                Window.show();
-                Window.focus();
-            } else {
-                Window.hide();
-            }
+    is_hide = true;
+    setTimeout(() => {
+        if (is_hide) {
+            Window.hide();
         }
     }, 100);
-
+})
+let fun_eve_focus = Window.event_focus('MainWindow', () => {
+    is_hide = false;
 });
+
+let fun_eve_click_tray = Window.event_click_tray(fun_switch_panel_status);
+
+let unlisten_single_instance: UnlistenFn | undefined;
 
 let unlistenTextUpdate: UnlistenFn;
 let unlistenClipboard: () => Promise<void>;
@@ -86,9 +72,9 @@ onMounted(async () => {
     });
     unlistenClipboard = await startListening();
 
-    unlisten_single_instance = await listen('single-instance', () => {
-        if (is_show.value = false) {
-            is_show.value = true;
+    unlisten_single_instance = await listen('single-instance', async () => {
+        if (!await Window.is_visible()) {
+            Window.show();
         }
     })
 });
@@ -102,25 +88,39 @@ onUnmounted(async () => {
     fun_eve_focus.then((fun) => {
         fun();
     });
+    fun_eve_click_tray.then((fun) => {
+        fun();
+    })
     if (unlisten_single_instance) unlisten_single_instance();
 })
 
 async function set_callout_shortkey(shortkey: string) {
-    GlobalShortcut.auto_set(shortkey, async () => {
-        if (is_show.value) {
-            is_show.value = false;
-        } else {
-            is_show.value = true;
-            if (clip_board_time >= 0 && clip_board_time <= 3) {
-                search_content.value = await readText();
-                fun_input();
-            } else {
-                main_input.value.select();
-            }
-        }
-    });
+    GlobalShortcut.auto_set(shortkey, fun_switch_panel_status);
     Config.write_item('callout', shortkey);
     callout_short_key.value = shortkey;
+}
+
+//用于切换面板的显示、隐藏两种状态
+async function fun_switch_panel_status() {
+    console.log("fun_callout_panel");
+    if (await Window.is_visible()) {
+        Window.hide();
+        return;
+    }
+    let p = await Explorer.get_path();
+    if (p == 'none') {
+        apps_menu.value.init_feature([], '');
+    } else {
+        apps_menu.value.init_feature(['explorer'], p);
+    }
+    Window.show();
+    Window.focus();
+    if (clip_board_time >= 0 && clip_board_time <= 3) {
+        search_content.value = await readText();
+        fun_input();
+    } else {
+        main_input.value.select();
+    }
 }
 
 async function fun_keydown(e: KeyboardEvent) {

@@ -271,9 +271,11 @@ async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
 
     Ombra.set_appid(app.id);
     app.setup();
-    if (!app.self) return;
-    //跳转到app页面
-    Window.to_app(app.id);
+    if (app.self) { //有界面，则跳转到app页面
+        Window.to_app(app.id);
+    } else { //无界面，则隐藏窗口
+        Window.hide();
+    }
 }
 let old_search_content = "";
 //由父组件触发搜索事件

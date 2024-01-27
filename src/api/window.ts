@@ -177,4 +177,24 @@ export default class Window {
             }
         });
     }
+    /**
+     * @description 当用户点击托盘图标时触发该事件
+     * @param callback 回调函数
+     * @returns 用于取消监视
+     */
+    static event_click_tray(callback: Function) {
+        return listen('click_tray', () => {
+            callback();
+        })
+    }
+    /**
+     * @description 当窗口移动时触发
+     * @param callback 回调函数
+     * @returns 用于取消监视
+     */
+    static event_move(callback: Function) {
+        return listen('tauri://move', () => {
+            callback();
+        })
+    }
 }

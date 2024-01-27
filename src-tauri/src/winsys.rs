@@ -184,9 +184,9 @@ pub fn get_all_app(w: Window) {
                     let pos = arr.iter().position(|c| *c == 0).unwrap();
                     let v = String::from_utf16_lossy(&arr[0..pos]);
                     // println!("{}={}", &k, &v);
-                    if app.name == "放大镜" {
-                        println!("{}={}", &k, &v);
-                    }
+                    // if app.name == "放大镜" {
+                    //     println!("{}={}", &k, &v);
+                    // }
                     if k == "System.ItemNameDisplay" {
                         app.name = v;
                     } else if k == "System.AppUserModel.ID" {
