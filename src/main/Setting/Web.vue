@@ -1,5 +1,5 @@
 <script setup lang="ts">
-export interface WebUrlObj {
+interface WebUrlObj {
     name: string,//网站名
     url: string,//网页路径
     id: string,//用网站域名作为id
@@ -7,12 +7,12 @@ export interface WebUrlObj {
     features: Array<string>, //可被匹配的特性
 }
 
-export const recommand_urls: Array<WebUrlObj> = [
+const recommand_urls: Array<WebUrlObj> = [
     {
         name: '必应',
         url: 'https://www.bing.com/search?q={query}',
         id: 'www.bing.com',
-        icon: 'https://www.bing.com/favicon.ico',
+        icon: '/web/bing.ico',
         features: ['text']
     }
 ]
@@ -42,6 +42,25 @@ export const recommand_urls: Array<WebUrlObj> = [
 //     });
 </script>
 
-<template></template>
+<template>
+    <div class="Web">
+        <div class="recommand">
+            <div v-for="item in recommand_urls">
+                {{ item.icon }}
+                {{ item.name }}
+                {{ item.url }}
+            </div>
+        </div>
+        <div>
 
-<style scoped lang="less"></style>
+        </div>
+    </div>
+</template>
+
+<style scoped lang="less">
+.Web {
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+</style>

@@ -1,29 +1,56 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
+import { Ref, h, onMounted, ref, render } from 'vue';
 import { useRouter } from 'vue-router';
+import Config from './Setting/Config.vue';
+import LocalExe from './Setting/LocalExe.vue';
+import Web from './Setting/Web.vue';
 import Window from '~/api/window';
+import KIClose from '~/kui/icon/KIClose.vue';
 
 const router = useRouter();
 
+const ref_div_panel = ref() as Ref<HTMLElement>;
+
+const menu_items = [{
+    name: '软件配置',
+    item: Config,
+}, {
+    name: '本地应用',
+    item: LocalExe,
+},
+{
+    name: '网页快开',
+    item: Web
+}];
+
+const show_item = ref(0);
+
 onMounted(() => {
+    render(h(menu_items[show_item.value].item), ref_div_panel.value);
 });
 
 
+//跳转到主页面
 function fun_to_main() {
-
-    //跳转到主页面
     Window.set_size(170);
     Window.set_resizable(false);
     router.push(`/`);
 }
+
+function fun_switch_panel(index: number) {
+    show_item.value = index;
+    render(h(menu_items[show_item.value].item), ref_div_panel.value);
+}
+
 
 </script>
 
 <template>
     <div class="Setting">
         <div class="header" data-tauri-drag-region>
-            <div class="name">
-                <span>设置</span>
+            <div class="label">
+                <span class="name">设置</span>
+                <KIClose :w="17" :h="17" @click="fun_to_main"></KIClose>
             </div>
             <div class="Icon" @click="fun_to_main">
                 <img src="/logo.png" draggable="false">
@@ -31,13 +58,13 @@ function fun_to_main() {
         </div>
         <div class="content">
             <div class="menu">
-                <div class="item">软件配置</div>
-                <div class="item">网页快开</div>
-                <div class="item">本地应用</div>
+                <template v-for="(item, index) in menu_items">
+                    <div class="item" :class="{ active: show_item == index }" @click="fun_switch_panel(index)">{{ item.name
+                    }}
+                    </div>
+                </template>
             </div>
-            <div class="panel">
-
-            </div>
+            <div class="panel" ref="ref_div_panel"></div>
         </div>
     </div>
 </template>
@@ -54,11 +81,35 @@ function fun_to_main() {
         justify-content: space-between;
         height: 50px;
 
-        .name {
+        .label {
             color: #eee;
-            font-size: 18px;
-            line-height: 50px;
-            margin: 0 20px;
+            height: 36px;
+            margin: 7px 20px;
+            display: flex;
+            border-radius: 18px;
+            padding: 5px;
+            align-items: center;
+            border: 2px solid #444;
+            background-color: #505050;
+            cursor: pointer;
+
+            .name {
+                font-size: 15px;
+                font-weight: bold;
+                margin: 0 10px;
+            }
+
+            .KIcon {
+                width: 24px;
+                height: 24px;
+                border-radius: 12px;
+                color: #7F7F7F;
+
+                &:hover {
+                    background-color: #424242;
+                    color: #ff0000;
+                }
+            }
         }
 
         .Icon {
@@ -102,6 +153,10 @@ function fun_to_main() {
                 &:hover {
                     background-color: #343434;
                 }
+            }
+
+            .active {
+                background-color: #37373D;
             }
         }
 

@@ -13,4 +13,10 @@ const prop = defineProps(['w', 'h']);
 
 </script>
 
-<style scoped lang="less"></style>
+<style scoped lang="less">
+.KIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+</style>

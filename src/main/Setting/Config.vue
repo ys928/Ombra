@@ -67,7 +67,6 @@ async function set_placeholder() {
     display: flex;
     flex-direction: column;
     background-color: #252525;
-    border-top: #494a4c solid 2px;
     padding-top: 20px;
     padding-left: 150px;
 
