@@ -11,7 +11,7 @@
 import { invoke } from '@tauri-apps/api';
 import { UnlistenFn, listen } from '@tauri-apps/api/event';
 import { onMounted, onUnmounted, ref } from 'vue';
-const emits = defineEmits(['fun_begin_idx', 'fun_search', 'fun_process'])
+const emits = defineEmits(['fun_search', 'fun_process'])
 type TaskProgress = {
     status: string, //状态
     data: string,   //传送数据

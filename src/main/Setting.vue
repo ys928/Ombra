@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { Ref, h, onMounted, ref, render } from 'vue';
-import { useRouter } from 'vue-router';
 import Config from './Setting/Config.vue';
 import LocalExe from './Setting/LocalExe.vue';
 import Web from './Setting/Web.vue';
 import Window from '~/api/window';
 import KIClose from '~/kui/icon/KIClose.vue';
 
-const router = useRouter();
 
 const ref_div_panel = ref() as Ref<HTMLElement>;
 
@@ -29,19 +27,10 @@ onMounted(() => {
     render(h(menu_items[show_item.value].item), ref_div_panel.value);
 });
 
-
-//跳转到主页面
-function fun_to_main() {
-    Window.set_size(170);
-    Window.set_resizable(false);
-    router.push(`/`);
-}
-
 function fun_switch_panel(index: number) {
     show_item.value = index;
     render(h(menu_items[show_item.value].item), ref_div_panel.value);
 }
-
 
 </script>
 
@@ -50,9 +39,9 @@ function fun_switch_panel(index: number) {
         <div class="header" data-tauri-drag-region>
             <div class="label">
                 <span class="name">设置</span>
-                <KIClose :w="17" :h="17" @click="fun_to_main"></KIClose>
+                <KIClose :w="17" :h="17" @click="Window.to_main"></KIClose>
             </div>
-            <div class="Icon" @click="fun_to_main">
+            <div class="Icon" @click="Window.to_main">
                 <img src="/logo.png" draggable="false">
             </div>
         </div>

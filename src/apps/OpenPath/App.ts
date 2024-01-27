@@ -17,5 +17,6 @@ export default {
         } else if (feature.includes('file_path')) {
             Explorer.select_file(text);
         }
-    }
+    },
+    preload: () => { }
 }

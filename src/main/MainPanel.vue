@@ -7,9 +7,6 @@ import Window from "~/api/window";
 import GlobalShortcut from "~/api/globalShortcut";
 import Explorer from "~/api/explorer";
 import Config from "~/api/config";
-import { useRouter } from "vue-router";
-
-const router = useRouter();
 
 const main_input = ref() as Ref<HTMLInputElement>;
 const measure = ref() as Ref<HTMLElement>;
@@ -59,7 +56,6 @@ let unlistenClipboard: () => Promise<void>;
 let clip_board_time = 999;
 let timing_fun: string | number | NodeJS.Timeout | undefined;
 onMounted(async () => {
-    Window.set_size(170);
     main_input.value.focus();
     //读取唤出面板的快捷键
     callout_short_key.value = await Config.read_item('callout');
@@ -207,10 +203,6 @@ function fun_click_space() {
     main_input.value.focus()
 }
 
-function fun_open_setting() {
-    Window.set_size(600);
-    router.push('/setting');
-}
 function fun_ompositionstart() {
     is_ompositioning = true;
 }
@@ -228,7 +220,7 @@ function fun_ompositionend() {
                 @keydown="fun_keydown($event)" @compositionstart="fun_ompositionstart" @compositionend="fun_ompositionend"
                 :placeholder="search_input_placeholder">
             <div class="space" @mousedown="main_input.focus()" @dblclick="fun_click_space" data-tauri-drag-region></div>
-            <div class="Icon" @click="fun_open_setting">
+            <div class="Icon" @click="Window.to_setting">
                 <img src="/logo.png" draggable="false">
             </div>
         </div>

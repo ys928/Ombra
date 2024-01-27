@@ -1,10 +1,10 @@
 <template>
     <div class="FileSearch">
-        <Search ref="vue_search" @fun_search="fun_search" @fun_exit="fun_exit"></Search>
+        <Search ref="vue_search" @fun_search="fun_search" @fun_exit="Window.close"></Search>
         <Result ref="vue_result" :last_cnt="last_search.name" :last_mode="last_search.mode" :last_ext="last_search.ext"
             @fun_set_pop_menu="fun_set_pop_menu" @fun_search="fun_search" @fun_complete_search="is_searching = false">
         </Result>
-        <Statusbar @fun_begin_idx="fun_begin_idx" @fun_search="fun_search" @fun_process="fun_process">
+        <Statusbar @fun_search="fun_search" @fun_process="fun_process">
         </Statusbar>
         <PopMenu ref="div_pop_menu" @hidden="pop_menu.is_show = false" :isdir="click_item.isdir" :name="click_item.name"
             :path="click_item.path" :ext="click_item.ext" :x="pop_menu.x" :y="pop_menu.y" v-if="pop_menu.is_show">
@@ -20,8 +20,9 @@ import PopMenu from './unit/PopMenu.vue'
 import Search from './unit/Search.vue';
 import Statusbar from './unit/Statusbar.vue';
 import Result from './unit/Result.vue';
-import { KLoading } from '~/kui';
 import Window from '~/api/window';
+import { KLoading } from '~/kui';
+
 type FileInfo = {
     name: string,
     ext: string,
@@ -71,16 +72,6 @@ watch(is_searching, () => {
     searching_task.deal = false;
 });
 
-
-//创建索引缓存文件任务
-function fun_begin_idx() {
-    if (is_processing.value) {
-        return;
-    }
-    is_processing.value = true;
-    invoke('walk_all_files');
-}
-
 let click_item: FileInfo;
 function fun_set_pop_menu(x: number, y: number, item: FileInfo) {
     pop_menu.x = x;
@@ -94,7 +85,9 @@ function fun_search(name: string, ext: string, mode: string, offset: number) {
 
     if (offset == 0) { //为首次搜索
         scroll_count == 0;
-        vue_result.value.clear_result();
+        if (vue_result.value) {
+            vue_result.value.clear_result();
+        }
         last_search.name = name;
         last_search.mode = mode;
         last_search.ext = ext;
@@ -117,10 +110,6 @@ function fun_search(name: string, ext: string, mode: string, offset: number) {
         offset: offset,
     };
     invoke('search_file', searchContent);
-}
-
-function fun_exit() {
-    Window.close();
 }
 
 function fun_process(status: boolean) {

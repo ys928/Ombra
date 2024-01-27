@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { nextTick, onMounted, reactive, ref } from 'vue';
+import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 import Path from '~/api/path'
 import Window from '~/api/window'
 import Ombra from '~/api/ombra';
 import Config from '~/api/config';
 import Tools from '~/api/tools';
 import { type AppInfo } from '~/stores/appList';
-import AppListStore from '~/stores/appList';
-import { useRouter } from 'vue-router';
+import { useAppListStore } from '~/stores/appList';
 const props = defineProps(['main_input', 'search_content', 'cur_focus_app']);
 const emit = defineEmits(['update:cur_focus_app']);
 
@@ -15,7 +14,6 @@ interface AppInfoExt extends AppInfo {
     is_match: boolean, //当前是否被匹配上了
     show_name: string, //要显示的名字
 }
-const router = useRouter();
 
 const search_result_list = reactive([]) as Array<AppInfoExt>; //每次的搜索结果
 
@@ -29,9 +27,11 @@ let search_result_is_expand = ref(false); //记录搜索结果是否为展开状
 
 let app_setup_content = ''; //点击app时向其中传入的文本内容
 
+const applistStore = useAppListStore();
+
 onMounted(async () => {
     let appinfo = await Config.read_item('appinfo');
-    const app_list = await AppListStore.get();
+    const app_list = applistStore.applist;
     if (appinfo == undefined) {
         appinfo = [];
         for (let i = 0; i < app_list.length; i++) {
@@ -65,6 +65,16 @@ onMounted(async () => {
     });
     search(); //初始化操作
 });
+
+//当app列表发送变化时，自动刷新app面板数据
+let watch_applist_timer: NodeJS.Timeout | undefined;
+watch(() => applistStore.applist.length, () => {
+    if (watch_applist_timer) clearTimeout(watch_applist_timer);
+    watch_applist_timer = setTimeout(() => {
+        search();
+    }, 200);
+});
+
 
 function click_app() {
     if (search_result_list.length == 0) {
@@ -222,11 +232,11 @@ function adjust_height() {
         search_resule_height = 430;
     }
     // console.log(search_box_height + search_resule_height + recommand_height);
-    Window.set_size(search_box_height + search_resule_height + recommand_height);
+    Window.set_height(search_box_height + search_resule_height + recommand_height);
 }
 
 async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
-    const app_list = await AppListStore.get();
+    const app_list = applistStore.applist;
     for (let i = 0; i < app_list.length; i++) {
         if (app_list[i].name == app.name) {
             app_list[i].weight += 1;
@@ -263,20 +273,18 @@ async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
     app.setup();
     if (!app.self) return;
     //跳转到app页面
-    Window.set_size(600);
-    Window.set_resizable(true);
-    router.push(`/app?id=${app.id}`);
+    Window.to_app(app.id);
 }
 let old_search_content = "";
 //由父组件触发搜索事件
 async function search(init = false) {
-    const app_list = await AppListStore.get();
+    const app_list = applistStore.applist;
     //如果搜索内容变化，则重新折叠面板
     if (old_search_content != props.search_content) {
         old_search_content = props.search_content;
         search_result_is_expand.value = false;
     }
-    //只在非初始化的情况下才重置feature
+    //只在非初始化(主窗口被唤出时)的情况下才重置feature
     if (!init) {
         //首先根据输入内容匹配特性
         let fe = await match_feature(props.search_content);

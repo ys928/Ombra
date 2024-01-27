@@ -11,8 +11,7 @@ import Dialog from "../api/dialog";
 import Ombra from "../api/ombra";
 import CLI from "../api/cli";
 import App from "../api/app";
-import AppListStore from '~/stores/appList';
-import AppIsinit from "~/stores/appIsInit";
+import { useAppListStore } from '~/stores/appList';
 
 let user_apps_list = [
     AppFileSearch,
@@ -23,19 +22,13 @@ let user_apps_list = [
 ]
 
 export async function load_apps() {
-    let isinit = AppIsinit.get();
+    const applistStore = useAppListStore();
+
     //加载内嵌应用
     for (let app of user_apps_list) {
-        if (!isinit) {
-            //@ts-ignore
-            if (app.preload) {
-                //@ts-ignore
-                app.preload();
-            }
-        }
-        AppListStore.add(app.name, app.id, app.icon, app.feature, app.self, app.component, app.setup, app.only_feature);
+        app.preload();
+        applistStore.add(app.name, app.id, app.icon, app.feature, app.self, app.component, app.setup, app.only_feature);
     }
-    AppIsinit.set(true);
 
     //加载插件应用
 
@@ -61,13 +54,13 @@ export async function load_apps() {
                 name = config.name;
             }
         }
-        AppListStore.add(name, id, icon, features, true, plugin_index, () => { }, false);
+        applistStore.add(name, id, icon, features, true, plugin_index, () => { }, false);
     }
 
     //加载系统应用、功能
 
     for (let app of sys_seting_list) {
-        AppListStore.add(app.name, '', app.icon, app.feature, app.self, null, app.setup, false);
+        applistStore.add(app.name, '', app.icon, app.feature, app.self, null, app.setup, false);
     }
     //加载用户安装的应用
     let apps = await App.get_sys_app();
@@ -78,7 +71,7 @@ export async function load_apps() {
         }
         let exist = await File.exists(apps[i].icon);
         let icon_url = exist ? Url.convert(apps[i].icon) : "/logo.png";
-        AppListStore.add(apps[i].name, '', icon_url, feature, false, null, () => {
+        applistStore.add(apps[i].name, '', icon_url, feature, false, null, () => {
             let features = Ombra.get_features();
             let text = Ombra.get_text();
             if (features.includes('explorer')) {

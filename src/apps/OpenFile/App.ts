@@ -15,5 +15,6 @@ export default {
         if (feature.includes('file_path')) {
             Explorer.open_file(text)
         }
-    }
+    },
+    preload: () => { }
 }

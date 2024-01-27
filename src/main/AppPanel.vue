@@ -3,23 +3,23 @@ import { useRoute } from 'vue-router';
 import Titlebar from './AppPanel/Titlebar.vue'
 import { Ref, onMounted, onUnmounted, ref, h, render, nextTick } from 'vue';
 import File from '~/api/file';
-import Window from '~/api/window';
-import AppListStore from '~/stores/appList';
+import { useAppListStore } from '~/stores/appList';
 const route = useRoute();
 
 
 const app_content = ref() as Ref<HTMLElement>;
 
+const applistStore = useAppListStore();
+
 let iframe: HTMLIFrameElement;
 
 onMounted(async () => {
-    Window.set_size(600);
     let id = route.query.id;
-    let app_list = await AppListStore.get();
+    let app_list = applistStore.applist;
     // console.log(app_list);
     for (let a of app_list) {
         if (a.id != id) continue;
-        console.log(a);
+        // console.log(a);
         if (a.component == null) {
             break;
         }
@@ -33,8 +33,7 @@ onMounted(async () => {
             window.addEventListener('message', handle_plugin);
 
         } else {
-            const el = h(a.component);
-            render(el, app_content.value);
+            render(h(a.component), app_content.value);
         }
     }
 });

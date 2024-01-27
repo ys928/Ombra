@@ -40,7 +40,7 @@ fn main() {
     let requests = RollingFileAppender::builder()
         .encoder(Box::new(PatternEncoder::new("{d} - {m}{n}")))
         .build(
-            log_file_path,
+            &log_file_path,
             Box::new(CompoundPolicy::new(
                 Box::new(SizeTrigger::new(1024 * 1024)),
                 Box::new(DeleteRoller::new()),
@@ -59,22 +59,27 @@ fn main() {
 
     let _ = log4rs::init_config(config).unwrap();
 
-    let quit = CustomMenuItem::new("quit".to_string(), "退出");
     let update = CustomMenuItem::new("update".to_string(), "更新");
-    let tray_menu = SystemTrayMenu::new().add_item(update).add_item(quit);
+    let logfile = CustomMenuItem::new("log".to_string(), "日志");
+    let quit = CustomMenuItem::new("quit".to_string(), "退出");
+    let tray_menu = SystemTrayMenu::new()
+        .add_item(logfile)
+        .add_item(update)
+        .add_item(quit);
     let system_tray = SystemTray::new().with_menu(tray_menu);
     tauri::Builder::default()
         .plugin(tauri_plugin_clipboard::init())
         .system_tray(system_tray)
-        .on_system_tray_event(|app, event| match event {
+        .on_system_tray_event(move |app, event| match event {
             SystemTrayEvent::MenuItemClick { id, .. } => match id.as_str() {
                 "quit" => {
-                    let w = app.get_window("MainWindow").unwrap();
-                    let _ = w.emit("exit_app", "");
-                    std::process::exit(0);
+                    app.exit(0);
                 }
                 "update" => {
                     winsys::open_web_url("https://github.com/ys928/Ombra/releases");
+                }
+                "log" => {
+                    winsys::explorer_select_path(log_file_path.to_str().unwrap());
                 }
                 _ => {}
             },

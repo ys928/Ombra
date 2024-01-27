@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^1.5.1",
+    "pinia": "^2.1.7",
     "tauri-plugin-autostart-api": "github:tauri-apps/tauri-plugin-autostart#v1",
     "tauri-plugin-clipboard-api": "^0.5.5",
     "url": "^0.11.3",

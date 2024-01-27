@@ -18,5 +18,6 @@ export default {
         } else {
             Url.open('http://' + text);
         }
-    }
+    },
+    preload: () => { }
 }

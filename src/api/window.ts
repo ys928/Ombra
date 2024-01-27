@@ -11,7 +11,12 @@ export default class Window {
      * 关闭当前窗口
      */
     static close() {
-        appWindow.close();
+        if (this.is_main()) {
+            this.set_height(170);
+            window.router.push('/');
+        } else {
+            appWindow.close();
+        }
     }
     /**
      * @description 显示当前窗口
@@ -38,16 +43,47 @@ export default class Window {
      * @param appid app的id
      */
     static new_app(appid: string) {
-        if (appWindow.label == 'MainWindow') {
-            let w = new WebviewWindow(appid, {
-                url: `/app?id=${appid}`,
-                decorations: false,
-                transparent: true
-            });
-            w.setSize(new LogicalSize(800, 600));
-            w.setResizable(true);
-        }
+        if (!this.is_main()) return;
+        this.hide();
+        window.router.push('/');
+        let w = new WebviewWindow(appid, {
+            url: `/app?id=${appid}`,
+            decorations: false,
+            transparent: true
+        });
+        w.setSize(new LogicalSize(800, 600));
+        w.setResizable(true);
     }
+    /**
+     * @description 将主窗口切换到app界面
+     * @param appid app的id
+     */
+    static to_app(appid: string) {
+        if (!this.is_main()) return;
+        Window.set_height(600);
+        Window.set_resizable(true);
+        window.router.push(`/app?id=${appid}`);
+    }
+    /**
+     * @description 将主窗口切换到主搜索界面
+     */
+    static to_main() {
+        if (!this.is_main()) return;
+        Window.set_height(170);
+        Window.set_resizable(false);
+        window.router.push(`/`);
+    }
+    /**
+     * 
+     * @returns 将主窗口切换到设置界面
+     */
+    static to_setting() {
+        if (!this.is_main()) return;
+        Window.set_height(600);
+        Window.set_resizable(false);
+        window.router.push(`/setting`);
+    }
+
     /**
      * 窗口阴影、圆滑边框模式，仅限非主窗口使用
      */
@@ -87,13 +123,24 @@ export default class Window {
 
     /**
      * @description 设置当前窗口的大小
-     * @param h 窗口的高度，默认主窗口高度170，app窗口推荐设置为600
      * @param w 窗口的宽度，默认800
+     * @param h 窗口的高度，默认主窗口高度170，app窗口推荐设置为600
      */
-    static set_size(h = 170, w = 800) {
+    static set_size(w = 800, h = 170) {
         appWindow.setSize({
             type: 'Logical',
             width: w,
+            height: h,
+        });
+    }
+    /**
+     * @description 设置窗口高度，默认宽度800
+     * @param h 窗口高度，推荐主窗口170，app窗口600
+     */
+    static set_height(h = 170) {
+        appWindow.setSize({
+            type: 'Logical',
+            width: 800,
             height: h,
         });
     }

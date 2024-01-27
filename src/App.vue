@@ -6,9 +6,12 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import Window from './api/window';
+import { load_apps } from './apps/apps';
+
 onMounted(() => {
   if (Window.is_main()) {
     Window.focus();
+    load_apps();
   }
   document.oncontextmenu = function (e) {
     e.preventDefault();
@@ -42,7 +45,7 @@ function fun_contextmenu(e: MouseEvent) {
 </style>
 
 <style>
-*{
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;

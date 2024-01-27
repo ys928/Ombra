@@ -9,5 +9,6 @@ export default {
     component: DevelopTool,
     self: true,
     setup: () => {
-    }
+    },
+    preload: () => { }
 }

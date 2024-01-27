@@ -1,6 +1,5 @@
+import { defineStore } from "pinia";
 import { Component, markRaw, reactive } from "vue";
-import Window from "~/api/window";
-import { load_apps } from '~/apps/apps'
 export interface AppInfo {
     name: string, //应用名，将显示在应用菜单面板上
     id: string, //应用id，如果self属性为true，那么该选项必填，否则可选，将被用于独立窗口label、以及vue中的路由
@@ -13,16 +12,8 @@ export interface AppInfo {
     setup: () => void, //当用户点击该app时将被立即执行的函数
 }
 
-const applist = reactive([]) as Array<AppInfo>;
-
-export default class AppListStore {
-
-    static async get() {
-        if (applist.length == 0) {
-            await load_apps();
-        }
-        return applist;
-    }
+export const useAppListStore = defineStore('applist', () => {
+    const applist = reactive([]) as Array<AppInfo>;
     /**
     * @description 添加app应用
     * @param name //应用名，将显示在应用菜单面板上
@@ -34,8 +25,8 @@ export default class AppListStore {
     * @param setup_callback  //当用户点击该app时将被立即执行的函数
     * @param only_feature //是否只在触发特点时才显示
     */
-    static add(name: string, id: string, icon: string, feature: Array<string>, self: boolean, component: Component | string | null, setup_callback: Function, only_feature = false) {
 
+    function add(name: string, id: string, icon: string, feature: Array<string>, self: boolean, component: Component | string | null, setup_callback: () => void, only_feature = false) {
         applist.push({
             name: name,
             icon: icon,
@@ -45,15 +36,8 @@ export default class AppListStore {
             id: id,
             component: component == null || typeof component == 'string' ? component : markRaw(component),
             self: self,
-            setup: () => {
-                if (self) {
-                    Window.set_size(600);
-                    Window.set_resizable(true);
-                } else {
-                    Window.hide();
-                }
-                setup_callback();
-            }
+            setup: setup_callback
         });
     }
-}
+    return { applist, add };
+});
