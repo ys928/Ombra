@@ -39,9 +39,9 @@ function fun_switch_panel(index: number) {
         <div class="header" data-tauri-drag-region>
             <div class="label">
                 <span class="name">设置</span>
-                <KIClose :w="17" :h="17" @click="Window.to_main"></KIClose>
+                <KIClose :w="17" :h="17" @click="Window.to_main()"></KIClose>
             </div>
-            <div class="Icon" @click="Window.to_main">
+            <div class="Icon" @click="Window.to_main()">
                 <img src="/logo.png" draggable="false">
             </div>
         </div>
@@ -64,6 +64,7 @@ function fun_switch_panel(index: number) {
     height: 100vh;
     display: flex;
     flex-direction: column;
+    user-select: none;
 
     .header {
         display: flex;

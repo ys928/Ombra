@@ -168,7 +168,7 @@ pub fn get_all_app(w: Window) {
                 let mut app = AppInfo::default();
                 let mut icon = String::new();
                 let mut pack = String::new();
-                let mut exe = String::new();
+                let mut target = String::new();
                 for i in 0..count {
                     let mut pk = PROPERTYKEY::default();
                     let ret = store.GetAt(i, &mut pk);
@@ -184,15 +184,15 @@ pub fn get_all_app(w: Window) {
                     let pos = arr.iter().position(|c| *c == 0).unwrap();
                     let v = String::from_utf16_lossy(&arr[0..pos]);
                     // println!("{}={}", &k, &v);
-                    // if app.name == "记事本" {
-                    //     println!("{}={}", &k, &v);
-                    // }
+                    if app.name == "放大镜" {
+                        println!("{}={}", &k, &v);
+                    }
                     if k == "System.ItemNameDisplay" {
                         app.name = v;
                     } else if k == "System.AppUserModel.ID" {
                         app.start = "shell:appsFolder\\".to_string() + &v;
                     } else if k == "System.Link.TargetParsingPath" {
-                        exe = v;
+                        target = v;
                     } else if k == "System.AppUserModel.PackageInstallPath" {
                         pack = v;
                     } else if k == "System.Tile.Square150x150LogoPath" {
@@ -204,27 +204,34 @@ pub fn get_all_app(w: Window) {
                     }
                 }
                 //跳过卸载软件
-                if exe.to_lowercase().contains("uninstall") {
+                if target.to_lowercase().contains("uninstall") {
                     continue;
                 }
-                if exe.len() > 0
-                    && !(exe.ends_with(".exe") || exe.ends_with(".msc") || exe.ends_with(".bat"))
+                //跳过非可执行文件
+                if target.len() > 0
+                    && !(target.ends_with(".exe")
+                        || target.ends_with(".msc")
+                        || target.ends_with(".bat"))
                 {
                     continue;
                 }
-                if exe.ends_with(".exe") {
-                    app.start = exe.clone();
-                }
-                if exe.ends_with(".exe") && !std::path::Path::new(&icon).exists() {
-                    let icon_save_path = std::path::Path::new(&ico_path);
-                    let icon_save_path = icon_save_path.join(&app.name);
-                    if !icon_save_path.exists() {
-                        get_icon_to_path(&exe, icon_save_path.to_str().unwrap());
-                    }
-                    app.icon = icon_save_path.to_string_lossy().to_string();
-                } else if icon.len() > 0 && pack.len() > 0 {
-                    let icon = std::path::Path::new(&pack).join(icon);
+                //获取包图标
+                if icon.len() > 0 && pack.len() > 0 {
+                    let icon = std::path::Path::new(&pack).join(&icon);
                     app.icon = match_icon_path(icon.as_path());
+                }
+                //exe程序优先
+                if target.ends_with(".exe") {
+                    app.start = target.clone();
+                    //图标不存在则从PE中抽取
+                    if !std::path::Path::new(&icon).exists() {
+                        let icon_save_path = std::path::Path::new(&ico_path);
+                        let icon_save_path = icon_save_path.join(&app.name);
+                        if !icon_save_path.exists() {
+                            get_icon_to_path(&target, icon_save_path.to_str().unwrap());
+                        }
+                        app.icon = icon_save_path.to_string_lossy().to_string();
+                    }
                 }
                 // if !std::path::Path::new(&app.icon).exists() {
                 //     println!("{}:{}", app.name, app.icon);

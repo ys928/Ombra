@@ -38,7 +38,7 @@ mod winsys;
 fn main() {
     let log_file_path = tools::get_data_dir(None).join("ombra.log");
     let requests = RollingFileAppender::builder()
-        .encoder(Box::new(PatternEncoder::new("{d} - {m}{n}")))
+        .encoder(Box::new(PatternEncoder::new("{d(%Y-%m-%d %H:%M:%S)} [{l}] {f}:{L} => {m}{n}")))
         .build(
             &log_file_path,
             Box::new(CompoundPolicy::new(
