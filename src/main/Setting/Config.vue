@@ -1,9 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import Config from '~/api/config';
+import AutoStart from '~/api/autostart';
+import Notification from '~/api/notification';
 
 const short_key = ref('');
 const search_input_placeholder = ref('');
+const auto_start = ref(false);
+
 
 onMounted(async () => {
     //读取唤出面板的快捷键
@@ -11,7 +15,11 @@ onMounted(async () => {
     short_key.value = callout_shortkey.replace('CommandOrControl', 'Ctrl');
     //读取搜索栏占位符
     search_input_placeholder.value = await Config.read_item('placeholder');
+    auto_start.value = await AutoStart.is_set();
 });
+
+
+
 
 async function fun_shortkey_input(e: KeyboardEvent) {
     e.preventDefault();
@@ -45,6 +53,24 @@ async function set_placeholder() {
     Config.write_item('placeholder', search_input_placeholder.value);
 }
 
+async function fun_set_auto_start() {
+    if (auto_start.value) {
+        let ret = await AutoStart.set(false);
+        if (ret) {
+            auto_start.value = false;
+        } else {
+            Notification.send('错误', "设置开机自启动失败");
+        }
+    } else {
+        let ret = await AutoStart.set(true);
+        if (ret) {
+            auto_start.value = true;
+        } else {
+            Notification.send('错误', "关闭开机自启动失败");
+        }
+    }
+}
+
 </script>
 
 <template>
@@ -54,6 +80,9 @@ async function set_placeholder() {
         </div>
         <div class="placeholder">
             <span>搜索框占位符</span> <input v-model="search_input_placeholder" @blur="set_placeholder">
+        </div>
+        <div class="autostart">
+            <span>开机自启动</span> <input v-model="auto_start" type="checkbox" @click="fun_set_auto_start">
         </div>
     </div>
 </template>
@@ -74,6 +103,7 @@ async function set_placeholder() {
         margin-top: 20px;
         display: flex;
         justify-content: left;
+        align-items: center;
 
         span {
             color: #e9e9e9;
@@ -94,8 +124,9 @@ async function set_placeholder() {
             border-radius: 5px;
             color: #90caf9;
             text-align: center;
-            font-size: 20px;
+            font-size: 16px;
             caret-color: transparent;
+            cursor: pointer;
 
             &:hover {
                 border: #ffffff solid 1px;
@@ -126,6 +157,38 @@ async function set_placeholder() {
 
             &:focus {
                 border: #90caf9 solid 1px;
+            }
+        }
+    }
+
+    .autostart {
+        input {
+            width: 16px;
+            height: 16px;
+            background-color: #252525;
+            border: 1px solid #616264;
+            border-radius: 4px;
+            color: #fff;
+            text-align: center;
+            line-height: 15px;
+            -webkit-appearance: none;
+            appearance: none;
+            outline: none;
+            cursor: pointer;
+
+            &:hover {
+                border: 1px solid #ffffff;
+            }
+
+            &:checked {
+                color: #fff;
+                background-color: #4e8cf2;
+                border: 1px solid #4e8cf2;
+            }
+
+            &:after {
+                content: "\2713";
+                color: #252525;
             }
         }
     }

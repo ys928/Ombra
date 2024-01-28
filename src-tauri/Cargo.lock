@@ -2742,6 +2742,7 @@ dependencies = [
 name = "ombra"
 version = "0.0.3"
 dependencies = [
+ "auto-launch",
  "base64 0.13.1",
  "chrono",
  "dirs 5.0.1",
@@ -2758,7 +2759,6 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-build",
- "tauri-plugin-autostart",
  "tauri-plugin-clipboard",
  "tauri-plugin-single-instance",
  "walkdir",
@@ -4303,19 +4303,6 @@ dependencies = [
  "syn 1.0.109",
  "tauri-codegen",
  "tauri-utils",
-]
-
-[[package]]
-name = "tauri-plugin-autostart"
-version = "0.0.0"
-source = "git+https://github.com/tauri-apps/plugins-workspace?branch=v1#39108ceacb8367dbbc8d89cbe17a6182fa8ad9b8"
-dependencies = [
- "auto-launch",
- "log",
- "serde",
- "serde_json",
- "tauri",
- "thiserror",
 ]
 
 [[package]]

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, h, onMounted, ref, render } from 'vue';
+import { Ref, h, onMounted, onUnmounted, ref, render } from 'vue';
 import Config from './Setting/Config.vue';
 import LocalExe from './Setting/LocalExe.vue';
 import Web from './Setting/Web.vue';
@@ -25,13 +25,23 @@ const show_item = ref(0);
 
 onMounted(() => {
     render(h(menu_items[show_item.value].item), ref_div_panel.value);
+    window.addEventListener('keydown', fun_keydown);
 });
+
+onUnmounted(() => {
+    window.removeEventListener('keydown', fun_keydown);
+})
 
 function fun_switch_panel(index: number) {
     show_item.value = index;
     render(h(menu_items[show_item.value].item), ref_div_panel.value);
 }
 
+function fun_keydown(e: KeyboardEvent) {
+    if (e.key == "Escape") {
+        Window.to_main()
+    }
+}
 </script>
 
 <template>

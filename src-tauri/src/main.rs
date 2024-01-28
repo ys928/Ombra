@@ -122,7 +122,9 @@ fn main() {
             dir_or_file,
             walk_dir,
             to_pinyin,
-            open_devtools
+            open_devtools,
+            auto_start,
+            is_auto_start,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -273,4 +275,37 @@ fn dir_or_file(path: &str) -> String {
 #[tauri::command]
 fn open_devtools(w: Window) {
     w.open_devtools();
+}
+
+#[tauri::command]
+fn auto_start(start: bool) -> bool {
+    let current_exe = std::env::current_exe().unwrap();
+    let auto_start = auto_launch::AutoLaunchBuilder::new()
+        .set_app_name("ombra")
+        .set_app_path(&current_exe.to_str().unwrap())
+        .set_use_launch_agent(true)
+        .build()
+        .unwrap();
+    if start {
+        if auto_start.enable().is_err() {
+            return false;
+        }
+    } else {
+        if auto_start.disable().is_err() {
+            return false;
+        };
+    }
+    return true;
+}
+
+#[tauri::command]
+fn is_auto_start() -> bool {
+    let current_exe = std::env::current_exe().unwrap();
+    let auto_start = auto_launch::AutoLaunchBuilder::new()
+        .set_app_name("ombra")
+        .set_app_path(&current_exe.to_str().unwrap())
+        .set_use_launch_agent(true)
+        .build()
+        .unwrap();
+    return auto_start.is_enabled().unwrap();
 }
