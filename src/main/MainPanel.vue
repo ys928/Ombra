@@ -263,6 +263,9 @@ function fun_ompositionend() {
             color: #f1f2f3;
             padding: 0 10px;
             user-select: none;
+            &::selection{
+                background-color: #263C58;
+            }
         }
 
         .space {

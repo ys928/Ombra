@@ -562,7 +562,7 @@ function init_feature(feature: string[], data: string) {
     features_list.length = 0;
     features_list.push(...feature);
     app_setup_content = data;
-    search(true);
+    search(features_list.length > 0);
 }
 
 defineExpose({
