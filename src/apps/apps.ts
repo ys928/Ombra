@@ -27,7 +27,7 @@ export async function load_apps() {
     //加载内嵌应用
     for (let app of user_apps_list) {
         app.preload();
-        applistStore.add(app.name, app.id, app.icon, app.feature, app.self, app.component, app.setup, app.only_feature);
+        applistStore.add(app.name, app.id, app.icon, app.feature, app.component, app.setup, app.only_feature);
     }
 
     //加载插件应用
@@ -54,16 +54,16 @@ export async function load_apps() {
                 name = config.name;
             }
         }
-        applistStore.add(name, id, icon, features, true, plugin_index, () => { }, false);
+        applistStore.add(name, id, icon, features, plugin_index, () => { }, false);
     }
 
     //加载系统应用、功能
 
     for (let app of sys_seting_list) {
-        applistStore.add(app.name, '', app.icon, app.feature, app.self, null, app.setup, false);
+        applistStore.add(app.name, '', app.icon, app.feature, null, app.setup, false);
     }
     //加载用户安装的应用
-    let apps = await App.get_sys_app();
+    let apps = await App.get_sys();
     for (let i = 0; i < apps.length; i++) {
         let feature: string[] = [];
         if (apps[i].name == 'Visual Studio Code') {
@@ -71,7 +71,7 @@ export async function load_apps() {
         }
         let exist = await File.exists(apps[i].icon);
         let icon_url = exist ? Url.convert(apps[i].icon) : "/logo.png";
-        applistStore.add(apps[i].name, '', icon_url, feature, false, null, () => {
+        applistStore.add(apps[i].name, '', icon_url, feature, null, () => {
             let features = Ombra.get_features();
             let text = Ombra.get_text();
             if (features.includes('explorer')) {
@@ -89,6 +89,12 @@ export async function load_apps() {
             }
         }, false);
 
+    }
+    //加载web应用
+    let web_apps = await App.get_web();
+    for (let w of web_apps) {
+        if (!w.on) continue; //跳过未启用的web app
+        applistStore.add_web(w);
     }
 }
 

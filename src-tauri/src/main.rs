@@ -5,7 +5,6 @@ use pinyin::ToPinyin;
 use serde::{Deserialize, Serialize};
 use std::collections::LinkedList;
 use std::sync::atomic::{AtomicBool, Ordering};
-use tauri::api::dialog;
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window};
 use walkdir::WalkDir;
 
@@ -139,13 +138,9 @@ static IS_IN_WALKDIR: AtomicBool = AtomicBool::new(false);
 
 #[tauri::command]
 fn walk_all_files(w: Window) {
-    // //测试监视
-    // file_catch::init(false);
-    // file_watch::watch_all_files();
-    // return;
     debug!("enter walk_all_files");
     if IS_IN_WALKDIR.load(Ordering::Relaxed) {
-        dialog::message(Some(&w), "提示", "请勿重复操作！");
+        debug!("Repeat call walk_all_files");
         return;
     }
 

@@ -27,6 +27,7 @@ import KIJson from './icon/KIJson.vue'
 import KIJs from './icon/KIJs.vue'
 
 import KLoading from './unit/KLoading.vue'
+import KSwitch from './unit/KSwitch.vue'
 
 export {
   KICsdn,
@@ -56,5 +57,6 @@ export {
   KIImage,
   KIJs,
   KIJson,
-  KLoading
+  KLoading,
+  KSwitch
 }
