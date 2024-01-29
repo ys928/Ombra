@@ -12,6 +12,7 @@ import Ombra from "../api/ombra";
 import CLI from "../api/cli";
 import App from "../api/app";
 import { useAppListStore } from '~/stores/appList';
+import Config from "~/api/config";
 
 let user_apps_list = [
     AppFileSearch,
@@ -95,6 +96,14 @@ export async function load_apps() {
     for (let w of web_apps) {
         if (!w.on) continue; //跳过未启用的web app
         applistStore.add_web(w);
+    }
+
+    //加载用户自己添加的本地应用ap
+    let local_apps = await Config.read_local_app();
+    if (local_apps == undefined) {
+        Config.write_local_app([]);
+    }else{
+        
     }
 }
 

@@ -2,6 +2,9 @@ import Directory from "./dir";
 import Path from "./path";
 import File from "./file";
 import { WebUrlApp } from "./app";
+
+
+
 async function read_config() {
     let p = await Config.path();
     let config = await File.read_text(p);
@@ -46,4 +49,14 @@ export default class Config {
         write_config(cfg);
     }
 
+    static async read_local_app() {
+        let cfg = await read_config();
+        return cfg['local_apps'] as Array<string> | undefined;
+    }
+
+    static async write_local_app(cnt: Array<string>) {
+        let cfg = await read_config();
+        cfg['local_apps'] = cnt;
+        write_config(cfg);
+    }
 }

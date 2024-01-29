@@ -1,7 +1,7 @@
 use std::{
     ffi::OsString,
     fs,
-    mem::ManuallyDrop,
+    mem::{size_of, ManuallyDrop},
     os::windows::{ffi::OsStringExt, process::CommandExt},
     process::Command,
 };
@@ -15,6 +15,9 @@ use windows::{
     core::{w, ComInterface, Interface, PCWSTR},
     Win32::{
         Foundation::S_OK,
+        Graphics::Gdi::{
+            DeleteObject, GetBitmapBits, GetObjectW, BITMAP, BITMAPINFOHEADER, HBITMAP,
+        },
         Storage::FileSystem::{GetDriveTypeW, GetLogicalDrives},
         System::{
             Com::{
@@ -28,14 +31,16 @@ use windows::{
         },
         UI::{
             Shell::{
-                BHID_EnumItems, BHID_PropertyStore, IEnumShellItems, IFolderView,
-                ILCreateFromPathW, IPersistFolder2, IShellBrowser, IShellItem, IShellWindows,
-                IWebBrowser2,
+                BHID_EnumItems, BHID_PropertyStore, ExtractAssociatedIconW, IEnumShellItems,
+                IFolderView, ILCreateFromPathW, IPersistFolder2, IShellBrowser, IShellItem,
+                IShellWindows, IWebBrowser2,
                 PropertiesSystem::{IPropertyStore, PSGetNameFromPropertyKey, PROPERTYKEY},
                 SHCreateItemFromParsingName, SHGetNameFromIDList, SHOpenFolderAndSelectItems,
                 ShellExecuteW, ShellWindows, SIGDN_FILESYSPATH,
             },
-            WindowsAndMessaging::{GetClassNameW, GetForegroundWindow, SW_SHOWNORMAL},
+            WindowsAndMessaging::{
+                GetClassNameW, GetForegroundWindow, GetIconInfo, ICONINFO, SW_SHOWNORMAL,
+            },
         },
     },
 };
@@ -55,7 +60,7 @@ pub fn cmd_exec(args: Vec<&str>) {
     let _ = binding.spawn();
 }
 
-fn get_icon_to_path(path: &str, save_path: &str) -> bool {
+fn get_icon_from_pe(path: &str, save_path: &str) -> bool {
     //不是exe文件结尾，直接跳过。
     if !(path.ends_with(".exe") || path.ends_with(".EXE")) {
         return false;
@@ -223,14 +228,18 @@ pub fn get_all_app(w: Window) {
                 //exe程序优先
                 if target.ends_with(".exe") {
                     app.start = target.clone();
-                    //图标不存在则从PE中抽取
-                    if !std::path::Path::new(&icon).exists() {
-                        let icon_save_path = std::path::Path::new(&ico_path);
-                        let icon_save_path = icon_save_path.join(&app.name);
-                        if !icon_save_path.exists() {
-                            get_icon_to_path(&target, icon_save_path.to_str().unwrap());
+                    let icon_save_path = std::path::Path::new(&ico_path);
+                    let icon_save_path = icon_save_path.join(&app.name);
+                    //图标不存在, 并且没有缓存
+                    if !std::path::Path::new(&app.icon).exists() && !icon_save_path.exists() {
+                        //先尝试关联文件获取、失败则继续尝试pe文件中获取
+                        let ret = get_associated_icon(&target, icon_save_path.to_str().unwrap())
+                            || get_icon_from_pe(&target, icon_save_path.to_str().unwrap());
+                        if ret {
+                            app.icon = icon_save_path.to_string_lossy().to_string();
+                        } else {
+                            app.icon.clear();
                         }
-                        app.icon = icon_save_path.to_string_lossy().to_string();
                     }
                 }
                 // if !std::path::Path::new(&app.icon).exists() {
@@ -465,5 +474,157 @@ pub fn default_open_file(path: &str) {
         p.push(0);
         let p = PCWSTR::from_raw(p.as_mut_ptr());
         ShellExecuteW(None, w!("open"), p, None, None, SW_SHOWNORMAL);
+    }
+}
+
+#[derive(Default)]
+#[repr(C)]
+pub struct ICONHEADER {
+    id_reserved: u16, // must be 0
+    id_type: u16,     // 1 = ICON, 2 = CURSOR
+    id_count: u16,    // number of images (and ICONDIRs)
+                      // ICONDIR [1...n]
+                      // ICONIMAGE [1...n]
+}
+
+#[derive(Default)]
+#[repr(C)]
+pub struct ICONDIR {
+    b_width: u8,
+    b_height: u8,
+    b_color_count: u8,
+    b_reserved: u8,
+    w_planes: u16,    // for cursors, this field = wXHotSpot
+    w_bit_count: u16, // for cursors, this field = wYHotSpot
+    dw_bytes_in_res: u32,
+    dw_image_offset: u32, // file-offset to the start of ICONIMAGE
+}
+
+fn get_associated_icon(file_path: &str, save_path: &str) -> bool {
+    let file_path: Vec<u16> = file_path.encode_utf16().collect();
+    let mut path: [u16; 128] = [0; 128];
+    for i in 0..file_path.len() {
+        path[i] = file_path[i];
+    }
+    unsafe {
+        //获取HICON
+        let mut pindex = 0;
+        let hicon = ExtractAssociatedIconW(None, &mut path, &mut pindex);
+        if hicon.0 == 0 {
+            return false;
+        }
+        //根据HICON获取bmp图像数据
+        let mut info = ICONINFO::default();
+        let _ = GetIconInfo(hicon, &mut info);
+        let mut bmp_color = BITMAP::default();
+        let mut bmp_mask = BITMAP::default();
+
+        GetObjectW(
+            info.hbmColor,
+            std::mem::size_of::<BITMAP>() as i32,
+            Some(&mut bmp_color as *mut BITMAP as *mut std::ffi::c_void),
+        );
+
+        GetObjectW(
+            info.hbmMask,
+            std::mem::size_of::<BITMAP>() as i32,
+            Some(&mut bmp_mask as *mut BITMAP as *mut std::ffi::c_void),
+        );
+
+        //得到BMP图片数据
+        let n_image_bytes = (num_bitmap_bytes(&bmp_color) + num_bitmap_bytes(&bmp_mask)) as u32;
+        let mut bi_header = BITMAPINFOHEADER::default();
+        bi_header.biSize = std::mem::size_of::<BITMAPINFOHEADER>() as u32;
+        bi_header.biWidth = bmp_color.bmWidth;
+        bi_header.biHeight = bmp_color.bmHeight * 2;
+        bi_header.biPlanes = bmp_color.bmPlanes;
+        bi_header.biBitCount = bmp_color.bmBitsPixel;
+        bi_header.biSizeImage = n_image_bytes;
+        //得到ICONDIR数据
+        let mut icon_dir = ICONDIR::default();
+        icon_dir.b_width = bmp_color.bmWidth as u8;
+        icon_dir.b_height = bmp_color.bmHeight as u8;
+        icon_dir.b_color_count = 0;
+        icon_dir.w_planes = bmp_color.bmPlanes;
+        icon_dir.w_bit_count = bmp_color.bmBitsPixel;
+        icon_dir.dw_bytes_in_res = size_of::<BITMAPINFOHEADER>() as u32 + n_image_bytes;
+        icon_dir.dw_image_offset = (size_of::<ICONHEADER>() + size_of::<ICONDIR>()) as u32;
+        //写入icon头
+        let mut icon_header = ICONHEADER::default();
+        icon_header.id_reserved = 0;
+        icon_header.id_type = 1; //type 1=ICON
+        icon_header.id_count = 1; //number of icon dir
+        let icon_header: &[u8] = std::slice::from_raw_parts(
+            &icon_header as *const _ as *const u8,
+            size_of::<ICONHEADER>(),
+        );
+
+        let mut icon_data = Vec::new();
+        icon_header.iter().for_each(|n| icon_data.push(*n));
+        //写入icon dir
+        let icon_dir: &[u8] =
+            std::slice::from_raw_parts(&icon_dir as *const _ as *const u8, size_of::<ICONDIR>());
+        icon_dir.iter().for_each(|n| icon_data.push(*n));
+        //写入bmp头
+        let bi_header: &[u8] = std::slice::from_raw_parts(
+            &bi_header as *const _ as *const u8,
+            size_of::<BITMAPINFOHEADER>(),
+        );
+        bi_header.iter().for_each(|n| icon_data.push(*n));
+        //写入图片数据
+        write_icon_data(&mut icon_data, info.hbmColor);
+        write_icon_data(&mut icon_data, info.hbmMask);
+
+        DeleteObject(info.hbmColor);
+        DeleteObject(info.hbmMask);
+
+        std::fs::write(save_path, icon_data).unwrap();
+    }
+    return true;
+}
+
+fn num_bitmap_bytes(p_bitmap: &BITMAP) -> i32 {
+    let mut n_width_bytes = p_bitmap.bmWidthBytes;
+    let res = n_width_bytes % 4;
+    if res != 0 {
+        n_width_bytes = n_width_bytes + 4 - res;
+    }
+    return n_width_bytes * p_bitmap.bmHeight;
+}
+fn write_icon_data(icon_data: &mut Vec<u8>, hbitmap: HBITMAP) {
+    unsafe {
+        let mut bmp = BITMAP::default();
+
+        GetObjectW(
+            hbitmap,
+            std::mem::size_of::<BITMAP>() as i32,
+            Some(&mut bmp as *mut BITMAP as *mut std::ffi::c_void),
+        );
+
+        let n_bitmap_bytes = num_bitmap_bytes(&bmp);
+        let mut data = Vec::new();
+        data.resize(n_bitmap_bytes as usize, 0);
+        GetBitmapBits(
+            hbitmap,
+            n_bitmap_bytes,
+            data.as_mut_ptr() as *mut std::ffi::c_void,
+        );
+
+        for i in (0..bmp.bmHeight).rev() {
+            // Write the bitmap scanline
+            let line_data: &[u8] = std::slice::from_raw_parts(
+                (data.as_ptr() as *const _ as *const u8)
+                    .wrapping_add((i * bmp.bmWidthBytes) as usize),
+                bmp.bmWidthBytes as usize,
+            );
+            line_data.iter().for_each(|n| icon_data.push(*n));
+            // extend to a 32bit boundary (in the file) if necessary
+            if bmp.bmWidthBytes % 4 != 0 {
+                let padding: u32 = 0;
+                let padding: &[u8] =
+                    std::slice::from_raw_parts(&padding as *const _ as *const u8, 4);
+                padding.iter().for_each(|n| icon_data.push(*n));
+            }
+        }
     }
 }
