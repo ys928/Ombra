@@ -1,14 +1,15 @@
 ## 介绍
 
-本软件受utools启发，实现的一款轻量级PC端应用功能集合。
+本软件受utools启发，实现的一款轻量级PC端应用功能集合，默认隐藏、唤醒面板的快捷键为：Ctrl+Shift+A，也可自行在设置面板修改。
 
 目前已实现的基本功能有：
 
-- [x] 快速搜索启动本地所有已安装程序
-- [x] 快捷打开网页链接
-- [x] 快捷打开本地文件、文件夹
-- [x] 本地文件搜索app
-- [x] explorer窗口识别、启动应用，例如快速启动vs code打开文件夹
+- [x] 本地程序快速搜索启动
+- [x] 网页链接、本地路径快速打开
+- [x] 文件搜索app
+- [x] explorer窗口识别、启动应用，例如快在资源管理器窗口上唤醒本面板，可快速启动vs code打开当前文件夹
+- [x] 自添加本地应用
+- [x] 搜索引擎快速查询
 
 未来计划实现的功能：
 
@@ -24,13 +25,19 @@
 
 主界面：
 
-![image](https://github.com/ys928/Ombra/assets/80371119/cc677a63-9f01-48d8-a284-4ebe870d7ce1)
+![image](https://github.com/ys928/Ombra/assets/80371119/3e529d21-7a12-4575-bf1f-12cdd0595262)
+
+设置面板：
+
+![image](https://github.com/ys928/Ombra/assets/80371119/9c669d53-4f12-4717-9278-1dd8406f0565)
+
 
 文件搜索应用：
 
-![image](https://github.com/ys928/Ombra/assets/80371119/90438ce9-c6a8-4c34-a87c-dbd424ffc7e9)
+![image](https://github.com/ys928/Ombra/assets/80371119/459a41a2-929f-4001-9602-c505a4f3db00)
 
 
-## 开发扩展
 
-如果你想要开发本应用的扩展，可以参考文章：[Ombra开发](https://www.kucoding.com/article/222.html)
+## 更多
+
+关于本项目的更多细节，可以参考文章：[Ombra简介](https://www.kucoding.com/article/222.html)
