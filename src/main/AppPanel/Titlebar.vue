@@ -6,6 +6,7 @@ import GlobalShortcut from '~/api/globalShortcut';
 import Ombra from '~/api/ombra';
 import App from '~/api/app';
 import Config from '~/api/config';
+import { UnlistenFn } from '@tauri-apps/api/event';
 
 //窗口是否显示
 const is_show = ref(true);
@@ -17,13 +18,25 @@ async function winSeparate() {
         Window.new_app(appid);
     }
 }
-let fun_eve_blur: Promise<Function>;
-let fun_eve_focus: Promise<Function>;
-if (Window.is_main()) {
-    fun_eve_blur = Window.event_blur('MainWindow', () => {
+let fun_eve_blur: UnlistenFn | undefined;
+
+let fun_eve_focus: UnlistenFn | undefined;
+
+let fun_eve_click_tray: UnlistenFn | undefined;
+
+onMounted(async () => {
+    if (!Window.is_main()) {
+        Window.shadow();
+        return;
+    }
+    //读取唤出面板的快捷键
+    callout_short_key.value = await Config.read_callout();
+    set_callout_shortkey(callout_short_key.value);
+
+    fun_eve_blur = await Window.event_blur('MainWindow', () => {
         is_show.value = false;
     })
-    fun_eve_focus = Window.event_focus('MainWindow', () => {
+    fun_eve_focus = await Window.event_focus('MainWindow', () => {
         is_show.value = true;
     });
     let timer: NodeJS.Timeout | undefined;
@@ -41,26 +54,19 @@ if (Window.is_main()) {
             }
         }, 100);
     });
-}
+    fun_eve_click_tray = await Window.event_click_tray(async () => {
+        if (await Window.is_visible()) {
+            Window.hide();
+        } else {
+            Window.show();
+        }
+    });
 
-
-onMounted(async () => {
-    Window.shadow();
-    if (Window.is_main()) {
-        //读取唤出面板的快捷键
-        callout_short_key.value = await Config.read_callout();
-        set_callout_shortkey(callout_short_key.value);
-    }
 });
 onUnmounted(() => {
-    if (Window.is_main()) {
-        fun_eve_blur.then((fun) => {
-            fun();
-        });
-        fun_eve_focus.then((fun) => {
-            fun();
-        });
-    }
+    if (fun_eve_blur) fun_eve_blur();
+    if (fun_eve_focus) fun_eve_focus();
+    if (fun_eve_click_tray) fun_eve_click_tray();
 });
 
 //处理程序退出时的情况

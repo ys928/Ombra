@@ -1,7 +1,6 @@
 import { invoke } from "@tauri-apps/api";
 import { UnlistenFn, listen } from "@tauri-apps/api/event";
 import { appWindow } from "@tauri-apps/api/window";
-import Config from "./config";
 import Path from "./path";
 import Dir from "./dir";
 
