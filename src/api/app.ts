@@ -2,6 +2,8 @@ import { invoke } from "@tauri-apps/api";
 import { UnlistenFn, listen } from "@tauri-apps/api/event";
 import { appWindow } from "@tauri-apps/api/window";
 import Config from "./config";
+import Path from "./path";
+import Dir from "./dir";
 
 type SysAppInfo = {
     name: string,
@@ -18,16 +20,6 @@ export interface WebUrlApp {
     features: Array<string>, //可被匹配的特性
 }
 
-const recommand_urls: Array<WebUrlApp> = [
-    {
-        name: '必应',
-        url: 'https://www.bing.com/search?q={query}',
-        id: 'www.bing.com',
-        icon: '/web/bing.ico',
-        on: true,
-        features: ['text']
-    }
-]
 export default class App {
 
     /**
@@ -49,24 +41,30 @@ export default class App {
         }
         return apps_sys;
     }
-    /**
-     * 
-     * @returns 获取所有可用的web app
-     */
-    static async get_web() {
-        let urls_app = await Config.read_web_apps();
-        if (urls_app == undefined) {
-            Config.write_web_apps(recommand_urls);
-            return recommand_urls;
-        }
-        return urls_app;
-    }
-
+    
     /**
      * 
      * @returns 判断当前app是否处于嵌入模式
      */
     static is_embed() {
         return appWindow.label == 'MainWindow';
+    }
+    /**
+     * 
+     * @param target 目标文件路径
+     * @returns 成功则返回其icon图片路径，失败返回空字符串
+     */
+    static async get_icon(target: string) {
+        let filename = Path.file_stem(target);
+        let c = await Dir.config();
+        let icon_path = await Path.join(c, 'icons', filename);
+        let ret = await Path.exists(icon_path);
+        if (ret) return icon_path;
+        ret = await invoke<boolean>('get_associated_icon', { filePath: target, savePath: icon_path });
+        if (ret) {
+            return icon_path;
+        } else {
+            return '';
+        }
     }
 }

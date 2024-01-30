@@ -25,6 +25,7 @@ import KIPdf from './icon/KIPdf.vue'
 import KIImage from './icon/KIImage.vue'
 import KIJson from './icon/KIJson.vue'
 import KIJs from './icon/KIJs.vue'
+import KIDelete from './icon/KIDelete.vue'
 
 import KLoading from './unit/KLoading.vue'
 import KSwitch from './unit/KSwitch.vue'
@@ -57,6 +58,7 @@ export {
   KIImage,
   KIJs,
   KIJson,
+  KIDelete,
   KLoading,
   KSwitch
 }

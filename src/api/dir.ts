@@ -7,7 +7,7 @@ type FileInfo = {
     ftype: number, //1：文件、2：目录
 }
 
-export default class Directory {
+export default class Dir {
 
     /**
      * 

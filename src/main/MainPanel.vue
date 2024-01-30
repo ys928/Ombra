@@ -21,19 +21,10 @@ const callout_short_key = ref('');
 //由于tauri中移动窗口也会相继触发blur、focus，因此使用该变量判断
 let is_hide = false;
 
-let fun_eve_blur = Window.event_blur('MainWindow', () => {
-    is_hide = true;
-    setTimeout(() => {
-        if (is_hide) {
-            Window.hide();
-        }
-    }, 100);
-})
-let fun_eve_focus = Window.event_focus('MainWindow', () => {
-    is_hide = false;
-});
+let fun_eve_blur: UnlistenFn | undefined;
+let fun_eve_focus: UnlistenFn | undefined;
 
-let fun_eve_click_tray = Window.event_click_tray(fun_switch_panel_status);
+let fun_eve_click_tray: UnlistenFn | undefined;;
 
 let unlisten_single_instance: UnlistenFn | undefined;
 
@@ -44,22 +35,11 @@ let timing_fun: string | number | NodeJS.Timeout | undefined;
 onMounted(async () => {
     main_input.value.focus();
     //读取唤出面板的快捷键
-    callout_short_key.value = await Config.read_item('callout');
-    if (callout_short_key.value == undefined) {
-        callout_short_key.value = 'CommandOrControl+Shift+A';
-        set_callout_shortkey('CommandOrControl+Shift+A');
-    } else {
-        set_callout_shortkey(callout_short_key.value);
-    }
+    callout_short_key.value = await Config.read_callout();
+    set_callout_shortkey(callout_short_key.value);
     //读取搜索栏占位符
-    let placeholder = await Config.read_item('placeholder');
-    if (placeholder == undefined || placeholder.length == 0) {
-        placeholder = 'Hi，Ombra！';
-        search_input_placeholder.value = 'Hi，Ombra！';
-    } else {
-        search_input_placeholder.value = placeholder;
-    }
-
+    let placeholder = await Config.read_placeholder();
+    search_input_placeholder.value = placeholder;
     unlistenTextUpdate = await onTextUpdate(() => {
         clip_board_time = 0;
         if (timing_fun) clearInterval(timing_fun);
@@ -77,32 +57,45 @@ onMounted(async () => {
             Window.show();
         }
     })
+
+    fun_eve_blur = await Window.event_blur('MainWindow', () => {
+        is_hide = true;
+        setTimeout(() => {
+            if (is_hide) {
+                Window.hide();
+            }
+        }, 100);
+    })
+
+    fun_eve_focus = await Window.event_focus('MainWindow', () => {
+        is_hide = false;
+    });
+
+    fun_eve_click_tray = await Window.event_click_tray(fun_switch_panel_status);
 });
 
 onUnmounted(async () => {
     unlistenTextUpdate();
     unlistenClipboard();
-    fun_eve_blur.then((fun) => {
-        fun();
-    });
-    fun_eve_focus.then((fun) => {
-        fun();
-    });
-    fun_eve_click_tray.then((fun) => {
-        fun();
-    })
+    
+    if (fun_eve_blur) fun_eve_blur();
+
+    if (fun_eve_focus) fun_eve_focus();
+
+    if (fun_eve_click_tray) fun_eve_click_tray();
+
     if (unlisten_single_instance) unlisten_single_instance();
 })
 
 async function set_callout_shortkey(shortkey: string) {
     GlobalShortcut.auto_set(shortkey, fun_switch_panel_status);
-    Config.write_item('callout', shortkey);
+    Config.write_callout(shortkey);
     callout_short_key.value = shortkey;
 }
 
 //用于切换面板的显示、隐藏两种状态
 async function fun_switch_panel_status() {
-    console.log("fun_callout_panel");
+    // console.log("fun_callout_panel");
     if (await Window.is_visible()) {
         Window.hide();
         return;
@@ -263,7 +256,8 @@ function fun_ompositionend() {
             color: #f1f2f3;
             padding: 0 10px;
             user-select: none;
-            &::selection{
+
+            &::selection {
                 background-color: #263C58;
             }
         }

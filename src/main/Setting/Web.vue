@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, reactive } from 'vue';
-import App, { type WebUrlApp } from '~/api/app';
+import { type WebUrlApp } from '~/api/app';
 import Config from '~/api/config';
 import { KSwitch } from '~/kui'
 import { useAppListStore } from '~/stores/appList';
@@ -10,7 +10,7 @@ const web_apps = reactive([]) as Array<WebUrlApp>;
 const applistStore = useAppListStore();
 
 onMounted(async () => {
-    web_apps.push(... (await App.get_web()));
+    web_apps.push(... (await Config.read_web_apps()));
 });
 
 async function fun_change(item: WebUrlApp) {

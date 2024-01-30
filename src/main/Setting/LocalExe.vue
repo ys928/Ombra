@@ -1,10 +1,150 @@
 <script setup lang="ts">
+import { UnlistenFn } from '@tauri-apps/api/event';
+import { onMounted, onUnmounted, reactive } from 'vue';
+import App from '~/api/app';
+import CLI from '~/api/cli';
+import Config from '~/api/config';
+import { type LocalApp } from '~/api/config'
+import Notification from '~/api/notification';
+import Path from '~/api/path';
+import Url from '~/api/url';
+import Window from '~/api/window'
+import { useAppListStore } from '~/stores/appList';
+import { KIDelete } from '~/kui';
+import Dialog from '~/api/dialog';
+const local_apps = reactive([]) as Array<LocalApp>;
+
+const applistStore = useAppListStore();
+
+let uf_file_drag: UnlistenFn | undefined;
+
+onMounted(async () => {
+    let ret = await Config.read_local_app();
+    if (ret == undefined) {
+        Config.write_local_app([]);
+    } else {
+        local_apps.push(...ret);
+    }
+    uf_file_drag = await Window.event_file_drag(async (files) => {
+        for (let f of files) {
+            if (!f.endsWith('.exe')) {
+                Notification.send('提示', '暂不支持非exe可执行文件');
+                continue;
+            }
+            let name = await Path.file_stem(f);
+            let icon = await App.get_icon(f);
+            if (icon.length == 0) {
+                Notification.send('错误', '获取程序图标失败');
+                continue;
+            }
+            local_apps.push({
+                name: name,
+                path: f,
+                icon: icon
+            });
+            applistStore.add(name, f, Url.convert(icon), [], null, () => {
+                CLI.exec(['start', '', f]);
+            })
+        }
+        Config.write_local_app(local_apps);
+    });
+});
+
+onUnmounted(() => {
+    if (uf_file_drag) uf_file_drag();
+});
+
+async function fun_delete(path: string) {
+    let ret = await Dialog.confirm('确定要删除？', '提示', 'warning');
+    if (!ret) return;
+    for (let i = 0; i < local_apps.length; i++) {
+        if (local_apps[i].path == path) {
+            local_apps.splice(i, 1);
+            Config.write_local_app(local_apps);
+            applistStore.remove(path);
+            break;
+        }
+    }
+}
+
+
 </script>
 
 <template>
     <div class="LocalExe">
-
+        <div class="item" v-for="item in local_apps">
+            <div class="info">
+                <img :src="Url.convert(item.icon)" alt="" srcset="">
+                <div>
+                    <span class="name">{{ item.name }}</span>
+                    <span class="path">{{ item.path }}</span>
+                </div>
+            </div>
+            <div class="delete" @click="fun_delete(item.path)">
+                <KIDelete w="12" h="12"></KIDelete>
+            </div>
+        </div>
     </div>
 </template>
 
-<style scoped lang="less"></style>
+<style scoped lang="less">
+.LocalExe {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+
+        .info {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+
+            img {
+                width: 30px;
+                height: 30px;
+                margin: 0 10px;
+            }
+
+            div {
+                height: 30px;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+
+                .name {
+                    color: #eee;
+                    font-size: 13px;
+                }
+
+                .path {
+                    color: #8E8E8E;
+                    font-size: 12px;
+                }
+            }
+
+        }
+
+        .delete {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #383838;
+            color: white;
+            width: 26px;
+            height: 26px;
+            border-radius: 13px;
+            cursor: pointer;
+
+            &:hover {
+                background-color: #F56C6C;
+            }
+        }
+    }
+}
+</style>

@@ -48,13 +48,8 @@ onMounted(async () => {
     Window.shadow();
     if (Window.is_main()) {
         //读取唤出面板的快捷键
-        callout_short_key.value = await Config.read_item('callout');
-        if (callout_short_key.value == undefined) {
-            callout_short_key.value = 'CommandOrControl+Shift+A';
-            set_callout_shortkey('CommandOrControl+Shift+A');
-        } else {
-            set_callout_shortkey(callout_short_key.value);
-        }
+        callout_short_key.value = await Config.read_callout();
+        set_callout_shortkey(callout_short_key.value);
     }
 });
 onUnmounted(() => {
@@ -88,7 +83,7 @@ async function set_callout_shortkey(shortkey: string) {
             is_show.value = true;
         }
     })
-    Config.write_item('callout', shortkey);
+    Config.write_callout(shortkey);
     callout_short_key.value = shortkey;
 }
 

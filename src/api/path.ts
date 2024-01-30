@@ -27,4 +27,16 @@ export default class Path {
     static join(...paths: string[]) {
         return path.join(...paths);
     }
+    /**
+     * 
+     * @param path 路径
+     * @returns 获得无后缀名的文件名
+     */
+    static file_stem(path: string) {
+        let p = path.replace(/\\/g, '/');
+        let filename = p.substring(p.lastIndexOf('/')+1);
+        let pos = filename.lastIndexOf('.');
+        if (pos == -1) return filename;
+        return filename.substring(0, pos);
+    }
 }

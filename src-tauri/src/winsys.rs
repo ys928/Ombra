@@ -240,6 +240,8 @@ pub fn get_all_app(w: Window) {
                         } else {
                             app.icon.clear();
                         }
+                    }else{
+                        app.icon=icon_save_path.to_string_lossy().to_string();
                     }
                 }
                 // if !std::path::Path::new(&app.icon).exists() {
@@ -499,8 +501,8 @@ pub struct ICONDIR {
     dw_bytes_in_res: u32,
     dw_image_offset: u32, // file-offset to the start of ICONIMAGE
 }
-
-fn get_associated_icon(file_path: &str, save_path: &str) -> bool {
+#[tauri::command]
+pub fn get_associated_icon(file_path: &str, save_path: &str) -> bool {
     let file_path: Vec<u16> = file_path.encode_utf16().collect();
     let mut path: [u16; 128] = [0; 128];
     for i in 0..file_path.len() {

@@ -30,36 +30,26 @@ let app_setup_content = ''; //点击app时向其中传入的文本内容
 const applistStore = useAppListStore();
 
 onMounted(async () => {
-    let appinfo = await Config.read_item('appinfo');
+    let appinfo = await Config.read_appinfo();
     const app_list = applistStore.applist;
-    if (appinfo == undefined) {
-        appinfo = [];
-        for (let i = 0; i < app_list.length; i++) {
+    for (let i = 0; i < app_list.length; i++) {
+        let f = true;
+        for (let j = 0; j < appinfo.length; j++) {
+            if (appinfo[j].name == app_list[i].name) {
+                app_list[i].weight = appinfo[j].weight;
+                f = false;
+                break;
+            }
+        }
+        if (f) {
+            app_list[i].weight = 0;
             appinfo.push({
                 name: app_list[i].name,
-                weight: 0,
-            });
-        }
-    } else {
-        for (let i = 0; i < app_list.length; i++) {
-            let f = true;
-            for (let j = 0; j < appinfo.length; j++) {
-                if (appinfo[j].name == app_list[i].name) {
-                    app_list[i].weight = appinfo[j].weight;
-                    f = false;
-                    break;
-                }
-            }
-            if (f) {
-                app_list[i].weight = 0;
-                appinfo.push({
-                    name: app_list[i].name,
-                    weight: 0
-                })
-            }
+                weight: 0
+            })
         }
     }
-    Config.write_item('appinfo', appinfo);
+    Config.write_appinfo(appinfo);
     app_list.sort((a, b) => {
         return a.weight - b.weight;
     });
@@ -259,7 +249,7 @@ async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
             appinfo[i - 1].weight = appinfo[i].weight + 3;
         }
     }
-    Config.write_item('appinfo', appinfo);
+    Config.write_appinfo(appinfo);
 
     if (sea_of_rec) {
         Ombra.set_text('');

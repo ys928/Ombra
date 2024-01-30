@@ -112,6 +112,7 @@ fn main() {
             winsys::get_explorer_show_path,
             winsys::explorer_select_path,
             winsys::default_open_file,
+            winsys::get_associated_icon,
             file_watch::watch_dir,
             file_watch::unwatch_dir,
             file_catch::get_file_catch_info,

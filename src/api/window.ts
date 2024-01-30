@@ -197,4 +197,10 @@ export default class Window {
             callback();
         })
     }
+
+    static async event_file_drag(callback: (files: Array<string>) => void) {
+        return await listen<Array<string>>('tauri://file-drop', (e) => {
+            callback(e.payload);
+        })
+    }
 }

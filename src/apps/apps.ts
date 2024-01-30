@@ -13,6 +13,7 @@ import CLI from "../api/cli";
 import App from "../api/app";
 import { useAppListStore } from '~/stores/appList';
 import Config from "~/api/config";
+import Path from "~/api/path";
 
 let user_apps_list = [
     AppFileSearch,
@@ -92,7 +93,7 @@ export async function load_apps() {
 
     }
     //加载web应用
-    let web_apps = await App.get_web();
+    let web_apps = await Config.read_web_apps();
     for (let w of web_apps) {
         if (!w.on) continue; //跳过未启用的web app
         applistStore.add_web(w);
@@ -100,10 +101,16 @@ export async function load_apps() {
 
     //加载用户自己添加的本地应用ap
     let local_apps = await Config.read_local_app();
-    if (local_apps == undefined) {
-        Config.write_local_app([]);
-    }else{
-        
+    for (let app of local_apps) {
+        let ret = await Path.exists(app.icon);
+        if (!ret) {
+            let url = await App.get_icon(app.icon);
+            if (url.length == 0) continue;
+            app.icon = url;
+        }
+        applistStore.add(app.name, app.path, Url.convert(app.icon), [], null, () => {
+            CLI.exec(['start', '', app.path]);
+        })
     }
 }
 
