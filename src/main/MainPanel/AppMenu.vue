@@ -7,7 +7,7 @@ import Config from '~/api/config';
 import Tools from '~/api/tools';
 import { type AppInfo } from '~/stores/appList';
 import { useAppListStore } from '~/stores/appList';
-const props = defineProps(['main_input', 'search_content', 'cur_focus_app']);
+const props = defineProps(['main_input', 'cur_focus_app']);
 const emit = defineEmits(['update:cur_focus_app']);
 
 interface AppInfoExt extends AppInfo {
@@ -21,11 +21,7 @@ const recommend_list = reactive([]) as Array<AppInfoExt>; //最多8个推荐应�
 
 const search_count = ref(0); //搜索结果的数量
 
-let features_list = [] as Array<string>; //为每次搜索内容所匹配到的特点
-
 let search_result_is_expand = ref(false); //记录搜索结果是否为展开状态
-
-let app_setup_content = ''; //点击app时向其中传入的文本内容
 
 const applistStore = useAppListStore();
 
@@ -225,7 +221,7 @@ function adjust_height() {
     Window.set_height(search_box_height + search_resule_height + recommand_height);
 }
 
-async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
+async function fun_open_app(app: AppInfo, is_from_search: boolean) {
     const app_list = applistStore.applist;
     for (let i = 0; i < app_list.length; i++) {
         if (app_list[i].name == app.name) {
@@ -251,12 +247,8 @@ async function fun_open_app(app: AppInfo, sea_of_rec: boolean) {
     }
     Config.write_appinfo(appinfo);
 
-    if (sea_of_rec) {
-        Ombra.set_text('');
+    if (is_from_search) { //如果是搜索进入，则需要清空features
         Ombra.set_features([]);
-    } else {
-        Ombra.set_text(app_setup_content);
-        Ombra.set_features(features_list);
     }
 
     Ombra.set_appid(app.id);
@@ -272,18 +264,16 @@ let old_search_content = "";
 async function search(init = false) {
     const app_list = applistStore.applist;
     //如果搜索内容变化，则重新折叠面板
-    if (old_search_content != props.search_content) {
-        old_search_content = props.search_content;
+    let search_content = Ombra.get_text();
+    if (old_search_content != search_content) {
+        old_search_content = search_content;
         search_result_is_expand.value = false;
     }
     //只在非初始化(主窗口被唤出时)的情况下才重置feature
     if (!init) {
         //首先根据输入内容匹配特性
-        let fe = await match_feature(props.search_content);
-        features_list.length = 0;
-        features_list.push(...fe);
-        //传递app启动内容
-        app_setup_content = props.search_content;
+        let fe = await match_feature(search_content);
+        Ombra.set_features(fe);
     }
 
     //用于临时存储匹配结果
@@ -293,6 +283,7 @@ async function search(init = false) {
 
     for (let app_item of app_list) {
         //匹配推荐应用
+        const features_list = Ombra.get_features();
         for (let f of app_item.feature) {
             if (features_list.includes(f)) {
                 let app = await test_name_match(app_item);
@@ -302,7 +293,7 @@ async function search(init = false) {
         //跳过only_featur显示
         if (app_item.only_feature) continue;
         //匹配搜索应用
-        let app = await test_name_match(app_item, props.search_content);
+        let app = await test_name_match(app_item, search_content);
         if (app.is_match) {
             tmp_match_result.push(app);
         }
@@ -386,7 +377,7 @@ async function test_name_match(app: AppInfo, search = '') {
             if (pos != -1) { //如果匹配到了
                 let s = '';
                 for (let i = 0; i < words.length; i++) {
-                    if (i >= pos && i < pos + props.search_content.length) {
+                    if (i >= pos && i < pos + search.length) {
                         s += Tools.get_span(words[i][0], 'match');
                         s += Tools.get_span(words[i].substring(1) + ' ', 'normal');
                     } else {
@@ -543,19 +534,11 @@ function recommand_item_is_active(index: number) {
         return index == props.cur_focus_app;
     }
 }
-//由父组件调用，用于初始化feature
-function init_feature(feature: string[], data: string) {
-    features_list.length = 0;
-    features_list.push(...feature);
-    app_setup_content = data;
-    search(features_list.length > 0);
-}
 
 defineExpose({
     click_app,
     move,
-    search,
-    init_feature
+    search
 });
 
 </script>

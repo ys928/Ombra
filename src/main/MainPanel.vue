@@ -1,22 +1,27 @@
 <script setup lang="ts">
-import { Ref, nextTick, onMounted, onUnmounted, ref } from "vue";
+import { Ref, onMounted, onUnmounted, ref } from "vue";
 import AppMenu from "./MainPanel/AppMenu.vue";
+import Search from "./MainPanel/Search.vue";
 import { onTextUpdate, readText, startListening } from "tauri-plugin-clipboard-api";
 import { UnlistenFn, listen } from "@tauri-apps/api/event";
 import Window from "~/api/window";
 import GlobalShortcut from "~/api/globalShortcut";
 import Explorer from "~/api/explorer";
 import Config from "~/api/config";
+import Ombra from "~/api/ombra";
 
-const main_input = ref() as Ref<HTMLInputElement>;
+const main_input = ref();
 const measure = ref() as Ref<HTMLElement>;
-const search_content = ref("");
 
 const apps_menu = ref();
 const cur_focus_app = ref(0);
 const is_show_setting = ref(false);
 const search_input_placeholder = ref('');
 const callout_short_key = ref('');
+
+const search_content = ref("");
+
+const block_content = ref('');
 
 //由于tauri中移动窗口也会相继触发blur、focus，因此使用该变量判断
 let is_hide = false;
@@ -34,6 +39,7 @@ let clip_board_time = 999;
 let timing_fun: string | number | NodeJS.Timeout | undefined;
 onMounted(async () => {
     main_input.value.focus();
+    fun_search();
     //读取唤出面板的快捷键
     callout_short_key.value = await Config.read_callout();
     set_callout_shortkey(callout_short_key.value);
@@ -55,6 +61,7 @@ onMounted(async () => {
     unlisten_single_instance = await listen('single-instance', async () => {
         if (!await Window.is_visible()) {
             Window.show();
+            Window.focus();
         }
     })
 
@@ -77,7 +84,7 @@ onMounted(async () => {
 onUnmounted(async () => {
     unlistenTextUpdate();
     unlistenClipboard();
-    
+
     if (fun_eve_blur) fun_eve_blur();
 
     if (fun_eve_focus) fun_eve_focus();
@@ -102,17 +109,33 @@ async function fun_switch_panel_status() {
     }
     let p = await Explorer.get_path();
     if (p == 'none') {
-        apps_menu.value.init_feature([], '');
+        Ombra.set_text('');
+        Ombra.set_features([]);
+        apps_menu.value.search(true);
     } else {
-        apps_menu.value.init_feature(['explorer'], p);
+        Ombra.set_text(p);
+        Ombra.set_features(['explorer']);
+        apps_menu.value.search(true);
     }
     Window.show();
     Window.focus();
-    if (clip_board_time >= 0 && clip_board_time <= 3) {
-        search_content.value = await readText();
-        fun_input();
+    if (clip_board_time <= 3) {
+        let text = await readText();
+        let text_trim = text.trim();
+        Ombra.set_text(text_trim);
+        if (text_trim.indexOf('\n') == -1) {
+            search_content.value = text_trim;
+        } else {
+            if (text_trim.length > 50) {
+                block_content.value = text_trim.substring(0, 50).replace('\n', '¬') + ' ......';
+            } else {
+                block_content.value = text_trim.replace('\n', '¬');
+            }
+            search_input_placeholder.value = "文本";
+        }
+        await apps_menu.value.search();
     } else {
-        main_input.value.select();
+        main_input.value.selected();
     }
 }
 
@@ -126,12 +149,18 @@ async function fun_keydown(e: KeyboardEvent) {
         return;
     }
     if (e.key == 'ArrowLeft') {
-        apps_menu.value.move('left');
+        let r = window.getSelection()?.getRangeAt(0);
+        if (r && r.startOffset == 0) {
+            apps_menu.value.move('left');
+        }
         return;
     }
 
     if (e.key == 'ArrowRight') {
-        apps_menu.value.move('right');
+        let r = window.getSelection()?.getRangeAt(0);
+        if (r && r.startOffset == main_input.value.textContent?.length) {
+            apps_menu.value.move('right');
+        }
         return;
     }
     if (e.key == 'Enter') {
@@ -147,61 +176,48 @@ async function fun_keydown(e: KeyboardEvent) {
         }
         if (search_content.value.length != 0) {
             search_content.value = "";
-            await nextTick();
-            fun_input();
+            fun_search();
         } else {
             Window.hide();
         }
+        return;
+    }
+    if (e.key == 'Backspace') {
+        if (search_content.value.length == 0 && block_content.value.length > 0) {
+            block_content.value = ''
+            //读取搜索栏占位符
+            let placeholder = await Config.read_placeholder();
+            search_input_placeholder.value = placeholder;
+            fun_search();
+        }
     }
 }
-let is_ompositioning = false;
 
 let need_search = false;
 
 let is_in_searching = false;
 
-async function fun_input() {
+async function fun_search() {
     is_show_setting.value = false;
-    if (is_ompositioning) return;
     if (is_in_searching) { //如果当前处于搜索状态，则缓存
         need_search = true;
         return;
     }
     //否则开始搜索
     is_in_searching = true;
-    adjust_input_size();
     cur_focus_app.value = 0;
+    Ombra.set_text(search_content.value);
     await apps_menu.value.search();
     is_in_searching = false;
     if (need_search) { //搜索结束，如果需要搜索，则继续
         need_search = false;
-        fun_input();
+        fun_search();
     }
 
-}
-
-function adjust_input_size() {
-    measure.value.innerText = search_content.value;
-    let w = measure.value.offsetWidth;
-    if (w > 730) {
-        main_input.value.style.width = '730px';
-        return;
-    }
-    if (w > 150) {
-        main_input.value.style.width = (w + 15) + 'px';
-    }
 }
 
 function fun_click_space() {
     main_input.value.focus()
-}
-
-function fun_ompositionstart() {
-    is_ompositioning = true;
-}
-function fun_ompositionend() {
-    is_ompositioning = false;
-    apps_menu.value.search();
 }
 
 </script>
@@ -209,16 +225,19 @@ function fun_ompositionend() {
 <template>
     <div class="MainPanel">
         <div class="InputArea">
-            <input class="search" v-model="search_content" ref="main_input" @input="fun_input"
-                @keydown="fun_keydown($event)" @compositionstart="fun_ompositionstart" @compositionend="fun_ompositionend"
-                :placeholder="search_input_placeholder">
-            <div class="space" @mousedown="main_input.focus()" @dblclick="fun_click_space" data-tauri-drag-region></div>
+            <div class="core">
+                <div class="block" v-if="block_content.length > 0" v-text="block_content"></div>
+                <Search ref="main_input" v-model:value="search_content" @keydown="fun_keydown" @change="fun_search"
+                    :placeholder="search_input_placeholder">
+                </Search>
+                <div class="space" @mousedown="main_input.focus()" @dblclick="fun_click_space" data-tauri-drag-region>
+                </div>
+            </div>
             <div class="Icon" @click="Window.to_setting">
                 <img src="/logo.png" draggable="false">
             </div>
         </div>
-        <AppMenu ref="apps_menu" :main_input="main_input" :search_content="search_content"
-            v-model:cur_focus_app="cur_focus_app">
+        <AppMenu ref="apps_menu" :main_input="main_input" v-model:cur_focus_app="cur_focus_app">
         </AppMenu>
         <div class="measure" ref="measure" style="visibility: hidden;"></div>
     </div>
@@ -241,30 +260,27 @@ function fun_ompositionend() {
         overflow: hidden;
         width: 100%;
         display: flex;
-        justify-content: space-between;
-        position: relative;
 
-        .search {
-            width: 160px;
-            font-family: 'Arial', sans-serif;
+        .core {
+            width: 100px;
+            flex-grow: 1;
             height: 50px;
-            border-radius: 5px;
-            font-size: 25px;
-            outline: none;
-            border: none;
-            background-color: #252525;
-            color: #f1f2f3;
-            padding: 0 10px;
-            user-select: none;
+            display: flex;
 
-            &::selection {
-                background-color: #263C58;
+            .block {
+                color: #eee;
+                margin: 10px 5px;
+                padding: 0 10px;
+                line-height: 30px;
+                font-size: 14px;
+                border: 1px dashed #999;
+            }
+
+            .space {
+                flex-grow: 1;
             }
         }
 
-        .space {
-            flex-grow: 1;
-        }
 
         .Icon {
             width: 50px;
@@ -285,15 +301,6 @@ function fun_ompositionend() {
             &:hover {
                 filter: drop-shadow(0 0 2em #eee);
             }
-        }
-
-        .block {
-            position: absolute;
-            font-size: 25px;
-            color: #ccc;
-            border: 1px dashed #eee;
-            left: 10px;
-            top: 0px;
         }
     }
 
