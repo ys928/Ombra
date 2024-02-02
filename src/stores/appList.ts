@@ -29,6 +29,12 @@ export const useAppListStore = defineStore('applist', () => {
     */
 
     function add(name: string, id: string, icon: string, feature: Array<string>, component: Component | string | null, setup_callback: () => void, only_feature = false) {
+        if (id.length != 0) {
+            for (let app of applist) {
+                if (app.id == id) return 'repeat'; //不允许重复添加id相同的app
+            }
+        }
+
         applist.push({
             name: name,
             icon: icon,
@@ -39,6 +45,7 @@ export const useAppListStore = defineStore('applist', () => {
             component: component == null || typeof component == 'string' ? component : markRaw(component),
             setup: setup_callback
         });
+        return 'success';
     }
 
     function add_web(app: WebUrlApp) {

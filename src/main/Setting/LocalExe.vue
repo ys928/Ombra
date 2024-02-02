@@ -12,6 +12,7 @@ import Window from '~/api/window'
 import { useAppListStore } from '~/stores/appList';
 import { KIDelete } from '~/kui';
 import Dialog from '~/api/dialog';
+import { KIPlus } from '~/kui'
 const local_apps = reactive([]) as Array<LocalApp>;
 
 const applistStore = useAppListStore();
@@ -67,6 +68,30 @@ async function fun_delete(path: string) {
     }
 }
 
+async function fun_add() {
+    const ret = await Dialog.open({ title: '选择文件', filters: [{ name: '可执行文件', extensions: ['exe'] }] });
+    if (ret == null) return;
+    let f = ret as string;
+    let name = await Path.file_stem(f);
+    let icon = await App.get_icon(f);
+    if (icon.length == 0) {
+        Notification.send('错误', '获取程序图标失败');
+        return;
+    }
+    local_apps.push({
+        name: name,
+        path: f,
+        icon: icon
+    });
+    let status = applistStore.add(name, f, Url.convert(icon), [], null, () => {
+        CLI.exec(['start', '', f]);
+    });
+    if (status == 'success') {
+        Config.write_local_app(local_apps);
+    } else {
+        Notification.send('错误', '请勿重复添加');
+    }
+}
 
 </script>
 
@@ -84,6 +109,9 @@ async function fun_delete(path: string) {
                 <KIDelete w="12" h="12"></KIDelete>
             </div>
         </div>
+        <span class="plus" @click="fun_add">
+            <KIPlus :w="20" :h="20"></KIPlus>
+        </span>
     </div>
 </template>
 
@@ -91,6 +119,7 @@ async function fun_delete(path: string) {
 .LocalExe {
     width: 100%;
     height: 100%;
+    position: relative;
     display: flex;
     flex-direction: column;
 
@@ -144,6 +173,25 @@ async function fun_delete(path: string) {
             &:hover {
                 background-color: #F56C6C;
             }
+        }
+    }
+
+    .plus {
+        position: absolute;
+        right: 20px;
+        bottom: 20px;
+        color: #A2A29B;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-radius: 15px;
+        background-color: #3c3c3c;
+
+        &:hover {
+            background-color: #5c5c5c;
         }
     }
 }
