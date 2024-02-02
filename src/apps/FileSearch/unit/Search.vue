@@ -13,7 +13,8 @@
 import { Ref, onMounted, ref } from 'vue';
 import { KIWholeWord } from '~/kui';
 import Ombra from '~/api/ombra';
-const emits = defineEmits(['fun_search', 'fun_exit']);
+import Window from '~/api/window';
+const emits = defineEmits(['fun_search']);
 
 const use_whole_word = ref(false) as Ref<Boolean>;
 
@@ -37,7 +38,9 @@ onMounted(() => {
 function fun_keydown(e: KeyboardEvent) {
     if (e.key == 'Escape') {
         if (search_content.value.length == 0) {
-            emits('fun_exit');
+            if (Window.is_main()) {
+                Window.close();
+            }
         } else {
             search_content.value = "";
             let cnt = get_name_ext();

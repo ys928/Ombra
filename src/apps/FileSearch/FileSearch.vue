@@ -1,6 +1,6 @@
 <template>
     <div class="FileSearch">
-        <Search ref="vue_search" @fun_search="fun_search" @fun_exit="Window.close"></Search>
+        <Search ref="vue_search" @fun_search="fun_search"></Search>
         <Result ref="vue_result" :last_cnt="last_search.name" :last_mode="last_search.mode" :last_ext="last_search.ext"
             @fun_set_pop_menu="fun_set_pop_menu" @fun_search="fun_search" @fun_complete_search="is_searching = false">
         </Result>
@@ -20,7 +20,6 @@ import PopMenu from './unit/PopMenu.vue'
 import Search from './unit/Search.vue';
 import Statusbar from './unit/Statusbar.vue';
 import Result from './unit/Result.vue';
-import Window from '~/api/window';
 import { KLoading } from '~/kui';
 
 type FileInfo = {
