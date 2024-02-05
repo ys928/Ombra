@@ -1,5 +1,6 @@
 import { invoke, path } from "@tauri-apps/api";
 import { UnlistenFn, listen } from "@tauri-apps/api/event";
+import Path from "./path";
 type FileInfo = {
     name: string,
     path: string,
@@ -16,7 +17,14 @@ export default class Dir {
     static config() {
         return path.appConfigDir();
     }
-
+    /**
+     * 
+     * @returns 返回存储图片的配置目录
+     */
+    static async config_icon() {
+        let ret = await this.config();
+        return Path.join(ret, 'icons');
+    }
     /**
      * 
      * @param path 要遍历的目录

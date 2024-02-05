@@ -4,6 +4,7 @@ use log::debug;
 use pinyin::ToPinyin;
 use serde::{Deserialize, Serialize};
 use std::collections::LinkedList;
+use std::io::Read;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window};
 use walkdir::WalkDir;
@@ -125,6 +126,7 @@ fn main() {
             open_devtools,
             auto_start,
             is_auto_start,
+            download_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -304,4 +306,24 @@ fn is_auto_start() -> bool {
         .build()
         .unwrap();
     return auto_start.is_enabled().unwrap();
+}
+
+#[tauri::command]
+fn download_file(w: Window, url: String, file: String) {
+    std::thread::spawn(move || {
+        let resp = reqwest::blocking::get(url);
+        if resp.is_err() {
+            debug!("{:?}", resp.err());
+            w.emit("download_file_result", false).unwrap();
+            return;
+        }
+        let mut resp = resp.unwrap();
+        if !resp.status().is_success() {
+            return;
+        }
+        let mut buf = Vec::new();
+        resp.read_to_end(&mut buf).unwrap();
+        std::fs::write(file, buf).unwrap();
+        w.emit("download_file_result", true).unwrap();
+    });
 }

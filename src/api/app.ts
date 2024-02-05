@@ -15,7 +15,7 @@ export interface WebUrlApp {
     url: string,//网页路径
     id: string,//用网站域名作为id
     icon: string,//网页图标
-    on: Boolean,//时候启动
+    on: Boolean,//是否启动
     features: Array<string>, //可被匹配的特性
 }
 

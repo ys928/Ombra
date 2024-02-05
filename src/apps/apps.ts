@@ -32,35 +32,7 @@ export async function load_apps() {
         applistStore.add(app.name, app.id, app.icon, app.feature, app.component, app.setup, app.only_feature);
     }
 
-    //加载插件应用
-
-    let plugin_path = await path.resolve('./plugin');
-    let plugin_dirs = await Directory.walk(plugin_path);
-    for (let i = 0; i < plugin_dirs.length; i++) {
-        let name = '';
-        let icon = '';
-        let plugin_index = '';
-        let id = ''
-        let features = [];
-        let plugin_files = await Directory.walk(plugin_dirs[i].path + '\\' + plugin_dirs[i].name);
-        for (let f of plugin_files) {
-            if (f.name.startsWith('icon')) { //icon图标
-                icon = Url.convert(f.path + '\\' + f.name);
-            } else if (f.name == 'index.html') {
-                plugin_index = Url.convert(f.path + '\\' + f.name);
-            } else if (f.name == 'config.json') {
-                let text = await File.read_text(f.path + '\\' + f.name);
-                let config = JSON.parse(text);
-                features = config.features;
-                id = config.id;
-                name = config.name;
-            }
-        }
-        applistStore.add(name, id, icon, features, plugin_index, () => { }, false);
-    }
-
     //加载系统应用、功能
-
     for (let app of sys_seting_list) {
         applistStore.add(app.name, '', app.icon, app.feature, null, app.setup, false);
     }
@@ -94,10 +66,29 @@ export async function load_apps() {
     }
     //加载web应用
     let web_apps = await Config.read_web_apps();
-    for (let w of web_apps) {
-        if (!w.on) continue; //跳过未启用的web app
-        applistStore.add_web(w);
+    for (let i = 0; i < web_apps.length; i++) {
+        if (!web_apps[i].on) continue; //跳过未启用的web app
+        console.log(Path.exists(web_apps[i].icon));
+        if (web_apps[i].icon.length == 0 || !await Path.exists(web_apps[i].icon)) {
+            let icon = await Url.download_favicon(web_apps[i].url, web_apps[i].name);
+            console.log(111, icon);
+            if (icon.length > 0) {
+                web_apps[i].icon = icon;
+            } else {
+                web_apps[i].icon = '';
+            }
+        }
+        applistStore.add_web({
+            name: web_apps[i].name,
+            features: web_apps[i].features,
+            id: web_apps[i].id,
+            url: web_apps[i].url,
+            icon: web_apps[i].icon.length > 0 ? Url.convert(web_apps[i].icon) : '/logo.png',
+            on: true
+        });
     }
+    console.log(web_apps);
+    Config.write_web_apps(web_apps);
 
     //加载用户自己添加的本地应用ap
     let local_apps = await Config.read_local_app();
@@ -111,6 +102,32 @@ export async function load_apps() {
         applistStore.add(app.name, app.path, Url.convert(app.icon), [], null, () => {
             CLI.exec(['start', '', app.path]);
         })
+    }
+
+    //加载插件应用
+    let plugin_path = await path.resolve('./plugin');
+    let plugin_dirs = await Directory.walk(plugin_path);
+    for (let i = 0; i < plugin_dirs.length; i++) {
+        let name = '';
+        let icon = '';
+        let plugin_index = '';
+        let id = ''
+        let features = [];
+        let plugin_files = await Directory.walk(plugin_dirs[i].path + '\\' + plugin_dirs[i].name);
+        for (let f of plugin_files) {
+            if (f.name.startsWith('icon')) { //icon图标
+                icon = Url.convert(f.path + '\\' + f.name);
+            } else if (f.name == 'index.html') {
+                plugin_index = Url.convert(f.path + '\\' + f.name);
+            } else if (f.name == 'config.json') {
+                let text = await File.read_text(f.path + '\\' + f.name);
+                let config = JSON.parse(text);
+                features = config.features;
+                id = config.id;
+                name = config.name;
+            }
+        }
+        applistStore.add(name, id, icon, features, plugin_index, () => { }, false);
     }
 }
 

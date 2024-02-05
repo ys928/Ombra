@@ -12,8 +12,8 @@ const recommand_urls: Array<WebUrlApp> = [
     {
         name: '必应',
         url: 'https://www.bing.com/search?q={query}',
-        id: 'www.bing.com',
-        icon: '/web/bing.ico',
+        id: 'https://www.bing.com/search?q={query}',
+        icon: '',
         on: true,
         features: ['text']
     }

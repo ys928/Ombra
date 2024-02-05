@@ -30,6 +30,7 @@ import KIPlus from './icon/KIPlus.vue'
 
 import KLoading from './unit/KLoading.vue'
 import KSwitch from './unit/KSwitch.vue'
+import KWindow from './unit/KWindow.vue'
 
 export {
   KICsdn,
@@ -62,5 +63,6 @@ export {
   KIPlus,
   KIDelete,
   KLoading,
-  KSwitch
+  KSwitch,
+  KWindow
 }
