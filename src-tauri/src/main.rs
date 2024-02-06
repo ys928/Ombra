@@ -36,11 +36,6 @@ mod file_catch;
 mod winsys;
 
 fn main() {
-    let config_file_path = tools::get_data_dir(None).join("config.json");
-    if !config_file_path.exists() {
-        let _ = std::fs::write(config_file_path, "{}");
-    }
-
     let log_file_path = tools::get_data_dir(None).join("ombra.log");
     let requests = RollingFileAppender::builder()
         .encoder(Box::new(PatternEncoder::new(

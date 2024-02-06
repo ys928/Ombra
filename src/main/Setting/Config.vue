@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import Config from '~/api/config';
 import AutoStart from '~/api/autostart';
 import Notification from '~/api/notification';
-
+import { useConfigStore } from '~/stores/config';
 const short_key = ref('');
 const search_input_placeholder = ref('');
 const auto_start = ref(false);
 
+const configStore = useConfigStore();
 
 onMounted(async () => {
     //读取唤出面板的快捷键
-    let callout_shortkey = await Config.read_callout();
+    let callout_shortkey = await configStore.read_callout();
     short_key.value = callout_shortkey.replace('CommandOrControl', 'Ctrl');
     //读取搜索栏占位符
-    search_input_placeholder.value = await Config.read_placeholder();
+    search_input_placeholder.value = await configStore.read_placeholder();
     auto_start.value = await AutoStart.is_set();
 });
 
@@ -31,7 +31,7 @@ async function fun_shortkey_input(e: KeyboardEvent) {
     //使用F1-F12注册快捷键
     let rf = /F[1-9][0-2]/g
     if (rf.test(e.key)) {
-        Config.write_callout(e.key);
+        configStore.write_callout(e.key);
         return;
     }
     //使用Ctrl+shift+Alt注册快捷键
@@ -45,12 +45,12 @@ async function fun_shortkey_input(e: KeyboardEvent) {
         short_key.value += e.key.toUpperCase();
     }
     let sk = short_key.value.replace('Ctrl', 'CommandOrControl');
-    Config.write_callout(sk);
+    configStore.write_callout(sk);
     return;
 }
 
 async function set_placeholder() {
-    Config.write_placeholder(search_input_placeholder.value);
+    configStore.write_placeholder(search_input_placeholder.value);
 }
 
 async function fun_set_auto_start() {

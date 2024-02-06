@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
 import { type WebUrlApp } from '~/api/app';
-import Config from '~/api/config';
 import { KSwitch } from '~/kui'
 import { useAppListStore } from '~/stores/appList';
+import { useConfigStore } from '~/stores/config';
 import { KIPlus, KIDelete, KWindow } from '~/kui'
 import Url from '~/api/url';
 import Notification from '~/api/notification';
@@ -13,6 +13,8 @@ const web_apps = reactive([]) as Array<WebUrlApp>;
 
 const applistStore = useAppListStore();
 
+const configStore = useConfigStore();
+
 const is_show_window = ref(false);
 
 const add_web_name = ref('');
@@ -20,11 +22,11 @@ const add_web_url = ref('');
 
 // download_file
 onMounted(async () => {
-    web_apps.push(... (await Config.read_web_apps()));
+    web_apps.push(... (await configStore.read_web_apps()));
 });
 
 async function fun_change(item: WebUrlApp) {
-    Config.write_web_apps(web_apps);
+    configStore.write_web_apps(web_apps);
     if (item.on) {
         applistStore.add_web(item);
     } else {
@@ -64,9 +66,9 @@ async function fun_add_web() {
     applistStore.add_web(show_item);
     web_apps.push(show_item);
 
-    let cfg_web_apps = await Config.read_web_apps();
+    let cfg_web_apps = await configStore.read_web_apps();
     cfg_web_apps.push(item);
-    Config.write_web_apps(cfg_web_apps);
+    configStore.write_web_apps(cfg_web_apps);
     is_show_window.value = false;
 }
 
@@ -87,14 +89,14 @@ async function fun_delete(url: string) {
     }
     applistStore.remove(url);
 
-    let cfg_web_apps = await Config.read_web_apps();
+    let cfg_web_apps = await configStore.read_web_apps();
     for (let i = 0; i < cfg_web_apps.length; i++) {
         if (cfg_web_apps[i].url == url) {
             cfg_web_apps.splice(i, 1);
             break;
         }
     }
-    Config.write_web_apps(cfg_web_apps);
+    configStore.write_web_apps(cfg_web_apps);
 }
 </script>
 

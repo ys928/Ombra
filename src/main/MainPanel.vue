@@ -7,8 +7,10 @@ import { UnlistenFn, listen } from "@tauri-apps/api/event";
 import Window from "~/api/window";
 import GlobalShortcut from "~/api/globalShortcut";
 import Explorer from "~/api/explorer";
-import Config from "~/api/config";
+import { useConfigStore } from "~/stores/config";
 import Ombra from "~/api/ombra";
+
+const configStore = useConfigStore();
 
 const main_input = ref();
 const measure = ref() as Ref<HTMLElement>;
@@ -41,10 +43,10 @@ onMounted(async () => {
     main_input.value.focus();
     fun_search();
     //读取唤出面板的快捷键
-    callout_short_key.value = await Config.read_callout();
+    callout_short_key.value = await configStore.read_callout();
     set_callout_shortkey(callout_short_key.value);
     //读取搜索栏占位符
-    let placeholder = await Config.read_placeholder();
+    let placeholder = await configStore.read_placeholder();
     search_input_placeholder.value = placeholder;
     unlistenTextUpdate = await onTextUpdate(() => {
         clip_board_time = 0;
@@ -98,7 +100,7 @@ onUnmounted(async () => {
 
 async function set_callout_shortkey(shortkey: string) {
     GlobalShortcut.auto_set(shortkey, fun_switch_panel_status);
-    Config.write_callout(shortkey);
+    configStore.write_callout(shortkey);
     callout_short_key.value = shortkey;
 }
 
@@ -188,7 +190,7 @@ async function fun_keydown(e: KeyboardEvent) {
         if (search_content.value.length == 0 && block_content.value.length > 0) {
             block_content.value = ''
             //读取搜索栏占位符
-            let placeholder = await Config.read_placeholder();
+            let placeholder = await configStore.read_placeholder();
             search_input_placeholder.value = placeholder;
             fun_search();
         }

@@ -12,7 +12,7 @@ import Ombra from "../api/ombra";
 import CLI from "../api/cli";
 import App from "../api/app";
 import { useAppListStore } from '~/stores/appList';
-import Config from "~/api/config";
+import { useConfigStore } from "~/stores/config";
 import Path from "~/api/path";
 
 let user_apps_list = [
@@ -25,7 +25,7 @@ let user_apps_list = [
 
 export async function load_apps() {
     const applistStore = useAppListStore();
-
+    const configStore = useConfigStore();
     //加载内嵌应用
     for (let app of user_apps_list) {
         app.preload();
@@ -65,7 +65,7 @@ export async function load_apps() {
 
     }
     //加载web应用
-    let web_apps = await Config.read_web_apps();
+    let web_apps = await configStore.read_web_apps();
     for (let i = 0; i < web_apps.length; i++) {
         if (!web_apps[i].on) continue; //跳过未启用的web app
         if (web_apps[i].icon.length == 0 || !await Path.exists(web_apps[i].icon)) {
@@ -84,10 +84,10 @@ export async function load_apps() {
             on: true
         });
     }
-    Config.write_web_apps(web_apps);
+    configStore.write_web_apps(web_apps);
 
     //加载用户自己添加的本地应用ap
-    let local_apps = await Config.read_local_app();
+    let local_apps = await configStore.read_local_app();
     for (let app of local_apps) {
         let ret = await Path.exists(app.icon);
         if (!ret) {

@@ -3,10 +3,10 @@ import { nextTick, onMounted, reactive, ref, watch } from 'vue';
 import Path from '~/api/path'
 import Window from '~/api/window'
 import Ombra from '~/api/ombra';
-import Config from '~/api/config';
 import Tools from '~/api/tools';
 import { type AppInfo } from '~/stores/appList';
 import { useAppListStore } from '~/stores/appList';
+import { useConfigStore } from '~/stores/config';
 const props = defineProps(['main_input', 'cur_focus_app']);
 const emit = defineEmits(['update:cur_focus_app']);
 
@@ -14,6 +14,8 @@ interface AppInfoExt extends AppInfo {
     is_match: boolean, //当前是否被匹配上了
     show_name: string, //要显示的名字
 }
+
+const configStore=useConfigStore();
 
 const search_result_list = reactive([]) as Array<AppInfoExt>; //每次的搜索结果
 
@@ -26,7 +28,7 @@ let search_result_is_expand = ref(false); //记录搜索结果是否为展开状
 const applistStore = useAppListStore();
 
 onMounted(async () => {
-    let appinfo = await Config.read_appinfo();
+    let appinfo = await configStore.read_appinfo();
     const app_list = applistStore.applist;
     for (let i = 0; i < app_list.length; i++) {
         let f = true;
@@ -45,7 +47,7 @@ onMounted(async () => {
             })
         }
     }
-    Config.write_appinfo(appinfo);
+    configStore.write_appinfo(appinfo);
     app_list.sort((a, b) => {
         return a.weight - b.weight;
     });
@@ -245,7 +247,7 @@ async function fun_open_app(app: AppInfo, is_from_search: boolean) {
             appinfo[i - 1].weight = appinfo[i].weight + 3;
         }
     }
-    Config.write_appinfo(appinfo);
+    configStore.write_appinfo(appinfo);
 
     if (is_from_search) { //如果是搜索进入，则需要清空features
         Ombra.set_features([]);

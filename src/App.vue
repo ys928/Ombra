@@ -7,9 +7,13 @@
 import { onMounted } from 'vue';
 import Window from './api/window';
 import { load_apps } from './apps/apps';
+import { useConfigStore } from './stores/config';
+
+const configStore = useConfigStore();
 
 onMounted(() => {
   if (Window.is_main()) {
+    configStore.init();
     Window.focus();
     load_apps();
   }

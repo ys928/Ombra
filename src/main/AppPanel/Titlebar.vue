@@ -5,8 +5,10 @@ import Window from '~/api/window';
 import GlobalShortcut from '~/api/globalShortcut';
 import Ombra from '~/api/ombra';
 import App from '~/api/app';
-import Config from '~/api/config';
+import { useConfigStore } from "~/stores/config";
 import { UnlistenFn } from '@tauri-apps/api/event';
+
+const configStore = useConfigStore();
 
 //窗口是否显示
 const is_show = ref(true);
@@ -30,7 +32,7 @@ onMounted(async () => {
         return;
     }
     //读取唤出面板的快捷键
-    callout_short_key.value = await Config.read_callout();
+    callout_short_key.value = await configStore.read_callout();
     set_callout_shortkey(callout_short_key.value);
 
     fun_eve_blur = await Window.event_blur('MainWindow', () => {
@@ -89,7 +91,7 @@ async function set_callout_shortkey(shortkey: string) {
             is_show.value = true;
         }
     })
-    Config.write_callout(shortkey);
+    configStore.write_callout(shortkey);
     callout_short_key.value = shortkey;
 }
 

@@ -3,13 +3,12 @@ import { UnlistenFn } from '@tauri-apps/api/event';
 import { onMounted, onUnmounted, reactive } from 'vue';
 import App from '~/api/app';
 import CLI from '~/api/cli';
-import Config from '~/api/config';
-import { type LocalApp } from '~/api/config'
 import Notification from '~/api/notification';
 import Path from '~/api/path';
 import Url from '~/api/url';
 import Window from '~/api/window'
 import { useAppListStore } from '~/stores/appList';
+import { LocalApp, useConfigStore } from '~/stores/config';
 import { KIDelete } from '~/kui';
 import Dialog from '~/api/dialog';
 import { KIPlus } from '~/kui'
@@ -17,12 +16,14 @@ const local_apps = reactive([]) as Array<LocalApp>;
 
 const applistStore = useAppListStore();
 
+const configStore = useConfigStore();
+
 let uf_file_drag: UnlistenFn | undefined;
 
 onMounted(async () => {
-    let ret = await Config.read_local_app();
+    let ret = await configStore.read_local_app();
     if (ret == undefined) {
-        Config.write_local_app([]);
+        configStore.write_local_app([]);
     } else {
         local_apps.push(...ret);
     }
@@ -47,7 +48,7 @@ onMounted(async () => {
                 CLI.exec(['start', '', f]);
             })
         }
-        Config.write_local_app(local_apps);
+        configStore.write_local_app(local_apps);
     });
 });
 
@@ -61,7 +62,7 @@ async function fun_delete(path: string) {
     for (let i = 0; i < local_apps.length; i++) {
         if (local_apps[i].path == path) {
             local_apps.splice(i, 1);
-            Config.write_local_app(local_apps);
+            configStore.write_local_app(local_apps);
             applistStore.remove(path);
             break;
         }
@@ -87,7 +88,7 @@ async function fun_add() {
         CLI.exec(['start', '', f]);
     });
     if (status == 'success') {
-        Config.write_local_app(local_apps);
+        configStore.write_local_app(local_apps);
     } else {
         Notification.send('错误', '请勿重复添加');
     }
