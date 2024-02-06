@@ -49,7 +49,7 @@ export const useAppListStore = defineStore('applist', () => {
     }
 
     function add_web(app: WebUrlApp) {
-        add(app.name, app.id, app.icon, app.features, null, () => {
+        add(app.name, app.url, app.icon, app.features, null, () => {
             let features = Ombra.get_features();
             let text = Ombra.get_text();
             let u;

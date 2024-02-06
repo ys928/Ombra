@@ -1,4 +1,4 @@
-import Directory from "./dir";
+import Dir from "./dir";
 import Path from "./path";
 import File from "./file";
 import { WebUrlApp } from "./app";
@@ -12,7 +12,13 @@ const recommand_urls: Array<WebUrlApp> = [
     {
         name: '必应',
         url: 'https://www.bing.com/search?q={query}',
-        id: 'https://www.bing.com/search?q={query}',
+        icon: '',
+        on: true,
+        features: ['text']
+    },
+    {
+        name: '谷歌',
+        url: 'https://www.google.com/search?q={query}',
         icon: '',
         on: true,
         features: ['text']
@@ -44,14 +50,11 @@ async function write_item(item: string, cnt: any) {
 export default class Config {
     /**
      * 
-     * @returns 获取配置文件路径
+     * @returns 获取配置文件路径，不存在则创建
      */
     static async path() {
-        let p = await Directory.config();
-        p += 'config.json';
-        if (!await Path.exists(p)) {
-            File.write_text(p, '{}');
-        }
+        let p = await Dir.config();
+        p = await Path.join(p, 'config.json');
         return p;
     }
 

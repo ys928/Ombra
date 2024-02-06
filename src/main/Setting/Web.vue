@@ -28,7 +28,7 @@ async function fun_change(item: WebUrlApp) {
     if (item.on) {
         applistStore.add_web(item);
     } else {
-        applistStore.remove(item.id);
+        applistStore.remove(item.url);
     }
 }
 async function fun_add_web() {
@@ -76,20 +76,20 @@ function get_icon_url(icon: string) {
     }
     return '/logo.png';
 }
-async function fun_delete(id: string) {
+async function fun_delete(url: string) {
     let ret = await Dialog.confirm('确定要删除？', '提示', 'warning');
     if (!ret) return;
     for (let i = 0; i < web_apps.length; i++) {
-        if (web_apps[i].id == id) {
+        if (web_apps[i].url == url) {
             web_apps.splice(i, 1);
             break;
         }
     }
-    applistStore.remove(id);
+    applistStore.remove(url);
 
     let cfg_web_apps = await Config.read_web_apps();
     for (let i = 0; i < cfg_web_apps.length; i++) {
-        if (cfg_web_apps[i].id == id) {
+        if (cfg_web_apps[i].url == url) {
             cfg_web_apps.splice(i, 1);
             break;
         }
@@ -111,7 +111,7 @@ async function fun_delete(id: string) {
                 </div>
                 <div class="opt">
                     <KSwitch v-model:value="item.on" @click="fun_change(item)"></KSwitch>
-                    <div class="delete" @click="fun_delete(item.id)">
+                    <div class="delete" @click="fun_delete(item.url)">
                         <KIDelete w="12" h="12"></KIDelete>
                     </div>
                 </div>

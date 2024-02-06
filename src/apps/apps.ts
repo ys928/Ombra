@@ -68,10 +68,8 @@ export async function load_apps() {
     let web_apps = await Config.read_web_apps();
     for (let i = 0; i < web_apps.length; i++) {
         if (!web_apps[i].on) continue; //跳过未启用的web app
-        console.log(Path.exists(web_apps[i].icon));
         if (web_apps[i].icon.length == 0 || !await Path.exists(web_apps[i].icon)) {
             let icon = await Url.download_favicon(web_apps[i].url, web_apps[i].name);
-            console.log(111, icon);
             if (icon.length > 0) {
                 web_apps[i].icon = icon;
             } else {
@@ -81,13 +79,11 @@ export async function load_apps() {
         applistStore.add_web({
             name: web_apps[i].name,
             features: web_apps[i].features,
-            id: web_apps[i].id,
             url: web_apps[i].url,
             icon: web_apps[i].icon.length > 0 ? Url.convert(web_apps[i].icon) : '/logo.png',
             on: true
         });
     }
-    console.log(web_apps);
     Config.write_web_apps(web_apps);
 
     //加载用户自己添加的本地应用ap

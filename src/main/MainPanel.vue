@@ -33,7 +33,7 @@ let fun_eve_click_tray: UnlistenFn | undefined;;
 
 let unlisten_single_instance: UnlistenFn | undefined;
 
-let unlistenTextUpdate: UnlistenFn;
+let unlistenTextUpdate: UnlistenFn | undefined;
 let unlistenClipboard: () => Promise<void>;
 let clip_board_time = 999;
 let timing_fun: string | number | NodeJS.Timeout | undefined;
@@ -82,8 +82,10 @@ onMounted(async () => {
 });
 
 onUnmounted(async () => {
-    unlistenTextUpdate();
-    unlistenClipboard();
+
+    if (unlistenTextUpdate) unlistenTextUpdate();
+
+    if (unlistenClipboard) unlistenClipboard();
 
     if (fun_eve_blur) fun_eve_blur();
 
@@ -158,7 +160,7 @@ async function fun_keydown(e: KeyboardEvent) {
 
     if (e.key == 'ArrowRight') {
         let r = window.getSelection()?.getRangeAt(0);
-        if (r && r.startOffset == main_input.value.textContent?.length) {
+        if (r && r.startOffset == search_content.value.length) {
             apps_menu.value.move('right');
         }
         return;
