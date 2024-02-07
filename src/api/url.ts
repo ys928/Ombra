@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api";
-import { UnlistenFn, listen } from "@tauri-apps/api/event";
+import { listen } from "@tauri-apps/api/event";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 //@ts-ignore
 import parseUrl from 'parse-url'

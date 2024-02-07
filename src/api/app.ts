@@ -1,8 +1,7 @@
 import { invoke } from "@tauri-apps/api";
-import { UnlistenFn, listen } from "@tauri-apps/api/event";
+import { listen } from "@tauri-apps/api/event";
 import { appWindow } from "@tauri-apps/api/window";
-import Path from "./path";
-import Dir from "./dir";
+import { FS, Path, Dir } from '.'
 namespace App {
 
     /**
@@ -38,10 +37,10 @@ namespace App {
      * @returns 成功则返回其icon图片路径，失败返回空字符串
      */
     export async function get_icon(target: string) {
-        let filename = Path.file_stem(target);
+        let filename = FS.file_stem(target);
         let c = await Dir.config();
         let icon_path = await Path.join(c, 'icons', filename);
-        let ret = await Path.exists(icon_path);
+        let ret = await FS.exists(icon_path);
         if (ret) return icon_path;
         ret = await invoke<boolean>('get_associated_icon', { filePath: target, savePath: icon_path });
         if (ret) {

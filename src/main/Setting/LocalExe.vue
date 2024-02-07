@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { UnlistenFn } from '@tauri-apps/api/event';
 import { onMounted, onUnmounted, reactive } from 'vue';
-import { App, CLI, Notification, Path, Url, Window, Dialog } from '~/api';
+import { App, CLI, Notification, Url, Window, Dialog, FS } from '~/api';
 import { useAppListStore } from '~/stores/appList';
 import { useConfigStore } from '~/stores/config';
 import { KIDelete } from '~/kui';
@@ -27,7 +26,7 @@ onMounted(async () => {
                 Notification.send('提示', '暂不支持非exe可执行文件');
                 continue;
             }
-            let name = await Path.file_stem(f);
+            let name = await FS.file_stem(f);
             let icon = await App.get_icon(f);
             if (icon.length == 0) {
                 Notification.send('错误', '获取程序图标失败');
@@ -67,7 +66,7 @@ async function fun_add() {
     const ret = await Dialog.open({ title: '选择文件', filters: [{ name: '可执行文件', extensions: ['exe'] }] });
     if (ret == null) return;
     let f = ret as string;
-    let name = await Path.file_stem(f);
+    let name = await FS.file_stem(f);
     let icon = await App.get_icon(f);
     if (icon.length == 0) {
         Notification.send('错误', '获取程序图标失败');

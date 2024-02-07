@@ -120,7 +120,7 @@ fn main() {
             walk_all_files,
             search_file,
             shadow_window,
-            dir_or_file,
+            is_dir,
             walk_dir,
             to_pinyin,
             open_devtools,
@@ -260,14 +260,12 @@ fn search_file(w: Window, name: String, ext: String, mode: String, limit: i32, o
 }
 
 #[tauri::command]
-fn dir_or_file(path: &str) -> String {
+fn is_dir(path: &str) -> bool {
     let p = std::path::Path::new(path);
     if p.is_dir() {
-        return "dir".to_string();
-    } else if p.is_file() {
-        return "file".to_string();
+        return true;
     }
-    return "error".to_string();
+    return false;
 }
 
 #[tauri::command]

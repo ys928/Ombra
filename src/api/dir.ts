@@ -1,5 +1,5 @@
 import { invoke, path } from "@tauri-apps/api";
-import { UnlistenFn, listen } from "@tauri-apps/api/event";
+import { listen } from "@tauri-apps/api/event";
 import Path from "./path";
 namespace Dir {
 

@@ -1,6 +1,6 @@
-import { fs } from "@tauri-apps/api";
+import { fs, invoke } from "@tauri-apps/api";
 
-namespace File {
+namespace FS {
     /**
      * @description 以utf-8编码读取文本所有内容并返回
      * @param filepath 文件路径
@@ -23,12 +23,33 @@ namespace File {
     }
     /**
      * 
-     * @param path 文件路径
-     * @returns 文件是否存在
+     * @param path 路径
+     * @returns 路径是否存在
      */
     export function exists(path: string) {
         return fs.exists(path);
     }
+    /**
+     * 
+     * @param path 本地文件路径
+     * @returns 是否为文件夹
+     */
+    export function is_dir(path: string) {
+        return invoke<boolean>('is_dir', { path: path });
+    }
+
+    /**
+     * 
+     * @param path 路径
+     * @returns 获得无后缀名的文件名
+     */
+    export function file_stem(path: string) {
+        let p = path.replace(/\\/g, '/');
+        let filename = p.substring(p.lastIndexOf('/') + 1);
+        let pos = filename.lastIndexOf('.');
+        if (pos == -1) return filename;
+        return filename.substring(0, pos);
+    }
 }
 
-export default File;
+export default FS;

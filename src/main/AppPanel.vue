@@ -2,7 +2,7 @@
 import { useRoute } from 'vue-router';
 import Titlebar from './AppPanel/Titlebar.vue'
 import { Ref, onMounted, onUnmounted, ref, h, render, nextTick } from 'vue';
-import {File} from '~/api';
+import { FS } from '~/api';
 import { useAppListStore } from '~/stores/appList';
 const route = useRoute();
 
@@ -46,13 +46,13 @@ async function handle_plugin(e: MessageEvent) {
         switch (e.data.name) {
             case 'file_read_text':
                 {
-                    let text = await File.read_text(e.data.path);
+                    let text = await FS.read_text(e.data.path);
                     iframe.contentWindow?.postMessage(text, '*');
                 }
                 break;
             case 'file_write_text':
                 {
-                    await File.write_text(e.data.path, e.data.content);
+                    await FS.write_text(e.data.path, e.data.content);
                     iframe.contentWindow?.postMessage('', '*');
                 }
                 break;

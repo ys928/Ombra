@@ -10,10 +10,10 @@
 
 <script setup lang="ts">
 
-import { UnlistenFn, listen } from '@tauri-apps/api/event';
+import { listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
-import { File, Window, Notification, Dialog, Url } from '~/api'
+import { FS, Window, Notification, Dialog, Url } from '~/api'
 interface FileChange {
     kind: string,
     files: Array<string>,
@@ -53,13 +53,13 @@ async function handle_plugin(e: MessageEvent) {
         switch (e.data.name) {
             case 'file_read_text':
                 {
-                    let text = await File.read_text(e.data.path);
+                    let text = await FS.read_text(e.data.path);
                     iframe.contentWindow?.postMessage(text, '*');
                 }
                 break;
             case 'file_write_text':
                 {
-                    await File.write_text(e.data.path, e.data.content);
+                    await FS.write_text(e.data.path, e.data.content);
                     iframe.contentWindow?.postMessage('', '*');
                 }
                 break;
@@ -103,8 +103,8 @@ async function fun_open_dev() {
 
 <style scoped lang="less">
 .DevelopTool {
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
 

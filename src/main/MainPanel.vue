@@ -3,7 +3,7 @@ import { Ref, onMounted, onUnmounted, ref } from "vue";
 import AppMenu from "./MainPanel/AppMenu.vue";
 import Search from "./MainPanel/Search.vue";
 import { onTextUpdate, readText, startListening } from "tauri-plugin-clipboard-api";
-import { UnlistenFn, listen } from "@tauri-apps/api/event";
+import { listen } from "@tauri-apps/api/event";
 import { Window, GlobalShortcut, Explorer, Ombra } from "~/api";
 import { useConfigStore } from "~/stores/config";
 

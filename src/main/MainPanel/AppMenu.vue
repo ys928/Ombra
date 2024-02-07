@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, reactive, ref, watch } from 'vue';
-import { Path, Window, Ombra, Tools } from '~/api'
+import { Window, Ombra, Tools, FS } from '~/api'
 import { useAppListStore } from '~/stores/appList';
 import { useConfigStore } from '~/stores/config';
 const props = defineProps(['main_input', 'cur_focus_app']);
@@ -515,10 +515,9 @@ async function match_feature(cnt: string) {
 
     let r_path = /^[a-zA-Z]:\\([^\/\\:\*\?"<>|]+\\)*[^\/\\:\*\?"<>|]*\\?$/
     if (r_path.test(cnt)) {
-        let t = await Path.judge(cnt);
-        if (t == 'dir') {
+        if (await FS.is_dir(cnt)) {
             tmp_feature.push('dir_path');
-        } else if (t == 'file') {
+        } else {
             tmp_feature.push('file_path');
         }
     }

@@ -8,8 +8,11 @@ declare module "*.vue" {
 
 //全局window对象类型信息
 interface Window {
-  router: Router
+  router: Router,
+  fs: any
 }
+
+type UnlistenFn = () => void;
 
 interface AppInfo {
   name: string, //应用名，将显示在应用菜单面板上

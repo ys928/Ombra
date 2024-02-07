@@ -3,7 +3,7 @@ import AppOpenLink from "./OpenLink"
 import AppOpenPath from "./OpenPath"
 import AppOpenFile from "./OpenFile"
 import AppPluginDevelop from './PluginDevelop'
-import { App, File, Dir, Url, Dialog, Ombra, CLI, Path } from '~/api'
+import { App, FS, Dir, Url, Dialog, Ombra, CLI, Path } from '~/api'
 import { useAppListStore } from '~/stores/appList';
 import { useConfigStore } from "~/stores/config";
 
@@ -35,7 +35,7 @@ export async function load_apps() {
         if (apps[i].name == 'Visual Studio Code') {
             feature.push('explorer');
         }
-        let exist = await File.exists(apps[i].icon);
+        let exist = await FS.exists(apps[i].icon);
         let icon_url = exist ? Url.convert(apps[i].icon) : "/logo.png";
         applistStore.add(apps[i].name, '', icon_url, feature, null, () => {
             let features = Ombra.get_features();
@@ -60,7 +60,7 @@ export async function load_apps() {
     let web_apps = await configStore.read_web_apps();
     for (let i = 0; i < web_apps.length; i++) {
         if (!web_apps[i].on) continue; //跳过未启用的web app
-        if (web_apps[i].icon.length == 0 || !await Path.exists(web_apps[i].icon)) {
+        if (web_apps[i].icon.length == 0 || !await FS.exists(web_apps[i].icon)) {
             let icon = await Url.download_favicon(web_apps[i].url, web_apps[i].name);
             if (icon.length > 0) {
                 web_apps[i].icon = icon;
@@ -81,7 +81,7 @@ export async function load_apps() {
     //加载用户自己添加的本地应用ap
     let local_apps = await configStore.read_local_app();
     for (let app of local_apps) {
-        let ret = await Path.exists(app.icon);
+        let ret = await FS.exists(app.icon);
         if (!ret) {
             let url = await App.get_icon(app.icon);
             if (url.length == 0) continue;
@@ -108,7 +108,7 @@ export async function load_apps() {
             } else if (f.name == 'index.html') {
                 plugin_index = Url.convert(f.path + '\\' + f.name);
             } else if (f.name == 'config.json') {
-                let text = await File.read_text(f.path + '\\' + f.name);
+                let text = await FS.read_text(f.path + '\\' + f.name);
                 let config = JSON.parse(text);
                 features = config.features;
                 id = config.id;

@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { Dir, Path, File } from "~/api";
+import { Dir, Path, FS } from "~/api";
 
 interface CfgAppInfo {
     name: string,
@@ -41,12 +41,12 @@ export const useConfigStore = defineStore('config', () => {
     async function write_config() {
         let p = await Dir.config();
         p = await Path.join(p, 'config.json');
-        File.write_text(p, JSON.stringify(config));
+        FS.write_text(p, JSON.stringify(config));
     }
     async function read_config() {
         let p = await Dir.config();
         p = await Path.join(p, 'config.json');
-        const text = await File.read_text(p);
+        const text = await FS.read_text(p);
         if (text.length == 0) {
             return {} as Config;
         } else {
@@ -111,7 +111,6 @@ export const useConfigStore = defineStore('config', () => {
     async function read_placeholder() {
         if (config.placeholder == undefined) {
             const cfg = await read_config();
-            console.log(cfg.placeholder);
             if (cfg.placeholder == undefined) {
                 config.placeholder = default_config.placeholder;
                 write_config();
@@ -119,7 +118,6 @@ export const useConfigStore = defineStore('config', () => {
                 config.placeholder = cfg.placeholder;
             }
         }
-        console.log(config.placeholder);
         return config.placeholder;
     }
 
