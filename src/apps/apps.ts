@@ -1,8 +1,8 @@
-import AppFileSearch from "./FileSearch/App";
-import AppOpenLink from "./OpenLink/App"
-import AppOpenPath from "./OpenPath/App"
-import AppOpenFile from "./OpenFile/App"
-import AppPluginDevelopTool from './PluginDevelopTool/App'
+import AppFileSearch from "./FileSearch";
+import AppOpenLink from "./OpenLink"
+import AppOpenPath from "./OpenPath"
+import AppOpenFile from "./OpenFile"
+import AppPluginDevelop from './PluginDevelop'
 import { App, File, Dir, Url, Dialog, Ombra, CLI, Path } from '~/api'
 import { useAppListStore } from '~/stores/appList';
 import { useConfigStore } from "~/stores/config";
@@ -12,7 +12,7 @@ let user_apps_list = [
     AppOpenLink,
     AppOpenPath,
     AppOpenFile,
-    AppPluginDevelopTool
+    AppPluginDevelop
 ]
 
 export async function load_apps() {

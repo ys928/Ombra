@@ -1,4 +1,4 @@
-import FileSearchVue from "./FileSearch.vue"
+import AppPanel from "./AppPanel.vue"
 import { invoke } from "@tauri-apps/api/tauri";
 //导出app注册信息对象
 export default {
@@ -7,7 +7,7 @@ export default {
     icon: '/imgs/file_search.jpg',
     feature: ['filename'],
     only_feature: false,
-    component: FileSearchVue,
+    component: AppPanel,
     self: true,
     setup: async () => {
     },
