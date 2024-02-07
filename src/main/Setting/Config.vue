@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import AutoStart from '~/api/autostart';
-import Notification from '~/api/notification';
+import { AutoStart, Notification } from '~/api';
 import { useConfigStore } from '~/stores/config';
 const short_key = ref('');
 const search_input_placeholder = ref('');

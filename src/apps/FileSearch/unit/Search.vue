@@ -12,8 +12,7 @@
 <script setup lang="ts">
 import { Ref, onMounted, ref } from 'vue';
 import { KIWholeWord } from '~/kui';
-import Ombra from '~/api/ombra';
-import Window from '~/api/window';
+import { Ombra, Window } from '~/api'
 const emits = defineEmits(['fun_search']);
 
 const use_whole_word = ref(false) as Ref<Boolean>;

@@ -1,5 +1,4 @@
-import Explorer from '~/api/explorer';
-import Ombra from '~/api/ombra';
+import { Explorer, Ombra } from '~/api'
 //导出app注册信息对象
 export default {
     name: '前往文件夹',

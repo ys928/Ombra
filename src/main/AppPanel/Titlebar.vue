@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { KIMinus, KIFullScreen, KIClose, KISeparate } from '~/kui'
 import { onMounted, onUnmounted, ref, watch } from 'vue';
-import Window from '~/api/window';
-import GlobalShortcut from '~/api/globalShortcut';
-import Ombra from '~/api/ombra';
-import App from '~/api/app';
+import { App, Window, GlobalShortcut, Ombra } from '~/api';
 import { useConfigStore } from "~/stores/config";
 import { UnlistenFn } from '@tauri-apps/api/event';
 

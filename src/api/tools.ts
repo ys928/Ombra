@@ -1,5 +1,5 @@
-export default class Tools {
-    static time_ago(fromTimestamp: number) {
+namespace Tools {
+    export function time_ago(fromTimestamp: number) {
         const currentTimestamp = Math.floor(Date.now() / 1000);
         const secondsAgo = currentTimestamp - fromTimestamp;
 
@@ -37,7 +37,7 @@ export default class Tools {
 
 
     //将以秒为单位的时间戳转化为字符串形式
-    static time_to_str(timestamp: number) {
+    export function time_to_str(timestamp: number) {
         const milliseconds = timestamp * 1000;
         const date = new Date(milliseconds);
         const options = {
@@ -57,7 +57,9 @@ export default class Tools {
      * @param cla span类
      * @returns 还会span标签字符串
      */
-    static get_span(cnt: string, cla: string) {
+    export function get_span(cnt: string, cla: string) {
         return `<span class="${cla}">${cnt}</span>`;
     }
 }
+
+export default Tools;

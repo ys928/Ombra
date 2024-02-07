@@ -2,7 +2,7 @@
 import { useRoute } from 'vue-router';
 import Titlebar from './AppPanel/Titlebar.vue'
 import { Ref, onMounted, onUnmounted, ref, h, render, nextTick } from 'vue';
-import File from '~/api/file';
+import {File} from '~/api';
 import { useAppListStore } from '~/stores/appList';
 const route = useRoute();
 

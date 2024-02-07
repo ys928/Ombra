@@ -1,11 +1,11 @@
 import { invoke } from "@tauri-apps/api";
 
-export default class AutoStart {
+namespace AutoStart {
     /**
      * 
      * @returns 当前应用时候已经自启动
      */
-    static is_set() {
+    export function is_set() {
         return invoke<boolean>('is_auto_start');
     }
     /**
@@ -13,7 +13,9 @@ export default class AutoStart {
      * @param start 开启或关闭自启动
      * @returns 是否设置成功
      */
-    static set(start: boolean) {
+    export function set(start: boolean) {
         return invoke<boolean>('auto_start', { start: start });
     }
 }
+
+export default AutoStart;

@@ -3,17 +3,9 @@ import AppOpenLink from "./OpenLink/App"
 import AppOpenPath from "./OpenPath/App"
 import AppOpenFile from "./OpenFile/App"
 import AppPluginDevelopTool from './PluginDevelopTool/App'
-import { path } from "@tauri-apps/api";
-import File from '~/api/file'
-import Directory from "../api/dir";
-import Url from "../api/url";
-import Dialog from "../api/dialog";
-import Ombra from "../api/ombra";
-import CLI from "../api/cli";
-import App from "../api/app";
+import { App, File, Dir, Url, Dialog, Ombra, CLI, Path } from '~/api'
 import { useAppListStore } from '~/stores/appList';
 import { useConfigStore } from "~/stores/config";
-import Path from "~/api/path";
 
 let user_apps_list = [
     AppFileSearch,
@@ -101,15 +93,15 @@ export async function load_apps() {
     }
 
     //加载插件应用
-    let plugin_path = await path.resolve('./plugin');
-    let plugin_dirs = await Directory.walk(plugin_path);
+    let plugin_path = await Path.resolve('./plugin');
+    let plugin_dirs = await Dir.walk(plugin_path);
     for (let i = 0; i < plugin_dirs.length; i++) {
         let name = '';
         let icon = '';
         let plugin_index = '';
         let id = ''
         let features = [];
-        let plugin_files = await Directory.walk(plugin_dirs[i].path + '\\' + plugin_dirs[i].name);
+        let plugin_files = await Dir.walk(plugin_dirs[i].path + '\\' + plugin_dirs[i].name);
         for (let f of plugin_files) {
             if (f.name.startsWith('icon')) { //icon图标
                 icon = Url.convert(f.path + '\\' + f.name);

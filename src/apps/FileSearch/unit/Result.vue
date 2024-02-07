@@ -2,17 +2,7 @@
 import { UnlistenFn, listen } from '@tauri-apps/api/event';
 import { KIDll, KIText, KIFolder, KITypeScript, KIHtml, KIPdf, KIJs, KIJson, KIUnknowFile, KIImage } from '~/kui'
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
-import Path from '~/api/path'
-import Explorer from '~/api/explorer';
-import Tools from '~/api/tools';
-
-type FileInfo = {
-    name: string,
-    ext: string,
-    path: string,
-    time: number,
-    isdir: boolean,
-}
+import { Path, Explorer, Tools } from '~/api'
 
 const props = defineProps(['last_cnt', 'last_mode', 'last_ext']);
 

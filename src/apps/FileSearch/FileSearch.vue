@@ -22,14 +22,6 @@ import Statusbar from './unit/Statusbar.vue';
 import Result from './unit/Result.vue';
 import { KLoading } from '~/kui';
 
-type FileInfo = {
-    name: string,
-    ext: string,
-    path: string,
-    time: number,
-    isdir: boolean,
-}
-
 const div_pop_menu = ref() as Ref<HTMLElement>
 //当前是否处于缓存数据状态
 const is_processing = ref(false);

@@ -3,7 +3,7 @@ import { Ref, h, onMounted, onUnmounted, ref, render } from 'vue';
 import Config from './Setting/Config.vue';
 import LocalExe from './Setting/LocalExe.vue';
 import Web from './Setting/Web.vue';
-import Window from '~/api/window';
+import { Window } from '~/api';
 import KIClose from '~/kui/icon/KIClose.vue';
 
 

@@ -8,9 +8,7 @@
 
 <script setup lang="ts">
 import { Ref, ref, onMounted } from 'vue';
-import Path from '~/api/path'
-import Explorer from '~/api/explorer';
-import Clipboard from '~/api/clipboard';
+import { Path, Explorer, Clipboard } from '~/api'
 
 const props = defineProps(['isdir', 'path', 'name', 'ext', 'x', 'y']);
 const emits = defineEmits(['hidden']);

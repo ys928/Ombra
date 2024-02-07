@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, reactive, ref, watch } from 'vue';
-import Path from '~/api/path'
-import Window from '~/api/window'
-import Ombra from '~/api/ombra';
-import Tools from '~/api/tools';
-import { type AppInfo } from '~/stores/appList';
+import { Path, Window, Ombra, Tools } from '~/api'
 import { useAppListStore } from '~/stores/appList';
 import { useConfigStore } from '~/stores/config';
 const props = defineProps(['main_input', 'cur_focus_app']);
@@ -15,7 +11,7 @@ interface AppInfoExt extends AppInfo {
     show_name: string, //要显示的名字
 }
 
-const configStore=useConfigStore();
+const configStore = useConfigStore();
 
 const search_result_list = reactive([]) as Array<AppInfoExt>; //每次的搜索结果
 

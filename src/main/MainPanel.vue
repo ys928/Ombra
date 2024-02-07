@@ -4,11 +4,8 @@ import AppMenu from "./MainPanel/AppMenu.vue";
 import Search from "./MainPanel/Search.vue";
 import { onTextUpdate, readText, startListening } from "tauri-plugin-clipboard-api";
 import { UnlistenFn, listen } from "@tauri-apps/api/event";
-import Window from "~/api/window";
-import GlobalShortcut from "~/api/globalShortcut";
-import Explorer from "~/api/explorer";
+import { Window, GlobalShortcut, Explorer, Ombra } from "~/api";
 import { useConfigStore } from "~/stores/config";
-import Ombra from "~/api/ombra";
 
 const configStore = useConfigStore();
 

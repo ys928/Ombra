@@ -1,30 +1,15 @@
 import { defineStore } from "pinia";
-import Dir from "~/api/dir";
-import Path from "~/api/path";
-import File from "~/api/file";
-export interface LocalApp {
-    name: string;
-    path: string; //路径作为id
-    icon: string;
-}
+import { Dir, Path, File } from "~/api";
 
-export interface AppInfo {
+interface CfgAppInfo {
     name: string,
     weight: number
 }
-interface WebUrlApp {
-    name: string,//网站名
-    url: string,//网页路径，同时作为id
-    icon: string,//网页图标
-    on: Boolean,//是否启动
-    features: Array<string>, //可被匹配的特性
-}
-
 interface Config {
     callout: string,
     placeholder: string,
     local_apps: Array<LocalApp>,
-    appinfo: Array<AppInfo>,
+    appinfo: Array<CfgAppInfo>,
     web_apps: Array<WebUrlApp>,
 }
 
@@ -132,10 +117,10 @@ export const useConfigStore = defineStore('config', () => {
             config['appinfo'] = [];
             write_config();
         }
-        return config['appinfo'] as Array<{ name: string, weight: number }>;
+        return config['appinfo'] as Array<CfgAppInfo>;
     }
 
-    async function write_appinfo(appinfo: Array<{ name: string, weight: number }>) {
+    async function write_appinfo(appinfo: Array<CfgAppInfo>) {
         config['appinfo'] = appinfo;
         write_config();
     }

@@ -1,12 +1,12 @@
 import { globalShortcut } from "@tauri-apps/api";
 
-export default class GlobalShortcut {
+namespace GlobalShortcut {
     /**
      * 
      * @param shortkey 要注册的全局快捷键
      * @param callback 相应的回调函数
      */
-    static register(shortkey: string, callback: Function) {
+    export function register(shortkey: string, callback: Function) {
         globalShortcut.register(shortkey, () => {
             callback();
         });
@@ -15,7 +15,7 @@ export default class GlobalShortcut {
      * 
      * @param shortkey 取消注册的全局快捷键
      */
-    static unregister(shortkey: string) {
+    export function unregister(shortkey: string) {
         globalShortcut.unregister(shortkey);
     }
     /**
@@ -23,7 +23,7 @@ export default class GlobalShortcut {
      * @param shortkey 全局快捷键
      * @returns 是否已经被注册
      */
-    static is_registered(shortkey: string) {
+    export function is_registered(shortkey: string) {
         return globalShortcut.isRegistered(shortkey);
     }
     /**
@@ -31,7 +31,7 @@ export default class GlobalShortcut {
      * @param shortkey 要注册的快捷键
      * @param func 当快捷键按下后的回调函数
      */
-    static async auto_set(shortkey: string, func: Function) {
+    export async function auto_set(shortkey: string, func: Function) {
         const isreg = await GlobalShortcut.is_registered(shortkey);
         if (isreg) {
             await GlobalShortcut.unregister(shortkey);
@@ -39,3 +39,4 @@ export default class GlobalShortcut {
         GlobalShortcut.register(shortkey, func);
     }
 }
+export default GlobalShortcut;

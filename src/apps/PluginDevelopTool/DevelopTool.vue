@@ -13,11 +13,7 @@
 import { UnlistenFn, listen } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/tauri';
 import { nextTick, onMounted, onUnmounted, ref } from 'vue';
-import File from '~/api/file'
-import Window from '~/api/window';
-import Notification from '~/api/notification';
-import Dialog from '~/api/dialog';
-import Url from '~/api/url';
+import { File, Window, Notification, Dialog, Url } from '~/api'
 interface FileChange {
     kind: string,
     files: Array<string>,

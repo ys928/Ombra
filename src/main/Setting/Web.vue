@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
-import { type WebUrlApp } from '~/api/app';
 import { KSwitch } from '~/kui'
 import { useAppListStore } from '~/stores/appList';
 import { useConfigStore } from '~/stores/config';
 import { KIPlus, KIDelete, KWindow } from '~/kui'
-import Url from '~/api/url';
-import Notification from '~/api/notification';
-import Dialog from '~/api/dialog';
+import { Url, Notification, Dialog } from '~/api';
 
 const web_apps = reactive([]) as Array<WebUrlApp>;
 

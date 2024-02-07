@@ -1,16 +1,10 @@
 <script setup lang="ts">
 import { UnlistenFn } from '@tauri-apps/api/event';
 import { onMounted, onUnmounted, reactive } from 'vue';
-import App from '~/api/app';
-import CLI from '~/api/cli';
-import Notification from '~/api/notification';
-import Path from '~/api/path';
-import Url from '~/api/url';
-import Window from '~/api/window'
+import { App, CLI, Notification, Path, Url, Window, Dialog } from '~/api';
 import { useAppListStore } from '~/stores/appList';
-import { LocalApp, useConfigStore } from '~/stores/config';
+import { useConfigStore } from '~/stores/config';
 import { KIDelete } from '~/kui';
-import Dialog from '~/api/dialog';
 import { KIPlus } from '~/kui'
 const local_apps = reactive([]) as Array<LocalApp>;
 
