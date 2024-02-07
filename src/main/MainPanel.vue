@@ -221,6 +221,25 @@ function fun_click_space() {
     main_input.value.focus()
 }
 
+async function fun_paste(e: ClipboardEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    let text = await readText();
+    let text_trim = text.trim();
+    Ombra.set_text(text_trim);
+    if (text_trim.indexOf('\n') == -1) {
+        search_content.value = text_trim;
+    } else {
+        if (text_trim.length > 50) {
+            block_content.value = text_trim.substring(0, 50).replace('\n', '¬') + ' ......';
+        } else {
+            block_content.value = text_trim.replace('\n', '¬');
+        }
+        search_input_placeholder.value = "文本";
+    }
+    await apps_menu.value.search();
+}
+
 </script>
 
 <template>
@@ -229,7 +248,7 @@ function fun_click_space() {
             <div class="core">
                 <div class="block" v-if="block_content.length > 0" v-text="block_content"></div>
                 <Search ref="main_input" v-model:value="search_content" @keydown="fun_keydown" @change="fun_search"
-                    :placeholder="search_input_placeholder">
+                    @paste="fun_paste" :placeholder="search_input_placeholder">
                 </Search>
                 <div class="space" @mousedown="main_input.focus()" @dblclick="fun_click_space" data-tauri-drag-region>
                 </div>

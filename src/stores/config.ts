@@ -38,91 +38,112 @@ const default_config: Config = {
 export const useConfigStore = defineStore('config', () => {
     let config = {} as Config;
 
-    async function init() {
-        let p = await Dir.config();
-        p = await Path.join(p, 'config.json');
-        if (!await Path.exists(p)) {
-            File.write_text(p, JSON.stringify(default_config));
-            config = default_config;
-        } else {
-            let text = await File.read_text(p);
-            config = JSON.parse(text);
-        }
-    }
     async function write_config() {
         let p = await Dir.config();
         p = await Path.join(p, 'config.json');
         File.write_text(p, JSON.stringify(config));
     }
+    async function read_config() {
+        let p = await Dir.config();
+        p = await Path.join(p, 'config.json');
+        const text = await File.read_text(p);
+        if (text.length == 0) {
+            return {} as Config;
+        } else {
+            return JSON.parse(text) as Config;
+        }
+    }
 
 
     async function read_web_apps() {
-        let web_apps = config['web_apps'];
-        if (web_apps == undefined) {
-            config['web_apps'] = [];
-            write_config();
+        if (config.web_apps == undefined) {
+            const cfg = await read_config();
+            if (cfg.web_apps == undefined) {
+                config.web_apps = default_config.web_apps;
+                write_config();
+            } else {
+                config.web_apps = cfg.web_apps;
+            }
         }
-        return config['web_apps'];
+        return config.web_apps;
     }
 
     async function write_web_apps(cnt: Array<WebUrlApp>) {
-        config['web_apps'] = cnt;
+        config.web_apps = cnt;
         write_config();
     }
 
     async function read_local_app() {
-        let web_apps = config['local_apps'];
-        if (web_apps == undefined) {
-            config['local_apps'] = [];
-            write_config();
+        if (config.local_apps == undefined) {
+            const cfg = await read_config();
+            if (cfg.local_apps == undefined) {
+                config.local_apps = default_config.local_apps;
+                write_config();
+            } else {
+                config.local_apps = cfg.local_apps;
+            }
         }
-        return config['local_apps'];
+        return config.local_apps;
     }
 
     async function write_local_app(cnt: Array<LocalApp>) {
-        config['local_apps'] = cnt;
+        config.local_apps = cnt;
         write_config();
     }
 
     async function read_callout() {
-        let web_apps = config['callout'];
-        if (web_apps == undefined) {
-            config['callout'] = "CommandOrControl+Shift+A";
-            write_config();
+        if (config.callout == undefined) {
+            const cfg = await read_config();
+            if (cfg.callout == undefined) {
+                config.callout = default_config.callout;
+                write_config();
+            } else {
+                config.callout = cfg.callout;
+            }
         }
-        return config['callout'];
+        return config.callout;
     }
     async function write_callout(callout: string) {
-        config['callout'] = callout;
+        config.callout = callout;
         write_config();
     }
 
     async function read_placeholder() {
-        let web_apps = config['placeholder'];
-        if (web_apps == undefined) {
-            config['placeholder'] = "Hi，Ombra！";
-            write_config();
+        if (config.placeholder == undefined) {
+            const cfg = await read_config();
+            console.log(cfg.placeholder);
+            if (cfg.placeholder == undefined) {
+                config.placeholder = default_config.placeholder;
+                write_config();
+            } else {
+                config.placeholder = cfg.placeholder;
+            }
         }
-        return config['placeholder'];
+        console.log(config.placeholder);
+        return config.placeholder;
     }
 
     async function write_placeholder(placeholder: string) {
-        config['placeholder'] = placeholder;
+        config.placeholder = placeholder;
         write_config();
     }
 
     async function read_appinfo() {
-        let web_apps = config['appinfo'];
-        if (web_apps == undefined) {
-            config['appinfo'] = [];
-            write_config();
+        if (config.appinfo == undefined) {
+            const cfg = await read_config();
+            if (cfg.appinfo == undefined) {
+                config.appinfo = default_config.appinfo;
+                write_config();
+            } else {
+                config.appinfo = cfg.appinfo;
+            }
         }
-        return config['appinfo'] as Array<CfgAppInfo>;
+        return config.appinfo;
     }
 
     async function write_appinfo(appinfo: Array<CfgAppInfo>) {
-        config['appinfo'] = appinfo;
+        config.appinfo = appinfo;
         write_config();
     }
-    return { init, read_web_apps, write_web_apps, read_appinfo, write_appinfo, read_local_app, write_local_app, read_callout, write_callout, read_placeholder, write_placeholder };
+    return { read_web_apps, write_web_apps, read_appinfo, write_appinfo, read_local_app, write_local_app, read_callout, write_callout, read_placeholder, write_placeholder };
 })

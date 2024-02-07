@@ -2,7 +2,7 @@
 import { Ref, ref, watch } from 'vue';
 
 const props = defineProps(['value', 'placeholder']);
-const emits = defineEmits(['update:value', 'change', 'keydown']);
+const emits = defineEmits(['update:value', 'change', 'keydown', 'paste']);
 
 const search_input = ref() as Ref<HTMLElement>;
 
@@ -43,6 +43,11 @@ function selected() {
     selection.addRange(range);
     search_input.value.focus();
 }
+
+function paste(e: ClipboardEvent) {
+    emits('paste', e);
+}
+
 defineExpose({
     focus,
     selected
@@ -53,7 +58,7 @@ defineExpose({
 <template>
     <div class="Search">
         <div ref="search_input" contenteditable @input="fun_input" @compositionstart="fun_ompositionstart"
-            @compositionend="fun_ompositionend" @keydown="fun_keydown($event)">
+            @compositionend="fun_ompositionend" @keydown="fun_keydown($event)" @paste="paste($event)">
         </div>
         <span class="placeholder" v-if="props.value.length == 0">{{ props.placeholder }}</span>
     </div>
