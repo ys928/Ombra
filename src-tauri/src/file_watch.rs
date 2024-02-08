@@ -1,11 +1,15 @@
-use std::{path::{Path, PathBuf}, sync::Mutex, time::Duration};
+use std::{
+    path::{Path, PathBuf},
+    sync::Mutex,
+    time::Duration,
+};
 
 use log::debug;
 use notify::{ReadDirectoryChangesWatcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
 use tauri::Window;
 
-use crate::{file_catch, winsys};
+use crate::{api, file_catch};
 
 static WATCHER: Mutex<Option<ReadDirectoryChangesWatcher>> = Mutex::new(None);
 
@@ -94,7 +98,7 @@ static FILE_SYSTEM_WATCHER: Mutex<Option<ReadDirectoryChangesWatcher>> = Mutex::
 
 pub fn watch_all_files() {
     debug!("enter watch_all_files");
-    let drives = winsys::get_logical_drives().unwrap();
+    let drives = api::sys::get_root_dirs();
 
     let mut fs_watcher = FILE_SYSTEM_WATCHER.lock().unwrap();
     //确保是第一次监视
@@ -122,7 +126,7 @@ pub fn watch_all_files() {
         if res.is_err() {
             return;
         }
-        let res=res.unwrap();
+        let res = res.unwrap();
         for p in res.paths {
             (*cf).push(p);
         }

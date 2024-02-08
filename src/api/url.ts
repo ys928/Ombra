@@ -44,12 +44,23 @@ namespace Url {
     }
 
     export async function download_favicon(url: string, name: string) {
-        let domain = Url.domain(url);
-        let favicon = domain + '/favicon.ico';
         let icon_path = await Dir.config_icon();
         let fav_file = await Path.join(icon_path, name);
-        let ret = await download(favicon, fav_file);
-        if (ret) {
+
+        let unlisten: UnlistenFn | undefined;
+        const download_result = new Promise<boolean>(async (resolve) => {
+            //获取下载结果
+            unlisten = await listen<boolean>('save_icon_to_file_result', (e) => {
+                resolve(e.payload)
+            });
+        });
+
+        invoke('save_icon_to_file', { url: url, savePath: fav_file });
+        let is_success = await download_result;
+        if (unlisten) {
+            unlisten();
+        }
+        if (is_success) {
             return fav_file;
         }
         return '';

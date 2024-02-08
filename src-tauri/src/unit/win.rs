@@ -8,7 +8,6 @@ use std::{
 
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
-use tauri::Window;
 
 use crate::tools::{self};
 use windows::{
@@ -39,18 +38,13 @@ use windows::{
                 ShellExecuteW, ShellWindows, SIGDN_FILESYSPATH,
             },
             WindowsAndMessaging::{
-                DestroyIcon, GetClassNameW, GetForegroundWindow, GetIconInfo, HICON, ICONINFO, SW_SHOWNORMAL
+                DestroyIcon, GetClassNameW, GetForegroundWindow, GetIconInfo, HICON, ICONINFO,
+                SW_SHOWNORMAL,
             },
         },
     },
 };
 
-#[tauri::command]
-pub fn open_web_url(url: &str) {
-    let _ = webbrowser::open(url);
-}
-
-#[tauri::command]
 pub fn cmd_exec(args: Vec<&str>) {
     let mut binding = Command::new("cmd");
     let binding = binding.creation_flags(0x08000000).arg("/c");
@@ -114,154 +108,150 @@ fn get_icon_from_pe(path: &str, save_path: &str) -> bool {
 }
 
 #[derive(Serialize, Deserialize, Default)]
-struct AppInfo {
-    name: String,
-    icon: String,
-    start: String,
+pub struct AppInfo {
+    pub name: String,
+    pub icon: String,
+    pub start: String,
 }
 
-#[tauri::command]
-pub fn get_all_app(w: Window) {
+pub fn get_all_app() -> Vec<AppInfo> {
     debug!("enter get_all_app");
-    std::thread::spawn(move || {
-        unsafe {
-            let _ = CoInitialize(Some(std::ptr::null()));
-            let pbc = CreateBindCtx(0);
-            if pbc.is_err() {
-                error!("call CreateBindCtx failed");
-                return;
+    unsafe {
+        let mut app_list = Vec::new();
+        let _ = CoInitialize(Some(std::ptr::null()));
+        let pbc = CreateBindCtx(0);
+        if pbc.is_err() {
+            error!("call CreateBindCtx failed");
+            return app_list;
+        }
+        let pbc = pbc.unwrap();
+        let folder = SHCreateItemFromParsingName(w!("shell:appsFolder"), &pbc);
+        if folder.is_err() {
+            error!("call SHCreateItemFromParsingName failed");
+            return app_list;
+        }
+        let folder: IShellItem = folder.unwrap();
+        let shell_items = folder.BindToHandler(&pbc, &BHID_EnumItems);
+        if shell_items.is_err() {
+            error!("call BindToHandler to get folder failed");
+            return app_list;
+        }
+        let shell_items: IEnumShellItems = shell_items.unwrap();
+        let ico_path = tools::get_data_dir(Some("icons"));
+        loop {
+            let mut data: u32 = 0;
+            let mut item = vec![None];
+            let result = shell_items.Next(&mut item, Some(&mut data));
+            if result.is_err() {
+                break;
             }
-            let pbc = pbc.unwrap();
-            let folder = SHCreateItemFromParsingName(w!("shell:appsFolder"), &pbc);
-            if folder.is_err() {
-                error!("call SHCreateItemFromParsingName failed");
-                return;
+            let item = &item[0];
+            if item.is_none() {
+                break;
             }
-            let folder: IShellItem = folder.unwrap();
-            let shell_items = folder.BindToHandler(&pbc, &BHID_EnumItems);
-            if shell_items.is_err() {
-                error!("call BindToHandler to get folder failed");
-                return;
+            let item = item.clone();
+            if item.is_none() {
+                info!("clone item failed");
+                continue;
             }
-            let shell_items: IEnumShellItems = shell_items.unwrap();
-            let mut app_list = Vec::new();
-            let ico_path = tools::get_data_dir(Some("icons"));
-            loop {
-                let mut data: u32 = 0;
-                let mut item = vec![None];
-                let result = shell_items.Next(&mut item, Some(&mut data));
-                if result.is_err() {
-                    break;
-                }
-                let item = &item[0];
-                if item.is_none() {
-                    break;
-                }
-                let item = item.clone();
-                if item.is_none() {
-                    info!("clone item failed");
+            let item = item.unwrap();
+            let store = item.BindToHandler(&pbc, &BHID_PropertyStore);
+            if store.is_err() {
+                info!("call BindToHandler to get item failed");
+                continue;
+            }
+            let store: IPropertyStore = store.unwrap();
+            let count = store.GetCount().unwrap();
+            let mut app = AppInfo::default();
+            let mut icon = String::new();
+            let mut pack = String::new();
+            let mut target = String::new();
+            for i in 0..count {
+                let mut pk = PROPERTYKEY::default();
+                let ret = store.GetAt(i, &mut pk);
+                if ret.is_err() {
                     continue;
                 }
-                let item = item.unwrap();
-                let store = item.BindToHandler(&pbc, &BHID_PropertyStore);
-                if store.is_err() {
-                    info!("call BindToHandler to get item failed");
-                    continue;
-                }
-                let store: IPropertyStore = store.unwrap();
-                let count = store.GetCount().unwrap();
-                let mut app = AppInfo::default();
-                let mut icon = String::new();
-                let mut pack = String::new();
-                let mut target = String::new();
-                for i in 0..count {
-                    let mut pk = PROPERTYKEY::default();
-                    let ret = store.GetAt(i, &mut pk);
-                    if ret.is_err() {
-                        continue;
-                    }
-                    let pk_name = PSGetNameFromPropertyKey(&pk).unwrap();
-                    let k = String::from_utf16_lossy(pk_name.as_wide());
-                    let mut value = store.GetValue(&pk).unwrap();
-                    let mut arr = [0; 1024];
-                    let _ = PropVariantToString(&value, &mut arr);
-                    let _ = PropVariantClear(&mut value);
-                    let pos = arr.iter().position(|c| *c == 0).unwrap();
-                    let v = String::from_utf16_lossy(&arr[0..pos]);
-                    // println!("{}={}", &k, &v);
-                    // if app.name == "放大镜" {
-                    //     println!("{}={}", &k, &v);
-                    // }
-                    if k == "System.ItemNameDisplay" {
-                        app.name = v;
-                    } else if k == "System.AppUserModel.ID" {
-                        app.start = "shell:appsFolder\\".to_string() + &v;
-                    } else if k == "System.Link.TargetParsingPath" {
-                        target = v;
-                    } else if k == "System.AppUserModel.PackageInstallPath" {
-                        pack = v;
-                    } else if k == "System.Tile.Square150x150LogoPath" {
-                        if icon.len() == 0 {
-                            icon = v;
-                        }
-                    } else if k == "System.Tile.SmallLogoPath" {
+                let pk_name = PSGetNameFromPropertyKey(&pk).unwrap();
+                let k = String::from_utf16_lossy(pk_name.as_wide());
+                let mut value = store.GetValue(&pk).unwrap();
+                let mut arr = [0; 1024];
+                let _ = PropVariantToString(&value, &mut arr);
+                let _ = PropVariantClear(&mut value);
+                let pos = arr.iter().position(|c| *c == 0).unwrap();
+                let v = String::from_utf16_lossy(&arr[0..pos]);
+                // println!("{}={}", &k, &v);
+                // if app.name == "放大镜" {
+                //     println!("{}={}", &k, &v);
+                // }
+                if k == "System.ItemNameDisplay" {
+                    app.name = v;
+                } else if k == "System.AppUserModel.ID" {
+                    app.start = "shell:appsFolder\\".to_string() + &v;
+                } else if k == "System.Link.TargetParsingPath" {
+                    target = v;
+                } else if k == "System.AppUserModel.PackageInstallPath" {
+                    pack = v;
+                } else if k == "System.Tile.Square150x150LogoPath" {
+                    if icon.len() == 0 {
                         icon = v;
                     }
+                } else if k == "System.Tile.SmallLogoPath" {
+                    icon = v;
                 }
-                //跳过卸载软件
-                if target.to_lowercase().contains("uninstall") {
-                    continue;
-                }
-                //跳过非可执行文件
-                if target.len() > 0
-                    && !(target.ends_with(".exe")
-                        || target.ends_with(".msc")
-                        || target.ends_with(".bat"))
-                {
-                    continue;
-                }
-                //获取包图标
-                if icon.len() > 0 && pack.len() > 0 {
-                    let icon = std::path::Path::new(&pack).join(&icon);
-                    app.icon = match_icon_path(icon.as_path());
-                }
-                //exe程序优先
-                if target.ends_with(".exe") {
-                    app.start = target.clone();
-                    let icon_save_path = std::path::Path::new(&ico_path);
-                    let icon_save_path = icon_save_path.join(&app.name);
-                    //图标不存在, 并且没有缓存
-                    if !std::path::Path::new(&app.icon).exists() && !icon_save_path.exists() {
-                        //先尝试关联文件获取、失败则继续尝试pe文件中获取
-                        let ret = get_associated_icon(&target, icon_save_path.to_str().unwrap())
-                            || get_icon_from_pe(&target, icon_save_path.to_str().unwrap());
-                        if ret {
-                            app.icon = icon_save_path.to_string_lossy().to_string();
-                        } else {
-                            app.icon.clear();
-                        }
-                    } else {
-                        app.icon = icon_save_path.to_string_lossy().to_string();
-                    }
-                }else if target.ends_with(".msc") {
-                    app.start = target.clone();
-                    let icon_save_path = std::path::Path::new(&ico_path);
-                    let icon_save_path = icon_save_path.join(&app.name);
-                    if !icon_save_path.exists() {
-                        msc_icon(&target, icon_save_path.to_str().unwrap());
-                    }
-                    app.icon=icon_save_path.to_string_lossy().to_string();
-                }
-                if !std::path::Path::new(&app.icon).exists() {
-                    println!("{}:{}:{}", app.name, app.icon,target);
-                }
-                app_list.push(app);
             }
-            CoUninitialize();
-            let _ = w.emit("get_all_app_result", &app_list);
-            debug!("send event:get_all_app_result {}", app_list.len());
-        };
-    });
+            //跳过卸载软件
+            if target.to_lowercase().contains("uninstall") {
+                continue;
+            }
+            //跳过非可执行文件
+            if target.len() > 0
+                && !(target.ends_with(".exe")
+                    || target.ends_with(".msc")
+                    || target.ends_with(".bat"))
+            {
+                continue;
+            }
+            //获取包图标
+            if icon.len() > 0 && pack.len() > 0 {
+                let icon = std::path::Path::new(&pack).join(&icon);
+                app.icon = match_icon_path(icon.as_path());
+            }
+            //exe程序优先
+            if target.ends_with(".exe") {
+                app.start = target.clone();
+                let icon_save_path = std::path::Path::new(&ico_path);
+                let icon_save_path = icon_save_path.join(&app.name);
+                //图标不存在, 并且没有缓存
+                if !std::path::Path::new(&app.icon).exists() && !icon_save_path.exists() {
+                    //先尝试关联文件获取、失败则继续尝试pe文件中获取
+                    let ret = get_associated_icon(&target, icon_save_path.to_str().unwrap())
+                        || get_icon_from_pe(&target, icon_save_path.to_str().unwrap());
+                    if ret {
+                        app.icon = icon_save_path.to_string_lossy().to_string();
+                    } else {
+                        app.icon.clear();
+                    }
+                } else {
+                    app.icon = icon_save_path.to_string_lossy().to_string();
+                }
+            } else if target.ends_with(".msc") {
+                app.start = target.clone();
+                let icon_save_path = std::path::Path::new(&ico_path);
+                let icon_save_path = icon_save_path.join(&app.name);
+                if !icon_save_path.exists() {
+                    msc_icon(&target, icon_save_path.to_str().unwrap());
+                }
+                app.icon = icon_save_path.to_string_lossy().to_string();
+            }
+            if !std::path::Path::new(&app.icon).exists() {
+                println!("{}:{}:{}", app.name, app.icon, target);
+            }
+            app_list.push(app);
+        }
+        CoUninitialize();
+        return app_list;
+    };
 }
 
 fn match_icon_path(icon: &std::path::Path) -> String {
@@ -329,7 +319,7 @@ fn match_icon_path(icon: &std::path::Path) -> String {
     return ret_image_path;
 }
 
-pub fn get_logical_drives() -> Result<Vec<String>, std::io::Error> {
+pub fn get_logical_drives() -> Vec<String> {
     unsafe {
         let bitmask = GetLogicalDrives();
         let mut drives = Vec::new();
@@ -352,11 +342,10 @@ pub fn get_logical_drives() -> Result<Vec<String>, std::io::Error> {
                 }
             }
         }
-        Ok(drives)
+        drives
     }
 }
 
-#[tauri::command]
 pub fn get_explorer_show_path() -> String {
     debug!("enter get_explorer_show_path");
     let mut folder_cur_path = "none".to_string();
@@ -462,7 +451,6 @@ pub fn get_explorer_show_path() -> String {
     return folder_cur_path;
 }
 
-#[tauri::command]
 pub fn explorer_select_path(path: &str) {
     debug!("enter explorer_select_path");
     unsafe {
@@ -476,7 +464,6 @@ pub fn explorer_select_path(path: &str) {
     }
 }
 
-#[tauri::command]
 pub fn default_open_file(path: &str) {
     debug!("enter default_open_file");
     unsafe {
@@ -509,7 +496,7 @@ pub struct ICONDIR {
     dw_bytes_in_res: u32,
     dw_image_offset: u32, // file-offset to the start of ICONIMAGE
 }
-#[tauri::command]
+
 pub fn get_associated_icon(file_path: &str, save_path: &str) -> bool {
     let file_path: Vec<u16> = file_path.encode_utf16().collect();
     let mut path: [u16; 128] = [0; 128];
@@ -595,9 +582,9 @@ fn msc_icon(path: &str, save_path: &str) {
     let r = regex::Regex::new("%(.*?)%").unwrap();
     let cap = r.captures(file);
     let file_path;
-    if cap.is_none(){
-        file_path=file.clone();
-    }else{
+    if cap.is_none() {
+        file_path = file.clone();
+    } else {
         let ret = cap.unwrap().get(1).map_or("", |m| m.as_str());
         if ret.len() == 0 {
             return;

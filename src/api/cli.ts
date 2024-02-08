@@ -7,7 +7,7 @@ namespace CLI {
      */
     export async function start_app(path: string) {
         if (await os.platform() == 'win32') {
-            invoke('cmd_exec', { args: ['start', '', path] });
+            invoke('cli_exec', { args: ['start', '', path] });
         }
     }
     /**
@@ -15,7 +15,7 @@ namespace CLI {
      * @param command 要执行的命令，用数组的形式组织命令与各参数，比如 ls -l 的形式应该为：['ls','-l']
      */
     export function exec(command: Array<string>) {
-        invoke('cmd_exec', { args: command });
+        invoke('cli_exec', { args: command });
     }
 }
 

@@ -4,7 +4,6 @@ use log::debug;
 use pinyin::ToPinyin;
 use serde::{Deserialize, Serialize};
 use std::collections::LinkedList;
-use std::io::Read;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window};
 use walkdir::WalkDir;
@@ -20,6 +19,7 @@ use crate::tools::FileInfo;
 
 mod file_watch;
 mod tools;
+mod unit;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct TaskProgress {
@@ -32,8 +32,8 @@ struct Payload {
     cwd: String,
 }
 
+mod api;
 mod file_catch;
-mod winsys;
 
 fn main() {
     let log_file_path = tools::get_data_dir(None).join("ombra.log");
@@ -78,10 +78,10 @@ fn main() {
                     app.exit(0);
                 }
                 "update" => {
-                    winsys::open_web_url("https://github.com/ys928/Ombra/releases");
+                    api::sys::open_web_url("https://github.com/ys928/Ombra/releases");
                 }
                 "log" => {
-                    winsys::explorer_select_path(log_file_path.to_str().unwrap());
+                    api::sys::explorer_select_path(log_file_path.to_str().unwrap());
                 }
                 _ => {}
             },
@@ -107,13 +107,17 @@ fn main() {
                 .unwrap();
         }))
         .invoke_handler(tauri::generate_handler![
-            winsys::open_web_url,
-            winsys::get_all_app,
-            winsys::cmd_exec,
-            winsys::get_explorer_show_path,
-            winsys::explorer_select_path,
-            winsys::default_open_file,
-            winsys::get_associated_icon,
+            api::sys::cli_exec,
+            api::sys::open_web_url,
+            api::sys::get_all_app,
+            api::sys::explorer_select_path,
+            api::sys::get_explorer_show_path,
+            api::sys::default_open_file,
+            api::sys::get_associated_icon,
+            api::sys::auto_start,
+            api::sys::is_auto_start,
+            api::web::save_icon_to_file,
+            api::web::download_file,
             file_watch::watch_dir,
             file_watch::unwatch_dir,
             file_catch::get_file_catch_info,
@@ -124,9 +128,6 @@ fn main() {
             walk_dir,
             to_pinyin,
             open_devtools,
-            auto_start,
-            is_auto_start,
-            download_file,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -151,7 +152,7 @@ fn walk_all_files(w: Window) {
 
     //单开一个线程遍历所有文件
     std::thread::spawn(move || {
-        let drives = winsys::get_logical_drives().unwrap();
+        let drives = api::sys::get_root_dirs();
 
         file_catch::init(); //重置缓存文件
 
@@ -271,57 +272,4 @@ fn is_dir(path: &str) -> bool {
 #[tauri::command]
 fn open_devtools(w: Window) {
     w.open_devtools();
-}
-
-#[tauri::command]
-fn auto_start(start: bool) -> bool {
-    let current_exe = std::env::current_exe().unwrap();
-    let auto_start = auto_launch::AutoLaunchBuilder::new()
-        .set_app_name("ombra")
-        .set_app_path(&current_exe.to_str().unwrap())
-        .set_use_launch_agent(true)
-        .build()
-        .unwrap();
-    if start {
-        if auto_start.enable().is_err() {
-            return false;
-        }
-    } else {
-        if auto_start.disable().is_err() {
-            return false;
-        };
-    }
-    return true;
-}
-
-#[tauri::command]
-fn is_auto_start() -> bool {
-    let current_exe = std::env::current_exe().unwrap();
-    let auto_start = auto_launch::AutoLaunchBuilder::new()
-        .set_app_name("ombra")
-        .set_app_path(&current_exe.to_str().unwrap())
-        .set_use_launch_agent(true)
-        .build()
-        .unwrap();
-    return auto_start.is_enabled().unwrap();
-}
-
-#[tauri::command]
-fn download_file(w: Window, url: String, file: String) {
-    std::thread::spawn(move || {
-        let resp = reqwest::blocking::get(url);
-        if resp.is_err() {
-            debug!("{:?}", resp.err());
-            w.emit("download_file_result", false).unwrap();
-            return;
-        }
-        let mut resp = resp.unwrap();
-        if !resp.status().is_success() {
-            return;
-        }
-        let mut buf = Vec::new();
-        resp.read_to_end(&mut buf).unwrap();
-        std::fs::write(file, buf).unwrap();
-        w.emit("download_file_result", true).unwrap();
-    });
 }
