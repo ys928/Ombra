@@ -63,10 +63,12 @@ fn main() {
 
     let update = CustomMenuItem::new("update".to_string(), "更新");
     let logfile = CustomMenuItem::new("log".to_string(), "日志");
+    let relaunch = CustomMenuItem::new("relaunch".to_string(), "重启");
     let quit = CustomMenuItem::new("quit".to_string(), "退出");
     let tray_menu = SystemTrayMenu::new()
         .add_item(logfile)
         .add_item(update)
+        .add_item(relaunch)
         .add_item(quit);
     let system_tray = SystemTray::new().with_menu(tray_menu);
     tauri::Builder::default()
@@ -82,6 +84,9 @@ fn main() {
                 }
                 "log" => {
                     api::sys::explorer_select_path(log_file_path.to_str().unwrap());
+                }
+                "relaunch"=>{
+                    app.restart();
                 }
                 _ => {}
             },
