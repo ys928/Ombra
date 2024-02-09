@@ -2,6 +2,7 @@ import AppFileSearch from "./FileSearch";
 import AppOpenLink from "./OpenLink"
 import AppOpenPath from "./OpenPath"
 import AppOpenFile from "./OpenFile"
+import AppImage from "./Image"
 import AppPluginDevelop from './PluginDevelop'
 import { App, FS, Dir, Url, Dialog, Ombra, CLI, Path } from '~/api'
 import { useAppListStore } from '~/stores/appList';
@@ -12,6 +13,7 @@ let user_apps_list = [
     AppOpenLink,
     AppOpenPath,
     AppOpenFile,
+    AppImage,
     AppPluginDevelop
 ]
 

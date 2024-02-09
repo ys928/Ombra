@@ -13,4 +13,5 @@ import Url from './url';
 import Window from "./window";
 import CLI from "./cli";
 import FS from "./fs";
-export { App, FS, AutoStart, Clipboard, Dialog, Dir, Explorer, CLI, GlobalShortcut, Notification, Ombra, Path, Tools, Url, Window }
+import Img from "./img";
+export { App, FS, Img, AutoStart, Clipboard, Dialog, Dir, Explorer, CLI, GlobalShortcut, Notification, Ombra, Path, Tools, Url, Window }
