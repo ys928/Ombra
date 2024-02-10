@@ -4,7 +4,7 @@ import AppOpenPath from "./OpenPath"
 import AppOpenFile from "./OpenFile"
 import AppImage from "./Image"
 import AppPluginDevelop from './PluginDevelop'
-import { App, FS, Dir, Url, Dialog, Ombra, CLI, Path } from '~/api'
+import { App, FS, Dir, Url, Dialog, Ombra, CLI, Path, Window } from '~/api'
 import { useAppListStore } from '~/stores/appList';
 import { useConfigStore } from "~/stores/config";
 
@@ -25,6 +25,34 @@ export async function load_apps() {
         app.preload();
         applistStore.add(app.name, app.id, app.icon, app.feature, app.component, app.setup, app.only_feature);
     }
+
+    //加载插件应用
+    let plugin_path = await Path.resolve('./plugin');
+    let plugin_dirs = await Dir.walk(plugin_path);
+    for (let i = 0; i < plugin_dirs.length; i++) {
+        let name = '';
+        let icon = '';
+        let plugin_index = '';
+        let id = ''
+        let features = [];
+        let plugin_files = await Dir.walk(plugin_dirs[i].path + '\\' + plugin_dirs[i].name);
+        for (let f of plugin_files) {
+            if (f.name.startsWith('icon')) { //icon图标
+                icon = Url.convert(f.path + '\\' + f.name);
+            } else if (f.name == 'index.html') {
+                plugin_index = Url.convert(f.path + '\\' + f.name);
+            } else if (f.name == 'config.json') {
+                let text = await FS.read_text(f.path + '\\' + f.name);
+                let config = JSON.parse(text);
+                features = config.features;
+                id = config.id;
+                name = config.name;
+            }
+        }
+        applistStore.add(name, id, icon, features, plugin_index, () => { }, false);
+    }
+    //not main window
+    if (!Window.is_main()) return;
 
     //加载系统应用、功能
     for (let app of sys_seting_list) {
@@ -92,32 +120,6 @@ export async function load_apps() {
         applistStore.add(app.name, app.path, Url.convert(app.icon), [], null, () => {
             CLI.exec(['start', '', app.path]);
         })
-    }
-
-    //加载插件应用
-    let plugin_path = await Path.resolve('./plugin');
-    let plugin_dirs = await Dir.walk(plugin_path);
-    for (let i = 0; i < plugin_dirs.length; i++) {
-        let name = '';
-        let icon = '';
-        let plugin_index = '';
-        let id = ''
-        let features = [];
-        let plugin_files = await Dir.walk(plugin_dirs[i].path + '\\' + plugin_dirs[i].name);
-        for (let f of plugin_files) {
-            if (f.name.startsWith('icon')) { //icon图标
-                icon = Url.convert(f.path + '\\' + f.name);
-            } else if (f.name == 'index.html') {
-                plugin_index = Url.convert(f.path + '\\' + f.name);
-            } else if (f.name == 'config.json') {
-                let text = await FS.read_text(f.path + '\\' + f.name);
-                let config = JSON.parse(text);
-                features = config.features;
-                id = config.id;
-                name = config.name;
-            }
-        }
-        applistStore.add(name, id, icon, features, plugin_index, () => { }, false);
     }
 }
 

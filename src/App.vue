@@ -6,7 +6,7 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import {Window} from '~/api'
-import { load_apps } from './apps/apps';
+import { load_apps } from './apps';
 
 onMounted(() => {
   if (Window.is_main()) {

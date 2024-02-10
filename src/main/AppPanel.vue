@@ -2,8 +2,9 @@
 import { useRoute } from 'vue-router';
 import Titlebar from './AppPanel/Titlebar.vue'
 import { Ref, onMounted, onUnmounted, ref, h, render, nextTick } from 'vue';
-import { FS } from '~/api';
+import { FS, Window } from '~/api';
 import { useAppListStore } from '~/stores/appList';
+import { load_apps } from '~/apps';
 const route = useRoute();
 
 
@@ -15,6 +16,9 @@ let iframe: HTMLIFrameElement;
 
 onMounted(async () => {
     let id = route.query.id;
+    if (!Window.is_main()) {
+        await load_apps();
+    }
     let app_list = applistStore.applist;
     // console.log(app_list);
     for (let a of app_list) {
@@ -35,6 +39,7 @@ onMounted(async () => {
         } else {
             render(h(a.component), app_content.value);
         }
+        break;
     }
 });
 
