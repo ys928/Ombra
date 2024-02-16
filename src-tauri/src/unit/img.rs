@@ -20,8 +20,13 @@ pub fn compress_jpg(img_path: &str, save_path: &str, quality: u32) -> bool {
     return true;
 }
 
-pub fn compress_png(img_path: &str, save_path: &str, quality: u32) {
-    let img = image::open(img_path).unwrap();
+pub fn compress_png(img_path: &str, save_path: &str, quality: u32) -> bool {
+    let img = image::open(img_path);
+    if img.is_err() {
+        return false;
+    }
+    let img = img.unwrap();
+
     let mut liq = imagequant::new();
     liq.set_quality(0, quality as u8).unwrap();
     let new_img = img.to_rgba8();
@@ -39,11 +44,15 @@ pub fn compress_png(img_path: &str, save_path: &str, quality: u32) {
     let (palette, pixels) = res.remapped(&mut img).unwrap();
     let mut enc = lodepng::Encoder::new();
     enc.set_palette(&palette).unwrap();
-    enc.encode_file(
+    let ret = enc.encode_file(
         save_path,
         &pixels,
         img.width() as usize,
         img.height() as usize,
-    )
-    .unwrap();
+    );
+
+    if ret.is_err() {
+        return false;
+    }
+    return true;
 }

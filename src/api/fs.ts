@@ -50,6 +50,24 @@ namespace FS {
         if (pos == -1) return filename;
         return filename.substring(0, pos);
     }
+    /**
+     * 
+     * @param path 路径
+     * @returns 获取路径的父目录
+     */
+    export function parent(path: string) {
+        let p = path.replace(/\\/g, '/');
+        let parent = path.substring(0, p.lastIndexOf('/'));
+        return parent;
+    }
+    /**
+     * 
+     * @param path 路径
+     * @returns 获取文件路径扩展名
+     */
+    export function extension(path: string) {
+        return path.substring(path.lastIndexOf('.') + 1);
+    }
 }
 
 export default FS;
