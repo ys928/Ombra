@@ -11,6 +11,18 @@ let show_img_path = ref("");
 
 let show_loading = ref(false);
 
+const ref_image = ref() as Ref<HTMLElement>
+
+//图片属性
+const img_attr = reactive({
+    x: 0,
+    y: 0,
+    ow: 0,
+    oh: 0,
+    scale: 1,
+    drag: false,
+});
+
 const ref_thumbnail = ref() as Ref<HTMLElement>;
 
 onMounted(async () => {
@@ -30,6 +42,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
     if (uf_file_drag) uf_file_drag();
+
 })
 
 async function compress() {
@@ -76,12 +89,89 @@ function fun_wheel(e: WheelEvent) {
     e.preventDefault();
 }
 
+function fun_img_mousedown(e: MouseEvent) {
+    e.preventDefault();
+    img_attr.drag = true;
+    document.addEventListener('mouseup', fun_img_mouseup);
+}
+
+function fun_img_mouseup(e: MouseEvent) {
+    e.preventDefault();
+    img_attr.drag = false;
+    document.removeEventListener('mouseup', fun_img_mouseup);
+
+    let img = ref_image.value.querySelector('img');
+    if (img == null) return;
+    img.style.cursor = "grab";
+}
+
+function fun_img_move(e: MouseEvent) {
+    e.preventDefault();
+    if (img_attr.drag) {
+        img_attr.x += e.movementX;
+        img_attr.y += e.movementY;
+
+        let img = ref_image.value.querySelector('img');
+        if (img == null) return;
+        img.style.cursor = "grabbing";
+    }
+}
+
+function fun_change_img(path: string) {
+    show_img_path.value = path;
+    img_attr.x = 0;
+    img_attr.y = 0;
+    img_attr.oh = 0;
+    img_attr.ow = 0;
+    img_attr.scale = 1;
+}
+
+function fun_img_wheel(e: WheelEvent) {
+    e.preventDefault();
+    let img = ref_image.value.querySelector('img');
+    if (img == null) return;
+    if (img_attr.ow == 0) {
+        img_attr.ow = img.clientWidth;
+        img_attr.oh = img.clientHeight;
+        img.style.maxWidth = 'none';
+        img.style.maxHeight = 'none';
+    }
+    if (e.deltaY < 0) {
+        if (img_attr.scale < 32) {
+            if (img_attr.scale > 2) {
+                img_attr.scale += 0.1 * Math.floor(img_attr.scale);
+            } else {
+                img_attr.scale += 0.1;
+            }
+        } else {
+            //todo：提示已达到最大
+            return;
+        }
+
+    } else {
+        if (img_attr.scale > 0.2) {
+            if (img_attr.scale > 2) {
+                img_attr.scale -= 0.1 * Math.floor(img_attr.scale);
+            } else {
+                img_attr.scale -= 0.1;
+            }
+        } else {
+            //todo：提示已达到最小
+            return;
+        }
+    }
+    img.style.width = img_attr.ow * img_attr.scale + 'px';
+    img.style.height = img_attr.oh * img_attr.scale + 'px';
+}
+
 </script>
 
 <template>
     <div class="AppPanel">
-        <div class="image" ref="ref_show_img">
-            <img v-if="show_img_path.length > 0" :src="Url.convert(show_img_path)" alt="">
+        <div class="image" ref="ref_image">
+            <img v-if="show_img_path.length > 0" :src="Url.convert(show_img_path)" @mousedown="fun_img_mousedown($event)"
+                @mouseup="fun_img_mouseup" @mousemove="fun_img_move($event)" @wheel="fun_img_wheel"
+                :style="{ left: img_attr.x + 'px', top: img_attr.y + 'px' }">
             <div v-else class="select" @click="fun_select_pic">
                 <KIPlus :w="50" :h="50"></KIPlus>
             </div>
@@ -89,7 +179,7 @@ function fun_wheel(e: WheelEvent) {
         </div>
         <div class="thumbnail" ref="ref_thumbnail" @wheel="fun_wheel($event)">
             <template v-for="item in imgs_path">
-                <div class="item" :class="{ active: item == show_img_path }" @click="show_img_path = item">
+                <div class="item" :class="{ active: item == show_img_path }" @click="fun_change_img(item)">
                     <img :src="Url.convert(item)" alt="">
                 </div>
             </template>
@@ -117,15 +207,19 @@ function fun_wheel(e: WheelEvent) {
         height: 100px;
         flex-grow: 1;
         display: flex;
-        padding: 50px 10px;
+        margin: 40px 10px 0;
         justify-content: center;
         align-items: center;
         overflow: hidden;
         position: relative;
 
         img {
+            position: relative;
             max-width: 100%;
             max-height: 100%;
+            left: 0;
+            top: 0;
+            cursor: grab;
         }
 
         .select {
