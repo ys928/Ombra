@@ -117,14 +117,6 @@ function fun_process(status: boolean) {
     display: flex;
     flex-direction: column;
     background-color: #191919;
-
-    .KLoading {
-        width: 50px;
-        height: 50px;
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-    }
+    position: relative;
 }
 </style>

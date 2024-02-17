@@ -85,6 +85,7 @@ function fun_wheel(e: WheelEvent) {
             <div v-else class="select" @click="fun_select_pic">
                 <KIPlus :w="50" :h="50"></KIPlus>
             </div>
+            <KLoading v-if="show_loading"></KLoading>
         </div>
         <div class="thumbnail" ref="ref_thumbnail" @wheel="fun_wheel($event)">
             <template v-for="item in imgs_path">
@@ -97,7 +98,6 @@ function fun_wheel(e: WheelEvent) {
             <div class="item" @click="compress">图片压缩</div>
             <div class="item">格式转换</div>
         </div>
-        <KLoading v-if="show_loading"></KLoading>
     </div>
 </template>
 
@@ -121,6 +121,7 @@ function fun_wheel(e: WheelEvent) {
         justify-content: center;
         align-items: center;
         overflow: hidden;
+        position: relative;
 
         img {
             max-width: 100%;
@@ -224,15 +225,6 @@ function fun_wheel(e: WheelEvent) {
                 border: 1px solid #C2C2C2;
             }
         }
-    }
-
-    .KLoading {
-        width: 50px;
-        height: 50px;
-        position: fixed;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
     }
 }
 </style>
