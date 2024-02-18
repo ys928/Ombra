@@ -133,44 +133,41 @@ function fun_img_wheel(e: WheelEvent) {
     if (img_attr.ow == 0) {
         img_attr.ow = img.clientWidth;
         img_attr.oh = img.clientHeight;
+        img.style.width = img_attr.ow + 'px';
+        img.style.height = img_attr.oh + 'px';
         img.style.maxWidth = 'none';
         img.style.maxHeight = 'none';
     }
-    if (e.deltaY < 0) {
-        if (img_attr.scale < 32) {
-            if (img_attr.scale > 2) {
-                img_attr.scale += 0.1 * Math.floor(img_attr.scale);
-            } else {
-                img_attr.scale += 0.1;
-            }
-        } else {
-            //todo：提示已达到最大
-            return;
-        }
-
-    } else {
-        if (img_attr.scale > 0.2) {
-            if (img_attr.scale > 2) {
-                img_attr.scale -= 0.1 * Math.floor(img_attr.scale);
-            } else {
-                img_attr.scale -= 0.1;
-            }
-        } else {
-            //todo：提示已达到最小
-            return;
-        }
+    let ratio = 1.1; //缩放比例
+    // 缩小
+    if (e.deltaY > 0) {
+        ratio = 0.9;
     }
-    img.style.width = img_attr.ow * img_attr.scale + 'px';
-    img.style.height = img_attr.oh * img_attr.scale + 'px';
+    // 限制缩放倍数
+    const scale = img_attr.scale * ratio;
+    if (scale >= 32 || scale <= 0.1) return;
+
+    img_attr.scale = scale;
+
+    let target = e.target as HTMLElement | null;
+    if (target && target.tagName === "IMG") {
+        let r = img.getBoundingClientRect();
+        let rx = e.clientX - (r.left - 0.5 * r.width * (ratio - 1)) - (e.clientX - r.left) * ratio;
+        let ry = e.clientY - (r.top - 0.5 * r.height * (ratio - 1)) - (e.clientY - r.top) * ratio;
+        img_attr.x += rx;
+        img_attr.y += ry;
+    }
+    img.style.width = `${img_attr.scale * img_attr.ow}px`;
+    img.style.height = `${img_attr.scale * img_attr.oh}px`;
 }
 
 </script>
 
 <template>
     <div class="AppPanel">
-        <div class="image" ref="ref_image">
+        <div class="image" ref="ref_image" @wheel="fun_img_wheel">
             <img v-if="show_img_path.length > 0" :src="Url.convert(show_img_path)" @mousedown="fun_img_mousedown($event)"
-                @mouseup="fun_img_mouseup" @mousemove="fun_img_move($event)" @wheel="fun_img_wheel"
+                @mouseup="fun_img_mouseup" @mousemove="fun_img_move($event)"
                 :style="{ left: img_attr.x + 'px', top: img_attr.y + 'px' }">
             <div v-else class="select" @click="fun_select_pic">
                 <KIPlus :w="50" :h="50"></KIPlus>
