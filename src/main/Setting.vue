@@ -4,7 +4,7 @@ import Config from './Setting/Config.vue';
 import LocalExe from './Setting/LocalExe.vue';
 import Web from './Setting/Web.vue';
 import { Window } from '~/api';
-import KIClose from '~/kui/icon/KIClose.vue';
+import { KIClose } from '~/icon';
 
 
 const ref_div_panel = ref() as Ref<HTMLElement>;

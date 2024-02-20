@@ -96,7 +96,6 @@ onUnmounted(async () => {
 
 async function set_callout_shortkey(shortkey: string) {
     GlobalShortcut.auto_set(shortkey, fun_switch_panel_status);
-    configStore.write_callout(shortkey);
     callout_short_key.value = shortkey;
 }
 

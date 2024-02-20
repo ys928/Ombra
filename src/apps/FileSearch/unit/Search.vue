@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { Ref, onMounted, ref } from 'vue';
-import { KIWholeWord } from '~/kui';
+import { KIWholeWord } from '~/icon';
 import { Ombra, Window } from '~/api'
 const emits = defineEmits(['fun_search']);
 

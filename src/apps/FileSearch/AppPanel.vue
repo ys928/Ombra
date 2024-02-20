@@ -1,15 +1,15 @@
 <template>
     <div class="FileSearch">
         <Search ref="vue_search" @fun_search="fun_search"></Search>
-        <Result ref="vue_result" :last_cnt="last_search.name" :last_mode="last_search.mode" :last_ext="last_search.ext"
-            @fun_set_pop_menu="fun_set_pop_menu" @fun_search="fun_search" @fun_complete_search="is_searching = false">
+        <Result ref="vue_result" v-loading="is_searching || is_processing" :last_cnt="last_search.name"
+            :last_mode="last_search.mode" :last_ext="last_search.ext" @fun_set_pop_menu="fun_set_pop_menu"
+            @fun_search="fun_search" @fun_complete_search="is_searching = false">
         </Result>
         <Statusbar @fun_search="fun_search" @fun_process="fun_process">
         </Statusbar>
         <PopMenu ref="div_pop_menu" @hidden="pop_menu.is_show = false" :isdir="click_item.isdir" :name="click_item.name"
             :path="click_item.path" :ext="click_item.ext" :x="pop_menu.x" :y="pop_menu.y" v-if="pop_menu.is_show">
         </PopMenu>
-        <KLoading v-if="is_searching || is_processing"></KLoading>
     </div>
 </template>
 
@@ -20,7 +20,7 @@ import PopMenu from './unit/PopMenu.vue'
 import Search from './unit/Search.vue';
 import Statusbar from './unit/Statusbar.vue';
 import Result from './unit/Result.vue';
-import { KLoading } from '~/kui';
+import { vLoading } from 'element-plus'
 
 const div_pop_menu = ref() as Ref<HTMLElement>
 //当前是否处于缓存数据状态

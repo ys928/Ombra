@@ -29,8 +29,8 @@ const router = createRouter({
 window.router = router
 
 const pinia = createPinia()
-createApp(App)
-    .use(router)
-    .use(pinia)
-    .use(ElementPlus)
-    .mount("#app");
+let app = createApp(App);
+app.use(router);
+app.use(pinia);
+app.use(ElementPlus);
+app.mount("#app");

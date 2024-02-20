@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Ref, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { Window, Url, Notification, Img, Dialog } from '~/api';
-import { KLoading, KIPlus } from '~/kui'
-import { ElMessage,ElDialog } from 'element-plus'
+import { KIPlus } from '~/icon'
+import { ElMessage, ElDialog, vLoading } from 'element-plus'
 let imgs_path = reactive([]) as Array<string>;
 
 let uf_file_drag: UnlistenFn | undefined;
@@ -168,14 +168,13 @@ function fun_img_wheel(e: WheelEvent) {
  
 <template>
     <div class="AppPanel">
-        <div class="image" ref="ref_image" @wheel="fun_img_wheel">
+        <div class="image" ref="ref_image" @wheel="fun_img_wheel" v-loading="show_loading">
             <img v-if="show_img_path.length > 0" :src="Url.convert(show_img_path)" @mousedown="fun_img_mousedown($event)"
                 @mouseup="fun_img_mouseup" @mousemove="fun_img_move($event)"
                 :style="{ left: img_attr.x + 'px', top: img_attr.y + 'px' }">
             <div v-else class="select" @click="fun_select_pic">
                 <KIPlus :w="50" :h="50"></KIPlus>
             </div>
-            <KLoading v-if="show_loading"></KLoading>
         </div>
         <div class="thumbnail" ref="ref_thumbnail" @wheel="fun_wheel($event)">
             <template v-for="item in imgs_path">

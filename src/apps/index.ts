@@ -88,9 +88,11 @@ export async function load_apps() {
     }
     //加载web应用
     let web_apps = await configStore.read_web_apps();
+    let is_change_webapps = false;
     for (let i = 0; i < web_apps.length; i++) {
         if (!web_apps[i].on) continue; //跳过未启用的web app
         if (web_apps[i].icon.length == 0 || !await FS.exists(web_apps[i].icon)) {
+            is_change_webapps = true;
             let icon = await Url.download_favicon(web_apps[i].url, web_apps[i].name);
             if (icon.length > 0) {
                 web_apps[i].icon = icon;
@@ -106,8 +108,9 @@ export async function load_apps() {
             on: true
         });
     }
-    configStore.write_web_apps(web_apps);
-
+    if (is_change_webapps) {
+        configStore.write_web_apps(web_apps);
+    }
     //加载用户自己添加的本地应用ap
     let local_apps = await configStore.read_local_app();
     for (let app of local_apps) {

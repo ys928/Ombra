@@ -47,6 +47,7 @@ export const useConfigStore = defineStore('config', () => {
         let p = await Dir.config();
         p = await Path.join(p, 'config.json');
         const text = await FS.read_text(p);
+        // console.log(text);
         if (text.length == 0) {
             return {} as Config;
         } else {
@@ -54,8 +55,8 @@ export const useConfigStore = defineStore('config', () => {
         }
     }
 
-
     async function read_web_apps() {
+        // console.log("read_web_apps");
         if (config.web_apps == undefined) {
             const cfg = await read_config();
             if (cfg.web_apps == undefined) {
@@ -69,11 +70,13 @@ export const useConfigStore = defineStore('config', () => {
     }
 
     async function write_web_apps(cnt: Array<WebUrlApp>) {
+        // console.log('write_web_apps')
         config.web_apps = cnt;
         write_config();
     }
 
     async function read_local_app() {
+        // console.log('read_local_app');
         if (config.local_apps == undefined) {
             const cfg = await read_config();
             if (cfg.local_apps == undefined) {
@@ -87,11 +90,13 @@ export const useConfigStore = defineStore('config', () => {
     }
 
     async function write_local_app(cnt: Array<LocalApp>) {
+        // console.log('Writing local app');
         config.local_apps = cnt;
         write_config();
     }
 
     async function read_callout() {
+        // console.log("Reading callout");
         if (config.callout == undefined) {
             const cfg = await read_config();
             if (cfg.callout == undefined) {
@@ -104,11 +109,13 @@ export const useConfigStore = defineStore('config', () => {
         return config.callout;
     }
     async function write_callout(callout: string) {
+        // console.log('write_callout');
         config.callout = callout;
         write_config();
     }
 
     async function read_placeholder() {
+        // console.log('read_placeholder');
         if (config.placeholder == undefined) {
             const cfg = await read_config();
             if (cfg.placeholder == undefined) {
@@ -122,11 +129,13 @@ export const useConfigStore = defineStore('config', () => {
     }
 
     async function write_placeholder(placeholder: string) {
+        // console.log('writing placeholder');
         config.placeholder = placeholder;
         write_config();
     }
 
     async function read_appinfo() {
+        // console.log('reading appinfo');
         if (config.appinfo == undefined) {
             const cfg = await read_config();
             if (cfg.appinfo == undefined) {
@@ -140,6 +149,7 @@ export const useConfigStore = defineStore('config', () => {
     }
 
     async function write_appinfo(appinfo: Array<CfgAppInfo>) {
+        // console.log('write_appinfo');
         config.appinfo = appinfo;
         write_config();
     }

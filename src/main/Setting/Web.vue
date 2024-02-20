@@ -24,7 +24,13 @@ onMounted(async () => {
 async function fun_change(item: WebUrlApp) {
     configStore.write_web_apps(web_apps);
     if (item.on) {
-        applistStore.add_web(item);
+        applistStore.add_web({
+            name: item.name,
+            features: item.features,
+            url: item.url,
+            icon: item.icon.length > 0 ? Url.convert(item.icon) : '/logo.png',
+            on: true
+        });
     } else {
         applistStore.remove(item.url);
     }

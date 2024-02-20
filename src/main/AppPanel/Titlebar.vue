@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { KIMinus, KIFullScreen, KIClose, KISeparate } from '~/kui'
+import { KIMinus, KIFullScreen, KIClose, KISeparate } from '~/icon'
 import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { App, Window, GlobalShortcut, Ombra } from '~/api';
 import { useConfigStore } from "~/stores/config";

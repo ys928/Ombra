@@ -43,7 +43,6 @@ onMounted(async () => {
             })
         }
     }
-    configStore.write_appinfo(appinfo);
     app_list.sort((a, b) => {
         return a.weight - b.weight;
     });
