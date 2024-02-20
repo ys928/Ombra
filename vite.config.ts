@@ -20,4 +20,7 @@ export default defineConfig(async () => ({
       '~': resolve(__dirname, './src'),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 2000
+  }
 }));
