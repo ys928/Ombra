@@ -60,7 +60,7 @@ defineExpose({
         <div ref="search_input" contenteditable @input="fun_input" @compositionstart="fun_ompositionstart"
             @compositionend="fun_ompositionend" @keydown="fun_keydown($event)" @paste="paste($event)">
         </div>
-        <span class="placeholder" v-if="props.value.length == 0">{{ props.placeholder }}</span>
+        <span data-tauri-drag-region class="placeholder" v-if="props.value.length == 0">{{ props.placeholder }}</span>
     </div>
 </template>
 
@@ -102,6 +102,7 @@ defineExpose({
         white-space: nowrap;
         color: #949494;
         font-size: 25px;
+        user-select: none;
     }
 }
 </style>

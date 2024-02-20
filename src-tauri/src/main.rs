@@ -5,7 +5,9 @@ use pinyin::ToPinyin;
 use serde::{Deserialize, Serialize};
 use std::collections::LinkedList;
 use std::sync::atomic::{AtomicBool, Ordering};
-use tauri::{CustomMenuItem, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window};
+use tauri::{
+    CustomMenuItem, LogicalPosition, Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, Window,
+};
 use walkdir::WalkDir;
 
 use log4rs::append::rolling_file::{
@@ -85,7 +87,7 @@ fn main() {
                 "log" => {
                     api::sys::explorer_select_path(log_file_path.to_str().unwrap());
                 }
-                "relaunch"=>{
+                "relaunch" => {
                     app.restart();
                 }
                 _ => {}
@@ -101,13 +103,14 @@ fn main() {
         })
         .setup(move |app| {
             let window = app.get_window("MainWindow").unwrap();
-            window.center().unwrap();
+            window
+                .set_position(LogicalPosition { x: 350, y: 200 })
+                .unwrap();
             #[cfg(any(windows, target_os = "macos"))]
             window_shadows::set_shadow(&window, true).expect("Unsupported platform!");
             Ok(())
         })
         .plugin(tauri_plugin_single_instance::init(|app, argv, cwd| {
-            println!("{}, {argv:?}, {cwd}", app.package_info().name);
             app.emit_all("single-instance", Payload { args: argv, cwd })
                 .unwrap();
         }))

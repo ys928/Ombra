@@ -3,6 +3,7 @@ use std::{
     fs,
     mem::{size_of, ManuallyDrop},
     os::windows::{ffi::OsStringExt, process::CommandExt},
+    path::Path,
     process::Command,
 };
 
@@ -181,7 +182,7 @@ pub fn get_all_app() -> Vec<AppInfo> {
                 let pos = arr.iter().position(|c| *c == 0).unwrap();
                 let v = String::from_utf16_lossy(&arr[0..pos]);
                 // println!("{}={}", &k, &v);
-                // if app.name == "放大镜" {
+                // if app.name == "SQL Shell (psql)" {
                 //     println!("{}={}", &k, &v);
                 // }
                 if k == "System.ItemNameDisplay" {
@@ -214,16 +215,16 @@ pub fn get_all_app() -> Vec<AppInfo> {
             }
             //获取包图标
             if icon.len() > 0 && pack.len() > 0 {
-                let icon = std::path::Path::new(&pack).join(&icon);
+                let icon = Path::new(&pack).join(&icon);
                 app.icon = match_icon_path(icon.as_path());
             }
             //exe程序优先
             if target.ends_with(".exe") {
                 app.start = target.clone();
-                let icon_save_path = std::path::Path::new(&ico_path);
+                let icon_save_path = Path::new(&ico_path);
                 let icon_save_path = icon_save_path.join(&app.name);
                 //图标不存在, 并且没有缓存
-                if !std::path::Path::new(&app.icon).exists() && !icon_save_path.exists() {
+                if !Path::new(&app.icon).exists() && !icon_save_path.exists() {
                     //先尝试关联文件获取、失败则继续尝试pe文件中获取
                     let ret = get_associated_icon(&target, icon_save_path.to_str().unwrap())
                         || get_icon_from_pe(&target, icon_save_path.to_str().unwrap());
@@ -237,15 +238,31 @@ pub fn get_all_app() -> Vec<AppInfo> {
                 }
             } else if target.ends_with(".msc") {
                 app.start = target.clone();
-                let icon_save_path = std::path::Path::new(&ico_path);
+                let icon_save_path = Path::new(&ico_path);
                 let icon_save_path = icon_save_path.join(&app.name);
                 if !icon_save_path.exists() {
                     msc_icon(&target, icon_save_path.to_str().unwrap());
                 }
                 app.icon = icon_save_path.to_string_lossy().to_string();
+            } else if target.ends_with(".bat") {
+                app.start = target.clone();
+                let icon_save_path = Path::new(&ico_path);
+                let icon_save_path = icon_save_path.join(&app.name);
+                //图标不存在, 并且没有缓存
+                if !Path::new(&app.icon).exists() && !icon_save_path.exists() {
+                    //尝试关联文件获取
+                    let ret = get_associated_icon(&target, icon_save_path.to_str().unwrap());
+                    if ret {
+                        app.icon = icon_save_path.to_string_lossy().to_string();
+                    } else {
+                        app.icon.clear();
+                    }
+                } else {
+                    app.icon = icon_save_path.to_string_lossy().to_string();
+                }
             }
-            if !std::path::Path::new(&app.icon).exists() {
-                println!("{}:{}:{}", app.name, app.icon, target);
+            if !Path::new(&app.icon).exists() {
+                debug!("failed get icon：{}:{}:{}", app.name, app.icon, target);
             }
             app_list.push(app);
         }
@@ -254,7 +271,7 @@ pub fn get_all_app() -> Vec<AppInfo> {
     };
 }
 
-fn match_icon_path(icon: &std::path::Path) -> String {
+fn match_icon_path(icon: &Path) -> String {
     let parent = icon.parent().unwrap();
     let name_ext = icon.file_name().unwrap().to_str().unwrap();
     let name = icon.file_stem().unwrap().to_str().unwrap();
@@ -581,7 +598,7 @@ fn msc_icon(path: &str, save_path: &str) {
     let file: &String = name.attributes.get("File").unwrap();
     let r = regex::Regex::new("%(.*?)%").unwrap();
     let cap = r.captures(file);
-    let file_path;
+    let mut file_path;
     if cap.is_none() {
         file_path = file.clone();
     } else {
@@ -591,6 +608,19 @@ fn msc_icon(path: &str, save_path: &str) {
         }
         let sysdir = std::env::var_os(ret).unwrap().to_string_lossy().to_string();
         file_path = r.replace(file, &sysdir).to_string();
+    }
+    if !Path::new(&file_path).exists() {
+        if file_path
+            .to_lowercase()
+            .starts_with("c:\\windows\\windows\\")
+        {
+            file_path.replace_range(2..10, "");
+        } else if file_path.starts_with("D") {
+            file_path.replace_range(0..1, "C");
+        }
+        if !Path::new(&file_path).exists() {
+            return;
+        }
     }
     let mut file_path: Vec<u16> = file_path.encode_utf16().collect();
     file_path.push(0);
