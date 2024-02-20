@@ -6,7 +6,6 @@ import { onTextUpdate, readText, startListening } from "tauri-plugin-clipboard-a
 import { listen } from "@tauri-apps/api/event";
 import { Window, GlobalShortcut, Explorer, Ombra } from "~/api";
 import { useConfigStore } from "~/stores/config";
-
 const configStore = useConfigStore();
 
 const main_input = ref();

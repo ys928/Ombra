@@ -2,7 +2,7 @@
 import { Ref, onMounted, onUnmounted, reactive, ref } from 'vue';
 import { Window, Url, Notification, Img, Dialog } from '~/api';
 import { KLoading, KIPlus } from '~/kui'
-
+import { ElMessage,ElDialog } from 'element-plus'
 let imgs_path = reactive([]) as Array<string>;
 
 let uf_file_drag: UnlistenFn | undefined;
@@ -12,6 +12,8 @@ let show_img_path = ref("");
 let show_loading = ref(false);
 
 const ref_image = ref() as Ref<HTMLElement>
+
+const is_show_setting = ref(false);
 
 //图片属性
 const img_attr = reactive({
@@ -35,7 +37,7 @@ onMounted(async () => {
             }
         }
         if (show_img_path.value.length == 0 && imgs_path.length > 0) {
-            show_img_path.value = imgs_path[0];
+            fun_change_img(imgs_path[0]);
         }
     });
 });
@@ -51,7 +53,8 @@ async function compress() {
         return;
     }
     if (show_img_path.value.length == 0) {
-        Notification.send('提示', '还未选择图片');
+        ElMessage.error('还未选择图片');
+        // Notification.send('提示', '还未选择图片');
         return;
     }
     // let name = FS.file_stem(imgs_path[0]);
@@ -81,7 +84,7 @@ async function fun_select_pic() {
     for (let i = 0; i < ret.length; i++) {
         imgs_path.push(ret[i]);
     }
-    show_img_path.value = ret[0];
+    fun_change_img(ret[0]);
 }
 
 function fun_wheel(e: WheelEvent) {
@@ -162,7 +165,7 @@ function fun_img_wheel(e: WheelEvent) {
 }
 
 </script>
-
+ 
 <template>
     <div class="AppPanel">
         <div class="image" ref="ref_image" @wheel="fun_img_wheel">
@@ -184,7 +187,11 @@ function fun_img_wheel(e: WheelEvent) {
         <div class="tools">
             <div class="item" @click="compress">图片压缩</div>
             <div class="item">格式转换</div>
+            <div class="item" @click="is_show_setting = true">设置</div>
         </div>
+        <el-dialog v-model="is_show_setting" title="设置" width="600">
+
+        </el-dialog>
     </div>
 </template>
 

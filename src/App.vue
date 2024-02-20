@@ -5,7 +5,7 @@
 </template>
 <script setup lang="ts">
 import { onMounted } from 'vue';
-import {Window} from '~/api'
+import { Window } from '~/api'
 import { load_apps } from './apps';
 
 onMounted(() => {

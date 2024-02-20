@@ -3,8 +3,8 @@ import { onMounted, onUnmounted, reactive } from 'vue';
 import { App, CLI, Notification, Url, Window, Dialog, FS } from '~/api';
 import { useAppListStore } from '~/stores/appList';
 import { useConfigStore } from '~/stores/config';
-import { KIDelete } from '~/kui';
-import { KIPlus } from '~/kui'
+import { Delete, Plus } from '@element-plus/icons-vue'
+import { ElIcon } from 'element-plus'
 const local_apps = reactive([]) as Array<LocalApp>;
 
 const applistStore = useAppListStore();
@@ -99,13 +99,13 @@ async function fun_add() {
                     <span class="path">{{ item.path }}</span>
                 </div>
             </div>
-            <div class="delete" @click="fun_delete(item.path)">
-                <KIDelete w="12" h="12"></KIDelete>
-            </div>
+            <el-icon class="delete" @click="fun_delete(item.path)">
+                <Delete />
+            </el-icon>
         </div>
-        <span class="plus" @click="fun_add">
-            <KIPlus :w="20" :h="20"></KIPlus>
-        </span>
+        <el-icon class="plus" @click="fun_add">
+            <Plus />
+        </el-icon>
     </div>
 </template>
 
@@ -154,15 +154,13 @@ async function fun_add() {
         }
 
         .delete {
-            display: flex;
-            align-items: center;
-            justify-content: center;
             background-color: #383838;
             color: white;
             width: 26px;
             height: 26px;
             border-radius: 13px;
             cursor: pointer;
+            font-size: 12px;
 
             &:hover {
                 background-color: #F56C6C;

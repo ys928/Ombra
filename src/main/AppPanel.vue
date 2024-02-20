@@ -5,6 +5,7 @@ import { Ref, onMounted, onUnmounted, ref, h, render, nextTick } from 'vue';
 import { FS, Window } from '~/api';
 import { useAppListStore } from '~/stores/appList';
 import { load_apps } from '~/apps';
+
 const route = useRoute();
 
 

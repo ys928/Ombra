@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { AutoStart, Notification } from '~/api';
+import { AutoStart } from '~/api';
 import { useConfigStore } from '~/stores/config';
+import { ElSwitch, ElMessage, ElInput, ElForm, ElFormItem } from 'element-plus';
 const short_key = ref('');
 const search_input_placeholder = ref('');
 const auto_start = ref(false);
@@ -17,10 +18,8 @@ onMounted(async () => {
     auto_start.value = await AutoStart.is_set();
 });
 
-
-
-
-async function fun_shortkey_input(e: KeyboardEvent) {
+async function fun_shortkey_input(event: KeyboardEvent | Event) {
+    let e = event as KeyboardEvent;
     e.preventDefault();
     e.stopPropagation();
     console.log(e);
@@ -53,20 +52,15 @@ async function set_placeholder() {
 }
 
 async function fun_set_auto_start() {
-    if (auto_start.value) {
-        let ret = await AutoStart.set(false);
-        if (ret) {
-            auto_start.value = false;
+    let ret = await AutoStart.set(auto_start.value);
+    if (ret) {
+        if (auto_start.value) {
+            ElMessage.success('启用开启自启动');
         } else {
-            Notification.send('错误', "设置开机自启动失败");
+            ElMessage.warning('取消开机自启动');
         }
     } else {
-        let ret = await AutoStart.set(true);
-        if (ret) {
-            auto_start.value = true;
-        } else {
-            Notification.send('错误', "关闭开机自启动失败");
-        }
+        ElMessage.error('更改配置失败');
     }
 }
 
@@ -74,15 +68,21 @@ async function fun_set_auto_start() {
 
 <template>
     <div class="Setting">
-        <div class="callout">
-            <span>快捷键</span> <input v-model="short_key" @keydown="fun_shortkey_input($event)">
-        </div>
-        <div class="placeholder">
-            <span>搜索框占位符</span> <input v-model="search_input_placeholder" @blur="set_placeholder">
-        </div>
-        <div class="autostart">
-            <span>开机自启动</span> <input v-model="auto_start" type="checkbox" @click="fun_set_auto_start">
-        </div>
+        <el-form label-position="right" label-width="100px" style="max-width: 460px">
+            <el-form-item label="快捷键">
+                <el-input v-model="short_key" placeholder="请输入热键"
+                    input-style="color: transparent; text-shadow: 0 0 0 #90CAF9;text-align: center;"
+                    style="width: 200px;height: 28px;" @keydown="fun_shortkey_input($event)" />
+            </el-form-item>
+            <el-form-item label="占位符">
+                <el-input v-model="search_input_placeholder" placeholder="请输入占位符"
+                    input-style="text-align: center;color:#90CAF9;" style="width: 200px;height: 28px;"
+                    @blur="set_placeholder" />
+            </el-form-item>
+            <el-form-item label="自启动">
+                <el-switch v-model="auto_start" @change="fun_set_auto_start" />
+            </el-form-item>
+        </el-form>
     </div>
 </template>
 
@@ -97,99 +97,5 @@ async function fun_set_auto_start() {
     background-color: #252525;
     padding-top: 20px;
     padding-left: 150px;
-
-    &>div {
-        margin-top: 20px;
-        display: flex;
-        justify-content: left;
-        align-items: center;
-
-        span {
-            color: #e9e9e9;
-            width: 150px;
-            text-align: right;
-            margin-right: 20px;
-        }
-    }
-
-    .callout {
-
-        input {
-            outline: none;
-            background-color: #2b2b2b;
-            border: #616264 solid 1px;
-            width: 200px;
-            height: 25px;
-            border-radius: 5px;
-            color: #90caf9;
-            text-align: center;
-            font-size: 16px;
-            caret-color: transparent;
-            cursor: pointer;
-
-            &:hover {
-                border: #ffffff solid 1px;
-            }
-
-            &:focus {
-                border: #90caf9 solid 1px;
-            }
-        }
-    }
-
-    .placeholder {
-        input {
-            outline: none;
-            background-color: #2b2b2b;
-            border: #616264 solid 1px;
-            width: 200px;
-            height: 25px;
-            border-radius: 5px;
-            color: #979798;
-            text-align: left;
-            font-size: 16px;
-            padding: 0 20px;
-
-            &:hover {
-                border: #ffffff solid 1px;
-            }
-
-            &:focus {
-                border: #90caf9 solid 1px;
-            }
-        }
-    }
-
-    .autostart {
-        input {
-            width: 16px;
-            height: 16px;
-            background-color: #252525;
-            border: 1px solid #616264;
-            border-radius: 4px;
-            color: #fff;
-            text-align: center;
-            line-height: 15px;
-            -webkit-appearance: none;
-            appearance: none;
-            outline: none;
-            cursor: pointer;
-
-            &:hover {
-                border: 1px solid #ffffff;
-            }
-
-            &:checked {
-                color: #fff;
-                background-color: #4e8cf2;
-                border: 1px solid #4e8cf2;
-            }
-
-            &:after {
-                content: "\2713";
-                color: #252525;
-            }
-        }
-    }
 }
 </style>

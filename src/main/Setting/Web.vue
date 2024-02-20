@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
-import { KSwitch } from '~/kui'
 import { useAppListStore } from '~/stores/appList';
 import { useConfigStore } from '~/stores/config';
-import { KIPlus, KIDelete, KWindow } from '~/kui'
-import { Url, Notification, Dialog } from '~/api';
-
+import { Url } from '~/api';
+import { ElDialog, ElButton, ElIcon, ElMessageBox, ElSwitch, ElInput, ElForm, ElFormItem, ElMessage } from 'element-plus'
+import { Delete, Plus } from '@element-plus/icons-vue'
 const web_apps = reactive([]) as Array<WebUrlApp>;
 
 const applistStore = useAppListStore();
@@ -32,16 +31,16 @@ async function fun_change(item: WebUrlApp) {
 }
 async function fun_add_web() {
     if (add_web_name.value.length == 0) {
-        Notification.send('提示', '未填写名称');
+        ElMessage.warning("未填写名称");
         return;
     }
     if (add_web_url.value.length == 0) {
-        Notification.send('提示', '未填写网址');
+        ElMessage.warning("未填写网址");
         return;
     }
     let fav_icon = await Url.download_favicon(add_web_url.value, add_web_name.value);
     if (fav_icon.length == 0) {
-        Notification.send('提示', '获取网站图标失败，将使用默认图标');
+        ElMessage.warning("获取网站图标失败，将使用默认图标");
     }
     let is_query = add_web_name.value.indexOf('{query}') != -1;
     let item = {
@@ -76,8 +75,12 @@ function get_icon_url(icon: string) {
     return '/logo.png';
 }
 async function fun_delete(url: string) {
-    let ret = await Dialog.confirm('确定要删除？', '提示', 'warning');
-    if (!ret) return;
+    let ret = await ElMessageBox.confirm('确定要删除？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+    });
+    if (ret.action != 'confirm') return;
     for (let i = 0; i < web_apps.length; i++) {
         if (web_apps[i].url == url) {
             web_apps.splice(i, 1);
@@ -109,28 +112,30 @@ async function fun_delete(url: string) {
                     </div>
                 </div>
                 <div class="opt">
-                    <KSwitch v-model:value="item.on" @click="fun_change(item)"></KSwitch>
-                    <div class="delete" @click="fun_delete(item.url)">
-                        <KIDelete w="12" h="12"></KIDelete>
-                    </div>
+                    <el-switch v-model="item.on" @click="fun_change(item)"></el-switch>
+                    <el-icon @click="fun_delete(item.url)">
+                        <Delete />
+                    </el-icon>
                 </div>
             </div>
-            <span class="plus" @click="is_show_window = true">
-                <KIPlus :w="20" :h="20"></KIPlus>
-            </span>
+            <el-icon class="plus" @click="is_show_window = true">
+                <Plus />
+            </el-icon>
         </div>
-        <KWindow v-model:isshow="is_show_window" @sure="fun_add_web" @cancel="is_show_window = false">
-            <div class="content">
-                <div class="name">
-                    <span>名称：</span>
-                    <input placeholder="搜索关键字" v-model="add_web_name" />
-                </div>
-                <div class="url">
-                    <span>链接：</span>
-                    <input placeholder="https://...." v-model="add_web_url" />
-                </div>
-            </div>
-        </KWindow>
+        <el-dialog v-model="is_show_window">
+            <el-form label-position="right" label-width="100px" style="max-width: 460px">
+                <el-form-item label="名称">
+                    <el-input v-model="add_web_name" placeholder="搜索关键字" style="width: 200px;height: 28px;" />
+                </el-form-item>
+                <el-form-item label="链接">
+                    <el-input v-model="add_web_url" placeholder="https://...." style="width: 200px;height: 28px;" />
+                </el-form-item>
+            </el-form>
+            <template #footer>
+                <el-button @click="is_show_window = false">取消</el-button>
+                <el-button type="primary" @click="fun_add_web">确定</el-button>
+            </template>
+        </el-dialog>
     </div>
 </template>
 
@@ -183,16 +188,14 @@ async function fun_delete(url: string) {
                 align-items: center;
                 justify-content: space-around;
 
-                .delete {
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
+                .el-icon {
                     background-color: #383838;
                     color: white;
                     width: 26px;
                     height: 26px;
                     border-radius: 13px;
                     cursor: pointer;
+                    font-size: 12px;
 
                     &:hover {
                         background-color: #F56C6C;
@@ -217,40 +220,6 @@ async function fun_delete(url: string) {
 
             &:hover {
                 background-color: #5c5c5c;
-            }
-        }
-    }
-
-    .content {
-        height: 100%;
-        width: 100%;
-
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        color: #eee;
-
-
-        .name,
-        .url {
-            margin: 10px 0;
-
-            input {
-                outline: none;
-                border: none;
-                background-color: #4A4A4A;
-                height: 30px;
-                border-radius: 5px;
-                font-size: 16px;
-                width: 300px;
-                padding: 0 10px;
-                color: #eee;
-                border: 1px solid #4A4A4A;
-
-                &:focus {
-                    border: 1px solid #eee;
-                }
             }
         }
     }

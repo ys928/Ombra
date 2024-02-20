@@ -5,8 +5,9 @@ import { createPinia } from 'pinia'
 import MainPanel from "./main/MainPanel.vue";
 import AppPanel from "./main/AppPanel.vue";
 import Setting from "./main/Setting.vue";
-
-
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
+import 'element-plus/theme-chalk/dark/css-vars.css'
 const router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -31,4 +32,5 @@ const pinia = createPinia()
 createApp(App)
     .use(router)
     .use(pinia)
+    .use(ElementPlus)
     .mount("#app");
