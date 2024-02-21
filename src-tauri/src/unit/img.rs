@@ -56,3 +56,25 @@ pub fn compress_png(img_path: &str, save_path: &str, quality: u32) -> bool {
     }
     return true;
 }
+
+pub fn convert(img_path: &str, save_path: &str, format: &str) -> bool {
+    let img = image::open(img_path);
+    if img.is_err() {
+        return false;
+    }
+    let img = img.unwrap();
+    let ret;
+    if format == "jpg" || format == "jpeg" {
+        ret = img.save_with_format(save_path, image::ImageFormat::Jpeg);
+    } else if format == "png" {
+        ret = img.save_with_format(save_path, image::ImageFormat::Png);
+    } else if format == "bmp" {
+        ret = img.save_with_format(save_path, image::ImageFormat::Bmp);
+    } else {
+        return false;
+    }
+    if ret.is_err() {
+        return false;
+    }
+    return true;
+}

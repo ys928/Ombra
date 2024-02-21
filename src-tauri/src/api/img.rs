@@ -15,3 +15,11 @@ pub fn img_compress(w: Window, img_path: String, save_path: String, quality: u32
         }
     });
 }
+
+#[tauri::command]
+pub fn img_convert(w: Window, img_path: String, save_path: String, format: String) {
+    std::thread::spawn(move || {
+        let ret = unit::img::convert(&img_path, &save_path, &format);
+        w.emit("img_convert_result", ret).unwrap();
+    });
+}

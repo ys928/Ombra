@@ -51,7 +51,7 @@ onUnmounted(() => {
 
 async function compress(command: string) {
     if (show_loading.value) {
-        ElMessage.warning('当前正在压缩中……');
+        ElMessage.warning('已有任务处理中……');
         return;
     }
 
@@ -96,8 +96,69 @@ async function compress(command: string) {
 }
 
 async function format_conversion(command: string) {
-    if (command == 'jpg') {
+    if (show_loading.value) {
+        ElMessage.warning('已有任务处理中……');
+        return;
+    }
+    if (show_img_path.value.length == 0) {
+        ElMessage.error('还未选择图片');
+        return;
+    }
 
+    if (command == 'jpg') {
+        let savefile = await Dialog.save({
+            title: '保存压缩图像文件',
+            filters: [{
+                name: 'image',
+                extensions: ['jpg']
+            }]
+        });
+        if (savefile == null) return;
+        show_loading.value = true;
+        ElMessage.info('开始转换……');
+        let ret = await Img.convert(show_img_path.value, savefile as string, "jpg");
+        show_loading.value = false;
+        if (ret) {
+            ElMessage.success('转换成功');
+        } else {
+            ElMessage.error('转换失败');
+        }
+    } else if (command == "png") {
+        let savefile = await Dialog.save({
+            title: '保存压缩图像文件',
+            filters: [{
+                name: 'image',
+                extensions: ['png']
+            }]
+        });
+        if (savefile == null) return;
+        show_loading.value = true;
+        ElMessage.info('开始转换……');
+        let ret = await Img.convert(show_img_path.value, savefile as string, "png");
+        show_loading.value = false;
+        if (ret) {
+            ElMessage.success('转换成功');
+        } else {
+            ElMessage.error('转换失败');
+        }
+    } else if (command == "bmp") {
+        let savefile = await Dialog.save({
+            title: '保存压缩图像文件',
+            filters: [{
+                name: 'image',
+                extensions: ['bmp']
+            }]
+        });
+        if (savefile == null) return;
+        show_loading.value = true;
+        ElMessage.info('开始转换……');
+        let ret = await Img.convert(show_img_path.value, savefile as string, "bmp");
+        show_loading.value = false;
+        if (ret) {
+            ElMessage.success('转换成功');
+        } else {
+            ElMessage.error('转换失败');
+        }
     }
 }
 

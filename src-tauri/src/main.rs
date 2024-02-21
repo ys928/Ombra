@@ -127,6 +127,7 @@ fn main() {
             api::web::save_icon_to_file,
             api::web::download_file,
             api::img::img_compress,
+            api::img::img_convert,
             file_watch::watch_dir,
             file_watch::unwatch_dir,
             file_catch::get_file_catch_info,
