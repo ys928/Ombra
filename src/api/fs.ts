@@ -53,6 +53,16 @@ namespace FS {
     /**
      * 
      * @param path 路径
+     * @returns 获得完整的文件名
+     */
+    export function file_name(path: string) {
+        let p = path.replace(/\\/g, '/');
+        let filename = p.substring(p.lastIndexOf('/') + 1);
+        return filename;
+    }
+    /**
+     * 
+     * @param path 路径
      * @returns 获取路径的父目录
      */
     export function parent(path: string) {

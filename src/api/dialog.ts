@@ -1,5 +1,5 @@
 import { dialog } from "@tauri-apps/api";
-import { OpenDialogOptions } from "@tauri-apps/api/dialog";
+import { OpenDialogOptions, SaveDialogOptions } from "@tauri-apps/api/dialog";
 
 namespace Dialog {
     /**
@@ -21,6 +21,14 @@ namespace Dialog {
      */
     export function open(option: OpenDialogOptions) {
         return dialog.open(option);
+    }
+    /**
+     * @description 弹出对话框选择文件打开
+     * @param option 一些选项
+     * @returns 返回选择结果路径，为null则说明没有选择
+     */
+    export function save(option: SaveDialogOptions) {
+        return dialog.save(option);
     }
 }
 

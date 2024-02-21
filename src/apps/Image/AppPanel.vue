@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { Ref, onMounted, onUnmounted, reactive, ref } from 'vue';
-import { Window, Url, Notification, Img, Dialog } from '~/api';
+import { Window, Url, Img, Dialog, FS } from '~/api';
 import { KIPlus } from '~/icon'
-import { ElMessage, ElDialog, vLoading } from 'element-plus'
+import { ElMessage, ElForm, ElFormItem, ElDialog, vLoading, ElButton, ElDropdown, ElDropdownMenu, ElDropdownItem, ElSlider, ElRow, ElCol } from 'element-plus'
 let imgs_path = reactive([]) as Array<string>;
 
 let uf_file_drag: UnlistenFn | undefined;
@@ -14,6 +14,8 @@ let show_loading = ref(false);
 const ref_image = ref() as Ref<HTMLElement>
 
 const is_show_setting = ref(false);
+
+const compress_ratio = ref(70);
 
 //图片属性
 const img_attr = reactive({
@@ -33,7 +35,7 @@ onMounted(async () => {
             if (file.endsWith('.jpg') || file.endsWith('.jpeg') || file.endsWith('.png')) {
                 imgs_path.push(file);
             } else {
-                Notification.send('提示', '暂时只支持jpg、jpeg、png格式图片');
+                ElMessage.warning("暂时只支持jpg、jpeg、png格式图片");
             }
         }
         if (show_img_path.value.length == 0 && imgs_path.length > 0) {
@@ -47,27 +49,55 @@ onUnmounted(() => {
 
 })
 
-async function compress() {
+async function compress(command: string) {
     if (show_loading.value) {
-        Notification.send('提示', '正在压缩中……');
+        ElMessage.warning('当前正在压缩中……');
         return;
     }
+
     if (show_img_path.value.length == 0) {
         ElMessage.error('还未选择图片');
-        // Notification.send('提示', '还未选择图片');
         return;
     }
-    // let name = FS.file_stem(imgs_path[0]);
-    // let ext = FS.extension(imgs_path[0]);
-    // let parent = FS.parent(imgs_path[0]);
-    // let newpath = await Path.join(parent, name + '_om.' + ext);
-    show_loading.value = true;
-    let ret = await Img.compress(show_img_path.value, show_img_path.value, 70);
-    show_loading.value = false;
-    if (ret) {
-        Notification.send('提示', '压缩成功');
-    } else {
-        Notification.send('提示', '压缩失败');
+
+    if (command == 'direct') {
+        show_loading.value = true;
+        ElMessage.info('开始压缩……');
+        let ret = await Img.compress(show_img_path.value, show_img_path.value, compress_ratio.value);
+        show_loading.value = false;
+        if (ret) {
+            ElMessage.success('压缩成功');
+        } else {
+            ElMessage.error('压缩失败');
+        }
+        return;
+    }
+
+    if (command == 'save') {
+        let ext = FS.extension(show_img_path.value);
+        let savefile = await Dialog.save({
+            title: '保存压缩图像文件',
+            filters: [{
+                name: 'image',
+                extensions: [ext]
+            }]
+        });
+        if (savefile == null) return;
+        show_loading.value = true;
+        ElMessage.info('开始压缩……');
+        let ret = await Img.compress(show_img_path.value, savefile as string, compress_ratio.value);
+        show_loading.value = false;
+        if (ret) {
+            ElMessage.success('压缩成功');
+        } else {
+            ElMessage.error('压缩失败');
+        }
+    }
+}
+
+async function format_conversion(command: string) {
+    if (command == 'jpg') {
+
     }
 }
 
@@ -183,13 +213,42 @@ function fun_img_wheel(e: WheelEvent) {
                 </div>
             </template>
         </div>
-        <div class="tools">
-            <div class="item" @click="compress">图片压缩</div>
-            <div class="item">格式转换</div>
-            <div class="item" @click="is_show_setting = true">设置</div>
-        </div>
-        <el-dialog v-model="is_show_setting" title="设置" width="600">
-
+        <el-row class="tools" justify="space-around">
+            <el-col :span="5">
+                <el-dropdown trigger="click" @command="compress">
+                    <el-button text bg size="small">图片压缩</el-button>
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item command="direct">原地压缩</el-dropdown-item>
+                            <el-dropdown-item command="save">另存压缩</el-dropdown-item>
+                            <el-dropdown-item>批量原地压缩</el-dropdown-item>
+                            <el-dropdown-item>批量另存压缩</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
+            </el-col>
+            <el-col :span="5">
+                <el-dropdown trigger="click" @command="format_conversion">
+                    <el-button text bg size="small">格式转换</el-button>
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item command="jpg">.jpg</el-dropdown-item>
+                            <el-dropdown-item command="png">.png</el-dropdown-item>
+                            <el-dropdown-item command="bmp">.bmp</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
+            </el-col>
+            <el-col :span="5">
+                <el-button text bg size="small" @click="is_show_setting = true">设置</el-button>
+            </el-col>
+        </el-row>
+        <el-dialog class="Setting" v-model="is_show_setting" title="设置" width="600">
+            <el-form label-position="right" label-width="100px" style="max-width: 550px">
+                <el-form-item label="压缩比例">
+                    <el-slider v-model="compress_ratio" :step="5" show-stops />
+                </el-form-item>
+            </el-form>
         </el-dialog>
     </div>
 </template>
@@ -300,28 +359,11 @@ function fun_img_wheel(e: WheelEvent) {
     }
 
     .tools {
-        height: 30px;
+        height: 20px;
         width: 100%;
         position: absolute;
         left: 0;
-        top: 0;
-        color: #fff;
-        display: flex;
-
-        .item {
-            font-size: 14px;
-            line-height: 20px;
-            margin: 3px 7px;
-            padding: 2px 3px;
-            border-radius: 5px;
-            cursor: pointer;
-            border: 1px solid #383838;
-
-            &:hover {
-                background-color: #272727;
-                border: 1px solid #C2C2C2;
-            }
-        }
+        top: 5px;
     }
 }
 </style>
