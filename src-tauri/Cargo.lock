@@ -2840,7 +2840,7 @@ dependencies = [
 
 [[package]]
 name = "ombra"
-version = "0.0.4"
+version = "0.0.5"
 dependencies = [
  "auto-launch",
  "base64 0.13.1",
