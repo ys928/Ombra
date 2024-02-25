@@ -44,9 +44,12 @@ async function fun_add_web() {
         ElMessage.warning("未填写网址");
         return;
     }
+    ElMessage.info("获取网站图标……");
     let fav_icon = await Url.download_favicon(add_web_url.value, add_web_name.value);
     if (fav_icon.length == 0) {
         ElMessage.warning("获取网站图标失败，将使用默认图标");
+    } else {
+        ElMessage.success("已添加");
     }
     let is_query = add_web_name.value.indexOf('{query}') != -1;
     let item = {

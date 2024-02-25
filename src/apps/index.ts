@@ -4,6 +4,7 @@ import AppOpenPath from "./OpenPath"
 import AppOpenFile from "./OpenFile"
 import AppImage from "./Image"
 import AppPluginDevelop from './PluginDevelop'
+import AppMarkdown from './Markdown'
 import { App, FS, Dir, Url, Dialog, Ombra, CLI, Path, Window } from '~/api'
 import { useAppListStore } from '~/stores/appList';
 import { useConfigStore } from "~/stores/config";
@@ -14,6 +15,7 @@ let user_apps_list = [
     AppOpenPath,
     AppOpenFile,
     AppImage,
+    AppMarkdown,
     AppPluginDevelop
 ]
 

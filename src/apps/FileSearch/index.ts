@@ -8,7 +8,6 @@ export default {
     feature: ['filename'],
     only_feature: false,
     component: AppPanel,
-    self: true,
     setup: async () => {
     },
     preload: () => {

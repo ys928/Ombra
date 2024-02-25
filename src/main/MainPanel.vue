@@ -166,6 +166,7 @@ async function fun_keydown(e: KeyboardEvent) {
         e.preventDefault();
         e.stopPropagation();
         apps_menu.value.click_app();
+        search_content.value="";
         return;
     }
     if (e.key == "Escape") {

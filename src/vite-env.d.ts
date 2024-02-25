@@ -31,13 +31,6 @@ interface SysAppInfo {
   start: string,
 }
 
-interface FileInfo {
-  name: string,
-  path: string,
-  time: number,
-  ftype: number, //1：文件、2：目录
-}
-
 interface LocalApp {
   name: string;
   path: string; //路径作为id

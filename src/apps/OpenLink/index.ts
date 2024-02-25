@@ -7,7 +7,6 @@ export default {
     feature: ['url'],
     only_feature: true,
     component: null,
-    self: false,
     setup: () => {
         let text = Ombra.get_text();
         let feature = Ombra.get_features();

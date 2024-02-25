@@ -7,7 +7,6 @@ export default {
     feature: [],
     only_feature: false,
     component: AppPanel,
-    self: true,
     setup: async () => {
     },
     preload: () => {
