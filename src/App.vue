@@ -1,12 +1,7 @@
-<template>
-  <div class="RootApp" @keydown="fun_keydown($event)" @contextmenu="fun_contextmenu($event)">
-    <RouterView></RouterView>
-  </div>
-</template>
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { Window } from '~/api'
-import { load_apps } from './apps';
+import { load_apps } from '~/apps';
 
 onMounted(() => {
   if (Window.is_main()) {
@@ -35,6 +30,12 @@ function fun_contextmenu(e: MouseEvent) {
 }
 
 </script>
+
+<template>
+  <div class="RootApp" @keydown="fun_keydown($event)" @contextmenu="fun_contextmenu($event)">
+    <RouterView></RouterView>
+  </div>
+</template>
 
 <style scoped lang="less">
 .RootApp {

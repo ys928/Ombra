@@ -1,5 +1,4 @@
 import { invoke, path } from "@tauri-apps/api";
-import { listen } from "@tauri-apps/api/event";
 import Path from "./path";
 namespace Dir {
 
@@ -21,23 +20,12 @@ namespace Dir {
     /**
      * 
      * @param path 要遍历的目录
-     * @param level 要遍历的层级，默认为1层，为0则递归遍历目录下的所有文件
      * @returns 返回文件信息列表
      */
-    export async function walk(path: string, level = 1) {
-        let unlisten: UnlistenFn | undefined;
-        let result = new Promise<Array<FileInfo>>(async (resolve) => {
-            unlisten = await listen<Array<FileInfo>>('walk_dir_result', (e) => {
-                resolve(e.payload);
-            })
+    export async function walk(path: string) {
+        return await invoke<Array<FileInfo>>('walk_dir', {
+            path: path
         });
-        invoke('walk_dir', {
-            path: path,
-            level: level
-        });
-        let ret = await result;
-        if (unlisten) unlisten();
-        return ret;
     }
 }
 

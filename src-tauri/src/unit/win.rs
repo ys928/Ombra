@@ -1,7 +1,7 @@
 use std::{
     ffi::OsString,
     fs,
-    mem::{size_of, ManuallyDrop},
+    mem::size_of,
     os::windows::{ffi::OsStringExt, process::CommandExt},
     path::Path,
     process::Command,
@@ -10,9 +10,8 @@ use std::{
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 
-use crate::tools::{self};
 use windows::{
-    core::{w, ComInterface, Interface, PCWSTR},
+    core::{w, Interface, PCWSTR, VARIANT},
     Win32::{
         Foundation::S_OK,
         Graphics::Gdi::{
@@ -26,7 +25,6 @@ use windows::{
                 StructuredStorage::{PropVariantClear, PropVariantToString},
                 CLSCTX_LOCAL_SERVER, COINIT_APARTMENTTHREADED, COINIT_DISABLE_OLE1DDE,
             },
-            Variant::{VARIANT, VARIANT_0, VARIANT_0_0, VARIANT_0_0_0, VT_I4},
             WindowsProgramming,
         },
         UI::{
@@ -138,7 +136,7 @@ pub fn get_all_app() -> Vec<AppInfo> {
             return app_list;
         }
         let shell_items: IEnumShellItems = shell_items.unwrap();
-        let ico_path = tools::get_data_dir(Some("icons"));
+        let ico_path = crate::unit::fs::data_dir(Some("icons"));
         loop {
             let mut data: u32 = 0;
             let mut item = vec![None];
@@ -391,19 +389,11 @@ pub fn get_explorer_show_path() -> String {
         }
         let count: i32 = count.unwrap();
         for i in 0..count {
-            let i = VARIANT {
-                Anonymous: VARIANT_0 {
-                    Anonymous: ManuallyDrop::new(VARIANT_0_0 {
-                        vt: VT_I4,
-                        wReserved1: 0,
-                        wReserved2: 0,
-                        wReserved3: 0,
-                        Anonymous: VARIANT_0_0_0 { lVal: i },
-                    }),
-                },
-            };
-            let disp = psh_windows.Item(i);
+            let i = VARIANT::from(i);
+
+            let disp = psh_windows.Item(&i);
             if disp.is_err() {
+                error!("{}", disp.unwrap_err());
                 continue;
             }
             let disp = disp.unwrap();

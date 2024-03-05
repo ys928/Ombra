@@ -9,8 +9,8 @@
         </div>
         <div class="children" v-if="is_open">
             <template v-for="item in children.dir">
-                <DirNode :is_open="false" :name="item.name" :path="item.path" :fun_open_file="prop.fun_open_file"
-                    :fun_open_dir="prop.fun_open_dir" :level="prop.level + 1">
+                <DirNode :is_open="false" :name="item.name" :path="item.path" :fun_open_dir="prop.fun_open_dir"
+                    :level="prop.level + 1">
                 </DirNode>
             </template>
             <div v-for="item in children.file" class="filename" @dblclick="fun_openfile(item.path)">
@@ -27,8 +27,9 @@
 <script setup lang="ts">
 import { KIArrowRight, KIArrowDown, KIText, KIMarkdown } from '~/icon'
 import { onMounted, reactive, ref } from 'vue';
+import { useOpenFilesStore } from '../../stores/openfiles';
 
-const prop = defineProps(['name', 'path', 'is_open', 'fun_open_file', 'fun_open_dir', 'level']);
+const prop = defineProps(['name', 'path', 'is_open', 'fun_open_dir', 'level']);
 
 type FileInfo = {
     path: string,
@@ -39,6 +40,8 @@ type FileChildren = {
     file: Array<FileInfo>
 };
 const is_open = ref(false);
+
+const openfilesStore = useOpenFilesStore();
 
 const children = reactive({
     dir: [],
@@ -53,7 +56,7 @@ onMounted(() => {
 });
 
 async function fun_openfile(p: string) {
-    prop.fun_open_file(p);
+    openfilesStore.open(p);
 }
 
 async function fun_dir() {

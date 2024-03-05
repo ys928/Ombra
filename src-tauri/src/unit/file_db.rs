@@ -1,13 +1,13 @@
-use std::{collections::LinkedList,path::PathBuf, sync::Mutex, time::Duration};
+use std::{collections::LinkedList, path::PathBuf, sync::Mutex, time::Duration};
 
-use crate::{tools, FileInfo};
+use crate::FileInfo;
 
 static DB_CONNECT: Mutex<Option<rusqlite::Connection>> = Mutex::new(None);
 
 use log::{debug, info};
 
 pub fn init() {
-    let fc = get_catch_file_path();
+    let fc = get_db_path();
     let mut db = DB_CONNECT.lock().unwrap();
     let _ = std::fs::remove_file(&fc);
     *db = Some(rusqlite::Connection::open(fc).unwrap());
@@ -26,20 +26,10 @@ pub fn init() {
         .unwrap();
 }
 
-fn get_catch_file_path() -> PathBuf {
-    let path = tools::get_data_dir(None);
+pub fn get_db_path() -> PathBuf {
+    let path = crate::unit::fs::data_dir(None);
     let fc = std::path::Path::new(&path).join("file_catch.db");
     return fc;
-}
-
-#[tauri::command]
-pub fn get_file_catch_info() -> i32 {
-    let fc = get_catch_file_path();
-    if fc.exists() {
-        return get_file_num();
-    } else {
-        return 0;
-    }
 }
 
 //大量插入操作
@@ -208,7 +198,7 @@ pub fn update_file(path: &Vec<PathBuf>) {
                 ])
                 .unwrap();
         }
-        let fi = tools::get_file_info(&file_full_path);
+        let fi = crate::unit::fs::get_file_info(&file_full_path);
         if fi.is_err() {
             continue;
         }

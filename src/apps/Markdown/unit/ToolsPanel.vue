@@ -1,16 +1,7 @@
-<template>
-    <div class="ToolsPanel">
-        <FileTree :root="root_path" :fun_opendir="fun_opendir" :fun_openfile="fun_openfile" :select_dir="select_dir">
-        </FileTree>
-    </div>
-</template>
-
 <script setup lang="ts">
 import { ref } from 'vue';
 import FileTree from './ToolsPanel/FileTree.vue';
 import { Dialog, Dir, Path } from '~/api';
-
-const emit = defineEmits(['open_file']);
 
 type FileInfo = {
     path: string,
@@ -23,9 +14,6 @@ type FileChildren = {
 
 const root_path = ref('');
 
-async function fun_openfile(f: string) {
-    emit('open_file', f)
-}
 async function fun_opendir(f: string) {
     const entries = await Dir.walk(f);
     let children: FileChildren = {
@@ -90,4 +78,12 @@ async function select_dir() {
 
 </script>
 
-<style scoped lang="less"></style>
+<template>
+    <div class="ToolsPanel">
+        <FileTree :root="root_path" :fun_opendir="fun_opendir" :select_dir="select_dir">
+        </FileTree>
+    </div>
+</template>
+
+<style scoped lang="less">
+</style>

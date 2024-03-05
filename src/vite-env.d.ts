@@ -6,6 +6,7 @@ declare module "*.vue" {
   export default component;
 }
 
+
 //全局window对象类型信息
 interface Window {
   router: Router,

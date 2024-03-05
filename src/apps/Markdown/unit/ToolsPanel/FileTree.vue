@@ -3,7 +3,7 @@
         <div class="title">资源管理器</div>
         <div class="tree" @click="fun_click_select_folder">
             <DirNode v-if="prop.root.length != 0" :is_open="true" :name="fun_name(prop.root)" :path="prop.root"
-                :fun_open_dir="prop.fun_opendir" :fun_open_file="prop.fun_openfile" :level="0"></DirNode>
+                :fun_open_dir="prop.fun_opendir" :level="0"></DirNode>
 
         </div>
         <div class="tools">
@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import DirNode from './DirNode.vue';
 
-const prop = defineProps(['fun_openfile', 'fun_opendir', 'root', 'is_show', 'select_dir']);
+const prop = defineProps(['fun_opendir', 'root', 'is_show', 'select_dir']);
 //从路径中解析出来最后的文件名称
 function fun_name(path: string) {
     let p = path.replace(/\\/g, '/'); //将所有\替换为/

@@ -1,5 +1,5 @@
 {
-  "name": "ombra",
+  "name": "Ombra",
   "private": true,
   "version": "0.0.5",
   "type": "module",
@@ -10,8 +10,8 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@tauri-apps/api": "^1.5.1",
-    "element-plus": "^2.5.6",
+    "@tauri-apps/api": "^1",
+    "element-plus": "^2.6.0",
     "parse-url": "^9.0.1",
     "pinia": "^2.1.7",
     "prosemirror-commands": "^1.5.2",
@@ -19,18 +19,17 @@
     "prosemirror-keymap": "^1.2.2",
     "prosemirror-markdown": "^1.12.0",
     "prosemirror-view": "^1.33.1",
-    "tauri-plugin-autostart-api": "github:tauri-apps/tauri-plugin-autostart#v1",
-    "tauri-plugin-clipboard-api": "^0.5.5",
+    "tauri-plugin-clipboard-api": "^0.6.0",
     "vue": "^3.3.4",
-    "vue-router": "^4.2.5"
+    "vue-router": "^4.3.0"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^1.5.6",
-    "@vitejs/plugin-vue": "^4.2.3",
-    "less": "^4.2.0",
-    "less-loader": "^11.1.4",
+    "@tauri-apps/cli": "^1",
+    "@types/node": "^20.11.24",
+    "@vitejs/plugin-vue": "^5.0.4",
+    "less-loader": "^12.2.0",
     "typescript": "^5.0.2",
-    "vite": "^4.4.4",
+    "vite": "^5.0.0",
     "vue-tsc": "^1.8.5"
   }
 }

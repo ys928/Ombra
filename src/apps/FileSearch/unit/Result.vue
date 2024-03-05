@@ -1,82 +1,58 @@
 <script setup lang="ts">
-import { listen } from '@tauri-apps/api/event';
 import { KIDll, KIText, KIFolder, KITypeScript, KIHtml, KIPdf, KIJs, KIJson, KIUnknowFile, KIImage } from '~/icon'
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { Path, Explorer, Tools } from '~/api'
+import { useSearchResultStore } from '../stores/searchResult';
+import { usePopMenuStore } from '../stores/popMenu';
+import { vLoading } from 'element-plus'
 
-const props = defineProps(['last_cnt', 'last_mode', 'last_ext']);
+const searchResultStore = useSearchResultStore();
 
-const emits = defineEmits(['fun_set_pop_menu', 'fun_search', 'fun_complete_search']);
-
-const search_result = reactive([]) as Array<FileInfo>;
+const popMenuStore = usePopMenuStore();
 
 const logo_size = ref({
     w: 13,
     h: 13,
 })
 
-function clear_result() {
-    search_result.length = 0;
-}
-
-defineExpose({
-    clear_result
-})
-
 function fun_file_item_contextmenu(e: MouseEvent, item: FileInfo) {
-    emits('fun_set_pop_menu', e.clientX, e.clientY, item);
+    popMenuStore.set_show(true);
+    popMenuStore.set_pos(e.clientX, e.clientY);
+    popMenuStore.set_click_item(item);
 }
-
-let scroll_count = 0;
-
-let unlisten: UnlistenFn | undefined;
-
-onMounted(async () => {
-    //获取搜索结果
-    unlisten = await listen<Array<FileInfo>>('search_file_result', (e) => {
-        if (e.payload.length < 50) scroll_count = -1;// 到底部了
-        search_result.push(...e.payload);
-        emits('fun_complete_search');
-    })
-});
-
-onUnmounted(() => {
-    if (unlisten) unlisten();
-});
-
-
 
 function handle_scroll(e: Event) {
-    if (scroll_count == -1) return;
+    if (searchResultStore.scroll_count == -1) return;
     const { scrollTop, clientHeight, scrollHeight } = e.target as HTMLElement;
+
     if (Math.ceil(scrollTop) + clientHeight >= scrollHeight) {
-        scroll_count++;
-        emits('fun_search', props.last_cnt, props.last_ext, props.last_mode, scroll_count * 50);
+        searchResultStore.set_scroll_count(searchResultStore.scroll_count + 1);
+        searchResultStore.search(searchResultStore.last_search.name, searchResultStore.last_search.ext, searchResultStore.last_search.mode, searchResultStore.scroll_count * 50);
     }
 }
 
 function fun_show_file_name(name: string, ext: string, isdir: boolean) {
-    if (props.last_mode == 'normal') {
-        let pos = name.toLowerCase().indexOf(props.last_cnt.toLowerCase());
+    if (searchResultStore.last_search.mode == 'normal') {
+        let pos = name.toLowerCase().indexOf(searchResultStore.last_search.name.toLowerCase());
         let s = Tools.get_span(name.substring(0, pos), 'normal');
-        s += Tools.get_span(name.substring(pos, pos + props.last_cnt.length), 'light');
-        s += Tools.get_span(name.substring(pos + props.last_cnt.length), 'normal');
+        s += Tools.get_span(name.substring(pos, pos + searchResultStore.last_search.name.length), 'light');
+        s += Tools.get_span(name.substring(pos + searchResultStore.last_search.name.length), 'normal');
         if (isdir) {
             return s;
         }
-        if (props.last_ext.length > 0) {
-            let pos = ext.toLocaleLowerCase().indexOf(props.last_ext);
+        if (searchResultStore.last_search.ext.length > 0) {
+            let pos = ext.toLocaleLowerCase().indexOf(searchResultStore.last_search.ext);
             s += Tools.get_span(".", 'normal');
             s += Tools.get_span(ext.substring(0, pos), 'normal');
-            s += Tools.get_span(ext.substring(pos, pos + props.last_ext.length), 'light');
-            s += Tools.get_span(ext.substring(pos + props.last_ext.length), 'normal');
+            s += Tools.get_span(ext.substring(pos, pos + searchResultStore.last_search.ext.length), 'light');
+            s += Tools.get_span(ext.substring(pos + searchResultStore.last_search.ext.length), 'normal');
         } else {
             s += Tools.get_span('.' + ext, 'normal');
         }
         return s;
-    } else if (props.last_mode == 'exact') {
+    } else if (searchResultStore.last_search.mode == 'exact') {
         let show_name = name;
-        if (props.last_ext.length > 0) {
+        if (searchResultStore.last_search.ext.length > 0) {
             show_name += '.' + ext;
         }
         return Tools.get_span(show_name, 'light');
@@ -93,6 +69,7 @@ async function fun_dbclick(item: FileInfo) {
     }
     Explorer.open_file(p);
 }
+
 //得到文件类型的计算属性
 const file_type = computed(() => (ext: string) => {
     switch (ext) {
@@ -117,18 +94,18 @@ const file_type = computed(() => (ext: string) => {
     }
 });
 
-
 </script>
 
 <template>
-    <div class="Result" @scroll="handle_scroll($event)">
+    <div class="Result" v-loading="searchResultStore.is_processing || searchResultStore.is_searching"
+        @scroll="handle_scroll($event)">
         <div class="table_header">
             <span class="name">名称</span>
             <span class="path">路径</span>
             <span class="time">修改时间</span>
         </div>
-        <div v-for="item in search_result" class="item" @contextmenu="fun_file_item_contextmenu($event, item)"
-            @dblclick="fun_dbclick(item)">
+        <div v-for="item in searchResultStore.result" class="item"
+            @contextmenu="fun_file_item_contextmenu($event, item)" @dblclick="fun_dbclick(item)">
             <span class="name" :title="item.name">
                 <KIFolder :w="logo_size.w" :h="logo_size.h" v-if="item.isdir"></KIFolder>
                 <KIDll :w="logo_size.w" :h="logo_size.h" v-else-if="file_type(item.ext) == 'dll'"></KIDll>
@@ -136,11 +113,13 @@ const file_type = computed(() => (ext: string) => {
                 <KITypeScript :w="logo_size.w" :h="logo_size.h" style="color: #4f9aba;"
                     v-else-if="file_type(item.ext) == 'typescript'">
                 </KITypeScript>
-                <KIHtml :w="logo_size.w" :h="logo_size.h" style="color: #e37933;" v-else-if="file_type(item.ext) == 'html'">
+                <KIHtml :w="logo_size.w" :h="logo_size.h" style="color: #e37933;"
+                    v-else-if="file_type(item.ext) == 'html'">
                 </KIHtml>
                 <KIPdf :w="logo_size.w" :h="logo_size.h" v-else-if="file_type(item.ext) == 'pdf'"></KIPdf>
                 <KIJs :w="logo_size.w" :h="logo_size.h" v-else-if="file_type(item.ext) == 'javascript'"></KIJs>
-                <KIJson :w="logo_size.w" :h="logo_size.h" style="color: #cbcb41;" v-else-if="file_type(item.ext) == 'json'">
+                <KIJson :w="logo_size.w" :h="logo_size.h" style="color: #cbcb41;"
+                    v-else-if="file_type(item.ext) == 'json'">
                 </KIJson>
                 <KIImage :w="logo_size.w" :h="logo_size.h" style="color: #A074C4;"
                     v-else-if="file_type(item.ext) == 'image'">

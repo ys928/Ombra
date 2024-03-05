@@ -1,7 +1,5 @@
+use crate::unit::{self, win::AppInfo};
 use log::debug;
-use tauri::Window;
-
-use crate::unit;
 
 #[tauri::command]
 pub fn cli_exec(args: Vec<&str>) {
@@ -14,16 +12,14 @@ pub fn open_web_url(url: &str) {
     let _ = webbrowser::open(url);
 }
 
-#[tauri::command]
-pub fn get_all_app(w: Window) {
-    std::thread::spawn(move || {
-        #[cfg(target_os = "windows")]
-        let app_list = unit::win::get_all_app();
+#[tauri::command(async)]
+pub async fn get_all_app() -> Vec<AppInfo> {
+    #[cfg(target_os = "windows")]
+    let app_list = unit::win::get_all_app();
 
-        let _ = w.emit("get_all_app_result", &app_list);
+    debug!("get_all_app_result {}", app_list.len());
 
-        debug!("send event:get_all_app_result {}", app_list.len());
-    });
+    return app_list;
 }
 
 #[tauri::command]

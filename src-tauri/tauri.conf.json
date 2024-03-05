@@ -28,10 +28,28 @@
       "iconPath": "icons/icon.png",
       "iconAsTemplate": true
     },
+    "windows": [
+      {
+        "label": "MainWindow",
+        "fullscreen": false,
+        "resizable": true,
+        "title": "ombra",
+        "width": 800,
+        "height": 170,
+        "decorations": false,
+        "transparent": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' https://asset.localhost;"
+    },
     "bundle": {
       "active": true,
       "targets": "all",
       "identifier": "ombra",
+      "copyright":"ys928",
+      "category": "Productivity",
+      "shortDescription": "一个小巧的工具箱集合",
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
@@ -40,36 +58,17 @@
         "icons/icon.ico"
       ],
       "windows": {
-        "allowDowngrades": true,
-        "certificateThumbprint": null,
-        "digestAlgorithm": null,
-        "nsis": null,
-        "timestampUrl": null,
-        "tsp": false,
-        "webviewFixedRuntimePath": null,
         "webviewInstallMode": {
           "silent": true,
           "type": "downloadBootstrapper"
         },
         "wix": {
           "language": "zh-CN"
+        },
+        "nsis":{
+          "languages": ["SimpChinese"]
         }
       }
-    },
-    "security": {
-      "csp": "default-src 'self'; img-src 'self' https://asset.localhost; frame-src 'self' https://asset.localhost; script-src 'self' https://asset.localhost;"
-    },
-    "windows": [
-      {
-        "label": "MainWindow",
-        "fullscreen": false,
-        "resizable": true,
-        "title": "Ombra",
-        "width": 800,
-        "height": 170,
-        "decorations": false,
-        "transparent": true
-      }
-    ]
+    }
   }
 }

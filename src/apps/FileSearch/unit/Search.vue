@@ -1,24 +1,15 @@
-<template>
-    <div class="Search">
-        <input v-model="search_content" ref="search_input" @input="fun_input" @compositionstart="fun_compositionstart"
-            @compositionend="fun_compositionend" @keydown="fun_keydown($event)">
-        <span class="option">
-            <KIWholeWord title="精确匹配" :w="18" :h="18" :class="{ active: use_whole_word }" @click="fun_switch_whole_word">
-            </KIWholeWord>
-        </span>
-    </div>
-</template>
-
 <script setup lang="ts">
 import { Ref, onMounted, ref } from 'vue';
 import { KIWholeWord } from '~/icon';
 import { Ombra, Window } from '~/api'
-const emits = defineEmits(['fun_search']);
+import { useSearchResultStore } from '../stores/searchResult'
 
 const use_whole_word = ref(false) as Ref<Boolean>;
 
 const search_content = ref('');
 const mode = ref('normal');
+
+const searchResultStore = useSearchResultStore();
 
 let is_inputing = false;
 const search_input = ref() as Ref<HTMLElement>;
@@ -31,7 +22,7 @@ onMounted(() => {
     });
     search_content.value = Ombra.get_text();
     let cnt = get_name_ext();
-    emits('fun_search', cnt.name, cnt.ext, mode.value, 0);
+    searchResultStore.search(cnt.name, cnt.ext, mode.value, 0);
 });
 
 function fun_keydown(e: KeyboardEvent) {
@@ -43,7 +34,7 @@ function fun_keydown(e: KeyboardEvent) {
         } else {
             search_content.value = "";
             let cnt = get_name_ext();
-            emits('fun_search', cnt.name, cnt.ext, mode.value, 0);
+            searchResultStore.search(cnt.name, cnt.ext, mode.value, 0);
         }
     }
 }
@@ -56,7 +47,7 @@ function fun_switch_whole_word() {
         mode.value = 'normal';
     }
     let cnt = get_name_ext();
-    emits('fun_search', cnt.name, cnt.ext, mode.value, 0);
+    searchResultStore.search(cnt.name, cnt.ext, mode.value, 0);
 }
 
 function fun_compositionstart() {
@@ -65,13 +56,13 @@ function fun_compositionstart() {
 function fun_compositionend() {
     is_inputing = false;
     let cnt = get_name_ext();
-    emits('fun_search', cnt.name, cnt.ext, mode.value, 0);
+    searchResultStore.search(cnt.name, cnt.ext, mode.value, 0);
 }
 
 function fun_input() {
     if (is_inputing) return;
     let cnt = get_name_ext();
-    emits('fun_search', cnt.name, cnt.ext, mode.value, 0);
+    searchResultStore.search(cnt.name, cnt.ext, mode.value, 0);
 }
 
 function get_name_ext() {
@@ -86,6 +77,18 @@ function get_name_ext() {
 }
 
 </script>
+
+<template>
+    <div class="Search">
+        <input v-model="search_content" ref="search_input" @input="fun_input" @compositionstart="fun_compositionstart"
+            @compositionend="fun_compositionend" @keydown="fun_keydown($event)">
+        <span class="option">
+            <KIWholeWord title="精确匹配" :w="18" :h="18" :class="{ active: use_whole_word }"
+                @click="fun_switch_whole_word">
+            </KIWholeWord>
+        </span>
+    </div>
+</template>
 
 <style scoped lang="less">
 .Search {

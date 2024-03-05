@@ -1,8 +1,9 @@
 <template>
     <div class="Labels">
-        <template v-for="(item, index) in md_files">
-            <span class="label" :class="{ 'actived': index == cur_show_file }" @click="change_file(index)">
+        <template v-for="(item, index) in openfilesStore.mdfiles">
+            <span class="label" :class="{ 'actived': index == openfilesStore.show_index }" @click="change_file(index)">
                 <span class="name">{{ item.name }}</span>
+                <span class="save_status" v-if="!item.save"></span>
                 <KIClose class="close" w="12" h="12" @click.stop="fun_close_file(index)"></KIClose>
             </span>
         </template>
@@ -10,31 +11,49 @@
 </template>
 
 <script setup lang="ts">
-import { Ref, inject } from 'vue';
 import { KIClose } from '~/icon'
-type md_file = {
-    name: string,
-    path: string,
-    content: string
-};
-const md_files = inject('md_files') as Array<md_file>;
-const cur_show_file = inject('cur_show_file') as Ref<number>;
-const next_show_file = inject('next_show_file') as Ref<number>;
+import { useOpenFilesStore } from '../../stores/openfiles'
+import { Action, ElMessageBox } from 'element-plus'
+
+const openfilesStore = useOpenFilesStore();
 
 function change_file(index: number) {
-    cur_show_file.value = index;
-    next_show_file.value = index;
+    if (index == openfilesStore.show_index) return;
+
+    //当前文件已保存，可直接切换
+    if (openfilesStore.mdfiles[openfilesStore.show_index].save) {
+        openfilesStore.set_show(index);
+        return;
+    }
+    //否则，需请求保存、或放弃修改
+    ElMessageBox.confirm("该文件尚未保存，切换文件将丢失数据！", '警告', {
+        confirmButtonText: '切换',
+        cancelButtonText: '取消',
+        type: 'warning',
+        callback: (action: Action) => {
+            if (action == "confirm") {
+                openfilesStore.set_show(index);
+            }
+        }
+    });
+
 }
 
 async function fun_close_file(index: number) {
-    if (index < cur_show_file.value) {
-        next_show_file.value = cur_show_file.value - 1;
-    } else if (index == cur_show_file.value) {
-        if (index == md_files.length - 1) {
-            next_show_file.value = index - 1;
-        }
+    if (openfilesStore.mdfiles[index].save) {
+        openfilesStore.close(index)
+        return;
     }
-    md_files.splice(index, 1);
+    ElMessageBox.confirm("该文件尚未保存，关闭文件将丢失数据！", '警告', {
+        confirmButtonText: '关闭',
+        cancelButtonText: '取消',
+        type: 'warning',
+        callback: (action: Action) => {
+            if (action == "confirm") {
+                openfilesStore.close(index)
+            }
+        }
+    });
 }
 
 </script>
@@ -46,6 +65,21 @@ async function fun_close_file(index: number) {
     border-bottom: 1px solid #2b2b2b;
     display: flex;
     justify-content: left;
+    overflow-y: hidden;
+    overflow-x: auto;
+
+    &::-webkit-scrollbar {
+        height: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background-color: #4D4D4D;
+        border-radius: 2px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background-color: transparent;
+    }
 
     .label {
         color: #9d9d9d;
@@ -87,6 +121,14 @@ async function fun_close_file(index: number) {
             &:hover {
                 background-color: #313232;
             }
+        }
+
+        .save_status {
+            width: 6px;
+            height: 6px;
+            border-radius: 3px;
+            background-color: #AD946F;
+            margin: 0 3px;
         }
     }
 

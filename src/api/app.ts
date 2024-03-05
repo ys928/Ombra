@@ -1,5 +1,4 @@
 import { invoke } from "@tauri-apps/api";
-import { listen } from "@tauri-apps/api/event";
 import { appWindow } from "@tauri-apps/api/window";
 import { FS, Path, Dir } from '.'
 namespace App {
@@ -9,19 +8,7 @@ namespace App {
      * @returns 返回app列表数据，每一项包含名称：name、路径：path、图标位置：icon
      */
     export async function get_sys() {
-        let unlisten: UnlistenFn | undefined;
-        const get_apps_result = new Promise<Array<SysAppInfo>>(async (resolve) => {
-            //获取所有遍历到的程序
-            unlisten = await listen<Array<SysAppInfo>>('get_all_app_result', (e) => {
-                resolve(e.payload)
-            });
-        });
-        invoke('get_all_app');
-        let apps_sys = await get_apps_result;
-        if (unlisten) {
-            unlisten();
-        }
-        return apps_sys;
+        return await invoke<Array<SysAppInfo>>('get_all_app');
     }
 
     /**

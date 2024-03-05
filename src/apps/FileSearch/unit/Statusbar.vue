@@ -1,17 +1,9 @@
-<template>
-    <div class="StatusBar">
-        <span class="progress"> {{ use_seconds }} {{ task_status }}</span>
-        <span class="file_num">
-            文件总数：<span> {{ file_num }} </span>
-        </span>
-    </div>
-</template>
-
 <script setup lang="ts">
 import { invoke } from '@tauri-apps/api';
 import { listen } from '@tauri-apps/api/event';
 import { onMounted, onUnmounted, ref } from 'vue';
-const emits = defineEmits(['fun_search', 'fun_process'])
+import { useSearchResultStore } from '../stores/searchResult';
+
 type TaskProgress = {
     status: string, //状态
     data: string,   //传送数据
@@ -19,6 +11,8 @@ type TaskProgress = {
 const file_num = ref(0);
 const use_seconds = ref();
 const task_status = ref();
+
+const searchResultStore = useSearchResultStore();
 
 let timerInterval: NodeJS.Timeout | undefined;
 let unlisten: UnlistenFn | undefined;
@@ -38,13 +32,13 @@ onMounted(async () => {
         // 初始化计时器变量
         if (e.payload.status == 'walking') { //正在遍历文件夹
             task_status.value = '正在索引文件：' + e.payload.data;
-            emits('fun_process', true);
+            searchResultStore.set_process_status(true);
         } else if (e.payload.status == 'begin_save') {
             task_status.value = '正在缓存：' + e.payload.data;
         } else if (e.payload.status == 'end') {
             task_status.value = '已完成数据缓存';
-            emits('fun_process', false);
-            emits('fun_search', '', '', 'normal', 0);
+            searchResultStore.set_process_status(false);
+            searchResultStore.search('', '', 'normal', 0);
         }
     })
 });
@@ -56,6 +50,15 @@ onUnmounted(() => {
 
 
 </script>
+
+<template>
+    <div class="StatusBar">
+        <span class="progress"> {{ use_seconds }} {{ task_status }}</span>
+        <span class="file_num">
+            文件总数：<span> {{ file_num }} </span>
+        </span>
+    </div>
+</template>
 
 
 <style scoped lang="less">
