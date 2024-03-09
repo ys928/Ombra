@@ -1,11 +1,13 @@
 <template>
     <div class="FileTree">
         <div class="title">资源管理器</div>
+
         <div class="tree" @click="fun_click_select_folder">
             <DirNode v-if="prop.root.length != 0" :is_open="true" :name="fun_name(prop.root)" :path="prop.root"
                 :fun_open_dir="prop.fun_opendir" :level="0"></DirNode>
-
+            <Blank v-else></Blank>
         </div>
+
         <div class="tools">
 
         </div>
@@ -14,7 +16,8 @@
 
 
 <script setup lang="ts">
-import DirNode from './DirNode.vue';
+import DirNode from './FileTree/DirNode.vue';
+import Blank from './FileTree/Blank.vue';
 
 const prop = defineProps(['fun_opendir', 'root', 'is_show', 'select_dir']);
 //从路径中解析出来最后的文件名称

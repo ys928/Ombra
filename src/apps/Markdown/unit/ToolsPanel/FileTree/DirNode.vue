@@ -27,7 +27,7 @@
 <script setup lang="ts">
 import { KIArrowRight, KIArrowDown, KIText, KIMarkdown } from '~/icon'
 import { onMounted, reactive, ref } from 'vue';
-import { useOpenFilesStore } from '../../stores/openfiles';
+import { useOpenFilesStore } from '../../../stores/openfiles';
 
 const prop = defineProps(['name', 'path', 'is_open', 'fun_open_dir', 'level']);
 
@@ -100,4 +100,4 @@ async function fun_dir() {
     }
 
 }
-</style>
+</style>../../../stores/openfiles

@@ -3,7 +3,7 @@ import { onMounted, onUnmounted } from 'vue';
 import MainPanel from './unit/MainPanel.vue'
 import ToolsPanel from './unit/ToolsPanel.vue';
 import { useOpenFilesStore } from './stores/openfiles';
-
+import { Window } from '~/api'
 const openFilesStore = useOpenFilesStore();
 
 onMounted(() => {
@@ -18,7 +18,16 @@ onUnmounted(() => {
 function fun_keydown(e: KeyboardEvent) {
     if (e.ctrlKey && e.key == "n") {
         openFilesStore.open_default();
+        e.preventDefault();
+        e.stopPropagation();
     }
+
+    if (e.key == "F11") {
+        Window.toggle_max()
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
 }
 
 
