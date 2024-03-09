@@ -1,6 +1,28 @@
 <script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue';
 import MainPanel from './unit/MainPanel.vue'
 import ToolsPanel from './unit/ToolsPanel.vue';
+import { useOpenFilesStore } from './stores/openfiles';
+
+const openFilesStore = useOpenFilesStore();
+
+onMounted(() => {
+    document.addEventListener("keydown", fun_keydown)
+});
+
+onUnmounted(() => {
+    document.removeEventListener("keydown", fun_keydown)
+})
+
+
+function fun_keydown(e: KeyboardEvent) {
+    if (e.ctrlKey && e.key == "n") {
+        openFilesStore.open_default();
+    }
+}
+
+
+
 </script>
 
 

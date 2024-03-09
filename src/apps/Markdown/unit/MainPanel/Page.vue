@@ -44,6 +44,7 @@ let state = EditorState.create({
             "Ctrl-4": setBlockType(schema.nodes.heading, { level: '4' }),
             "Ctrl-5": setBlockType(schema.nodes.heading, { level: '5' }),
             "Ctrl-6": setBlockType(schema.nodes.heading, { level: '6' }),
+            "Ctrl-p": setBlockType(schema.nodes.paragraph),
             "Ctrl-s": save_file,
         }),
         monitor_changes_plugin
@@ -51,9 +52,10 @@ let state = EditorState.create({
 })
 onMounted(() => {
     let mdedit = document.querySelector('.MdEdit');
-    new EditorView(mdedit, {
+    const view = new EditorView(mdedit, {
         state
     });
+    view.focus();
     // document.addEventListener('keydown', (e) => {
     //     console.log(e);
     // })
@@ -91,6 +93,7 @@ function save_file(state: EditorState, _dispatch: ((tr: Transaction) => void) | 
     width: 100%;
     height: 100%;
     overflow: hidden;
+    padding: 20px 0;
 
     .ProseMirror {
         width: 100%;
@@ -114,6 +117,30 @@ function save_file(state: EditorState, _dispatch: ((tr: Transaction) => void) | 
 
         &::-webkit-scrollbar-track {
             background-color: transparent;
+        }
+
+        h1 {
+            margin: 25px 0;
+        }
+
+        h2 {
+            margin: 20px 0;
+        }
+
+        h3 {
+            margin: 15px 0;
+        }
+
+        h4 {
+            margin: 10px 0;
+        }
+
+        h5 {
+            margin: 5px 0;
+        }
+
+        h6 {
+            margin: 0;
         }
 
         p {

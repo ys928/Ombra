@@ -41,7 +41,7 @@ export const useOpenFilesStore = defineStore('markdown_openfiles', () => {
             name: '未命名.md',
             path: '',
             content: '',
-            save: false
+            save: true
         });
         show_index.value = mdfiles.value.length - 1;
     }
