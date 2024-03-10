@@ -5,9 +5,14 @@ import { onMounted, ref, Ref } from 'vue'
 import { undo, redo, history } from "prosemirror-history"
 import { keymap } from "prosemirror-keymap"
 import 'prosemirror-view/style/prosemirror.css'
-import { schema, defaultMarkdownParser, defaultMarkdownSerializer } from "prosemirror-markdown"
+import { parse_markdown_text, defaultMarkdownSerializer } from './markdown'
+import { schema } from './markdown/schema'
+
 import { baseKeymap, toggleMark, setBlockType } from 'prosemirror-commands';
 import { FS, Dialog } from '~/api'
+import "highlight.js/styles/ir-black.css";
+
+
 
 const props = defineProps(['md_file']);
 
@@ -31,7 +36,7 @@ const monitor_changes_plugin = new Plugin({
 let state = EditorState.create({
     schema,
     //@ts-ignore
-    doc: defaultMarkdownParser.parse(props.md_file.content),
+    doc: parse_markdown_text(props.md_file.content),
     plugins: [
         history(),
         keymap({ "Mod-z": undo, "Mod-y": redo }),
@@ -185,10 +190,10 @@ function save_file(state: EditorState, _dispatch: ((tr: Transaction) => void) | 
             }
         }
 
-        pre {
-            background-color: #2D2D2D;
-            padding: 20px;
-        }
+        // pre {
+        //     background-color: #2D2D2D;
+        //     padding: 20px;
+        // }
     }
 }
 </style>
