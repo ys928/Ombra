@@ -1,27 +1,27 @@
 <script setup lang="ts">
-import { Ref, ref, watch } from 'vue';
+import { Ref, computed, ref, watch } from 'vue';
 
 const props = defineProps(['value', 'placeholder']);
 const emits = defineEmits(['update:value', 'change', 'keydown', 'paste']);
 
 const search_input = ref() as Ref<HTMLElement>;
 
-let is_ompositioning = false;
+const is_ompositioning = ref(false);
 
 watch(() => props.value, () => {
     search_input.value.textContent = props.value;
 });
 
 function fun_ompositionstart() {
-    is_ompositioning = true;
+    is_ompositioning.value = true;
 }
 function fun_ompositionend() {
-    is_ompositioning = false;
+    is_ompositioning.value = false;
     emits('update:value', search_input.value.textContent);
     emits('change')
 }
 async function fun_input() {
-    if (is_ompositioning) return;
+    if (is_ompositioning.value) return;
     emits('update:value', search_input.value.textContent);
     emits('change');
 }
@@ -48,6 +48,15 @@ function paste(e: ClipboardEvent) {
     emits('paste', e);
 }
 
+const is_show_placeholder = computed(() => {
+    if (is_ompositioning.value) {
+        return false;
+    }
+    if (props.value.length == 0) return true;
+
+    return false;
+})
+
 defineExpose({
     focus,
     selected
@@ -60,7 +69,8 @@ defineExpose({
         <div ref="search_input" contenteditable @input="fun_input" @compositionstart="fun_ompositionstart"
             @compositionend="fun_ompositionend" @keydown="fun_keydown($event)" @paste="paste($event)">
         </div>
-        <span data-tauri-drag-region class="placeholder" v-if="props.value.length == 0">{{ props.placeholder }}</span>
+        <span data-tauri-drag-region class="placeholder" v-if="is_show_placeholder">{{
+            props.placeholder }}</span>
     </div>
 </template>
 
