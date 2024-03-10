@@ -166,7 +166,7 @@ async function fun_keydown(e: KeyboardEvent) {
         e.preventDefault();
         e.stopPropagation();
         apps_menu.value.click_app();
-        search_content.value="";
+        search_content.value = "";
         return;
     }
     if (e.key == "Escape") {
@@ -174,12 +174,19 @@ async function fun_keydown(e: KeyboardEvent) {
             is_show_setting.value = false;
             return;
         }
-        if (search_content.value.length != 0) {
+        if (search_content.value.length > 0) {
             search_content.value = "";
-            fun_search();
-        } else {
-            Window.hide();
+            if (block_content.value.length == 0) {
+                fun_search();
+            }
+            return;
         }
+        if (block_content.value.length > 0) {
+            block_content.value = "";
+            fun_search();
+            return;
+        }
+        Window.hide();
         return;
     }
     if (e.key == 'Backspace') {

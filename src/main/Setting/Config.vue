@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { AutoStart } from '~/api';
 import { useConfigStore } from '~/stores/config';
-import { ElSwitch, ElMessage, ElInput, ElForm, ElFormItem } from 'element-plus';
+import { ElSwitch, ElMessage, ElInput, ElForm, ElFormItem, ElCheckTag, ElRow } from 'element-plus';
 const short_key = ref('');
 const search_input_placeholder = ref('');
 const auto_start = ref(false);
@@ -20,12 +20,11 @@ onMounted(async () => {
 
 async function fun_shortkey_input(event: KeyboardEvent | Event) {
     let e = event as KeyboardEvent;
-    e.preventDefault();
-    e.stopPropagation();
-    console.log(e);
     if (e.key == 'Control' || e.key == 'Shift' || e.key == 'Alt' || e.key == 'Meta') {
+        console.log(e);
         return;
     }
+    console.log(e);
     //使用F1-F12注册快捷键
     let rf = /F[1-9][0-2]/g
     if (rf.test(e.key)) {
@@ -37,7 +36,7 @@ async function fun_shortkey_input(event: KeyboardEvent | Event) {
     short_key.value += e.ctrlKey ? 'Ctrl+' : '';
     short_key.value += e.shiftKey ? 'Shift+' : '';
     short_key.value += e.altKey ? 'Alt+' : '';
-    if (e.key == ' ') {
+    if (e.key == ' ' || e.key == "Process") {
         short_key.value += 'Space';
     } else {
         short_key.value += e.key.toUpperCase();
@@ -64,15 +63,34 @@ async function fun_set_auto_start() {
     }
 }
 
+function fun_set_hotkey(shortkey: string) {
+    short_key.value = shortkey.replace("CommandOrControl", "Ctrl");
+    configStore.write_callout(shortkey);
+}
+
 </script>
 
 <template>
     <div class="Setting">
         <el-form label-position="right" label-width="100px" style="max-width: 460px">
             <el-form-item label="快捷键">
-                <el-input v-model="short_key" placeholder="请输入热键"
-                    input-style="color: transparent; text-shadow: 0 0 0 #90CAF9;text-align: center;"
-                    style="width: 200px;height: 28px;" @keydown="fun_shortkey_input($event)" />
+                <el-row>
+                    <el-input v-model="short_key" placeholder="请输入热键"
+                        input-style="color: transparent; text-shadow: 0 0 0 #90CAF9;text-align: center;"
+                        style="width: 200px;height: 28px;" @keydown="fun_shortkey_input($event)" />
+                </el-row>
+                <el-row>
+                    <el-check-tag
+                        style="width: 80px;height: 25px;display: flex;justify-content: center; align-items: center; font-size: 10px; margin: 5px 5px 0;"
+                        checked @click="fun_set_hotkey('CommandOrControl+Space')">
+                        Ctrl+Space
+                    </el-check-tag>
+                    <el-check-tag
+                        style="width: 80px;height: 25px;display: flex;justify-content: center; align-items: center; font-size: 10px; margin: 5px 5px 0;"
+                        checked @click="fun_set_hotkey('Alt+Space')">
+                        Alt+Space
+                    </el-check-tag>
+                </el-row>
             </el-form-item>
             <el-form-item label="占位符">
                 <el-input v-model="search_input_placeholder" placeholder="请输入占位符"

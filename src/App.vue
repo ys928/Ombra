@@ -8,31 +8,40 @@ onMounted(() => {
     Window.focus();
     load_apps();
   }
+
   document.oncontextmenu = function (e) {
     e.preventDefault();
   };
+
+  document.addEventListener('keydown', fun_keydown)
 });
 
 function fun_keydown(e: KeyboardEvent) {
   if (e.key == 'F5') e.preventDefault();
   if (e.key == 'r' && e.ctrlKey) {
     e.preventDefault();
-    e.stopPropagation();
   }
   if (e.key == 'R' && e.shiftKey && e.ctrlKey) {
     e.preventDefault();
-    e.stopPropagation();
   }
-}
-
-function fun_contextmenu(e: MouseEvent) {
-  e.preventDefault();
+  if (e.key == "g" && e.ctrlKey) {
+    e.preventDefault();
+  }
+  if (e.key == "f" && e.ctrlKey) {
+    e.preventDefault();
+  }
+  if (e.key == "p" && e.ctrlKey) {
+    e.preventDefault();
+  }
+  if (e.key == "j" && e.ctrlKey) {
+    e.preventDefault();
+  }
 }
 
 </script>
 
 <template>
-  <div class="RootApp" @keydown="fun_keydown($event)" @contextmenu="fun_contextmenu($event)">
+  <div class="RootApp">
     <RouterView></RouterView>
   </div>
 </template>

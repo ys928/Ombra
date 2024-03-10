@@ -15,7 +15,7 @@ interface Config {
 
 
 const default_config: Config = {
-    callout: 'CommandOrControl+Shift+A',
+    callout: 'CommandOrControl+Space',
     placeholder: 'Hi，Ombra！',
     local_apps: [],
     appinfo: [],
