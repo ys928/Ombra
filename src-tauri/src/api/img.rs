@@ -1,25 +1,18 @@
-use tauri::Window;
-
 use crate::unit;
-#[tauri::command]
-pub fn img_compress(w: Window, img_path: String, save_path: String, quality: u32) {
-    std::thread::spawn(move || {
-        if img_path.ends_with(".jpg") || img_path.ends_with(".jpeg") {
-            let ret = unit::img::compress_jpg(&img_path, &save_path, quality);
-            w.emit("img_compress_result", ret).unwrap();
-        } else if img_path.ends_with(".png") {
-            let ret = unit::img::compress_png(&img_path, &save_path, quality);
-            w.emit("img_compress_result", ret).unwrap();
-        } else {
-            w.emit("img_compress_result", false).unwrap();
-        }
-    });
+#[tauri::command(async)]
+pub async fn img_compress(img_path: String, save_path: String, quality: u32) -> bool {
+    if img_path.ends_with(".jpg") || img_path.ends_with(".jpeg") {
+        let ret = unit::img::compress_jpg(&img_path, &save_path, quality);
+        return ret;
+    } else if img_path.ends_with(".png") {
+        let ret = unit::img::compress_png(&img_path, &save_path, quality);
+        return ret;
+    } else {
+        return false;
+    }
 }
 
-#[tauri::command]
-pub fn img_convert(w: Window, img_path: String, save_path: String, format: String) {
-    std::thread::spawn(move || {
-        let ret = unit::img::convert(&img_path, &save_path, &format);
-        w.emit("img_convert_result", ret).unwrap();
-    });
+#[tauri::command(async)]
+pub async fn img_convert(img_path: String, save_path: String, format: String) -> bool {
+    unit::img::convert(&img_path, &save_path, &format)
 }
