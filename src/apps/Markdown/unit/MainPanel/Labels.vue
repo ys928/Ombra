@@ -20,22 +20,24 @@ const openfilesStore = useOpenFilesStore();
 function change_file(index: number) {
     if (index == openfilesStore.show_index) return;
 
-    //当前文件已保存，可直接切换
-    if (openfilesStore.mdfiles[openfilesStore.show_index].save) {
-        openfilesStore.set_show(index);
-        return;
-    }
-    //否则，需请求保存、或放弃修改
-    ElMessageBox.confirm("该文件尚未保存，切换文件将丢失数据！", '警告', {
-        confirmButtonText: '切换',
-        cancelButtonText: '取消',
-        type: 'warning',
-        callback: (action: Action) => {
-            if (action == "confirm") {
-                openfilesStore.set_show(index);
-            }
-        }
-    });
+    openfilesStore.set_show(index);
+
+    // //当前文件已保存，可直接切换
+    // if (openfilesStore.mdfiles[openfilesStore.show_index].save) {
+    //     openfilesStore.set_show(index);
+    //     return;
+    // }
+    // //否则，需请求保存、或放弃修改
+    // ElMessageBox.confirm("该文件尚未保存，切换文件将丢失数据！", '警告', {
+    //     confirmButtonText: '切换',
+    //     cancelButtonText: '取消',
+    //     type: 'warning',
+    //     callback: (action: Action) => {
+    //         if (action == "confirm") {
+    //             openfilesStore.set_show(index);
+    //         }
+    //     }
+    // });
 
 }
 

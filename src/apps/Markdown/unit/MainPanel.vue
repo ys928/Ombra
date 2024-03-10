@@ -14,7 +14,7 @@ const openfilesStore = useOpenFilesStore();
         <div class="Content" v-if="openfilesStore.mdfiles.length > 0">
             <Labels></Labels>
             <template v-for="(item, index) in openfilesStore.mdfiles" :key="item.path">
-                <Page v-if="index == openfilesStore.show_index" :md_file="item"></Page>
+                <Page v-show="index == openfilesStore.show_index" :md_file="item"></Page>
             </template>
         </div>
         <Blank v-else></Blank>
@@ -23,17 +23,22 @@ const openfilesStore = useOpenFilesStore();
 
 <style scoped lang="less">
 .MainPanel {
-    display: flex;
-    flex-direction: column;
     height: 100%;
 
-    .Labels {
-        height: 30px;
+    .Content {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+
+        .Labels {
+            height: 30px;
+        }
+
+        .Page {
+            height: 100px;
+            flex-grow: 1;
+        }
     }
 
-    .Page {
-        height: 100px;
-        flex-grow: 1;
-    }
 }
 </style>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { EditorState, Transaction, Plugin } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { onMounted } from 'vue'
+import { onMounted, ref, Ref } from 'vue'
 import { undo, redo, history } from "prosemirror-history"
 import { keymap } from "prosemirror-keymap"
 import 'prosemirror-view/style/prosemirror.css'
@@ -10,6 +10,8 @@ import { baseKeymap, toggleMark, setBlockType } from 'prosemirror-commands';
 import { FS, Dialog } from '~/api'
 
 const props = defineProps(['md_file']);
+
+const ref_mdedit = ref() as Ref<HTMLElement>;
 
 // 创建一个插件来监视用户的输入行为
 const monitor_changes_plugin = new Plugin({
@@ -51,8 +53,7 @@ let state = EditorState.create({
     ]
 })
 onMounted(() => {
-    let mdedit = document.querySelector('.MdEdit');
-    const view = new EditorView(mdedit, {
+    const view = new EditorView(ref_mdedit.value, {
         state
     });
     view.focus();
@@ -85,7 +86,7 @@ function save_file(state: EditorState, _dispatch: ((tr: Transaction) => void) | 
 </script>
 
 <template>
-    <div class="MdEdit"> </div>
+    <div class="MdEdit" ref="ref_mdedit"> </div>
 </template>
 
 <style lang="less">
