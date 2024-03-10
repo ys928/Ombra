@@ -52,6 +52,7 @@ async function fun_add_web() {
         ElMessage.success("已添加");
     }
     let is_query = add_web_name.value.indexOf('{query}') != -1;
+
     let item = {
         name: add_web_name.value,
         url: add_web_url.value,
@@ -60,20 +61,14 @@ async function fun_add_web() {
         icon: fav_icon,
         on: true
     }
-    let show_item = {
-        name: item.name,
-        url: item.url,
-        id: item.id,
-        features: item.features,
-        icon: item.icon.length > 0 ? Url.convert(item.icon) : '/logo.png',
-        on: true
-    }
-    applistStore.add_web(show_item);
-    web_apps.push(show_item);
+
+    applistStore.add_web(item);
+    web_apps.push(item);
 
     let cfg_web_apps = await configStore.read_web_apps();
     cfg_web_apps.push(item);
     configStore.write_web_apps(cfg_web_apps);
+
     is_show_window.value = false;
 }
 
@@ -89,7 +84,7 @@ async function fun_delete(url: string) {
         cancelButtonText: '取消',
         type: 'warning',
     });
-    if (ret.action != 'confirm') return;
+    if (ret != 'confirm') return;
     for (let i = 0; i < web_apps.length; i++) {
         if (web_apps[i].url == url) {
             web_apps.splice(i, 1);

@@ -92,6 +92,8 @@ onUnmounted(async () => {
     if (fun_eve_click_tray) fun_eve_click_tray();
 
     if (unlisten_single_instance) unlisten_single_instance();
+
+    GlobalShortcut.unregister(callout_short_key.value);
 })
 
 async function set_callout_shortkey(shortkey: string) {

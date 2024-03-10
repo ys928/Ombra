@@ -109,7 +109,7 @@ fn main() {
             api::sys::get_associated_icon,
             api::sys::auto_start,
             api::sys::is_auto_start,
-            api::web::save_icon_to_file,
+            api::web::web_icon_to_file,
             api::web::download_file,
             api::img::img_compress,
             api::img::img_convert,

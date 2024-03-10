@@ -1,5 +1,4 @@
 import { invoke } from "@tauri-apps/api";
-import { listen } from "@tauri-apps/api/event";
 import { convertFileSrc } from "@tauri-apps/api/tauri";
 //@ts-ignore
 import parseUrl from 'parse-url'
@@ -28,39 +27,15 @@ namespace Url {
     }
 
     export async function download(url: string, file: string) {
-        let unlisten: UnlistenFn | undefined;
-        const download_result = new Promise<boolean>(async (resolve) => {
-            //获取下载结果
-            unlisten = await listen<boolean>('download_file_result', (e) => {
-                resolve(e.payload)
-            });
-        });
-        invoke('download_file', { url: url, file: file });
-        let is_success = await download_result;
-        if (unlisten) {
-            unlisten();
-        }
-        return is_success;
+        let ret = await invoke<boolean>('download_file', { url: url, file: file });
+        return ret;
     }
 
     export async function download_favicon(url: string, name: string) {
         let icon_path = await Dir.config_icon();
         let fav_file = await Path.join(icon_path, name);
-
-        let unlisten: UnlistenFn | undefined;
-        const download_result = new Promise<boolean>(async (resolve) => {
-            //获取下载结果
-            unlisten = await listen<boolean>('save_icon_to_file_result', (e) => {
-                resolve(e.payload)
-            });
-        });
-
-        invoke('save_icon_to_file', { url: url, savePath: fav_file });
-        let is_success = await download_result;
-        if (unlisten) {
-            unlisten();
-        }
-        if (is_success) {
+        let ret = await invoke<boolean>('web_icon_to_file', { url: url, savePath: fav_file });
+        if (ret) {
             return fav_file;
         }
         return '';

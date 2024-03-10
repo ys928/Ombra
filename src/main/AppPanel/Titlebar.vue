@@ -65,6 +65,9 @@ onUnmounted(() => {
     if (fun_eve_blur) fun_eve_blur();
     if (fun_eve_focus) fun_eve_focus();
     if (fun_eve_click_tray) fun_eve_click_tray();
+
+    GlobalShortcut.unregister(callout_short_key.value);
+
 });
 
 //处理程序退出时的情况
