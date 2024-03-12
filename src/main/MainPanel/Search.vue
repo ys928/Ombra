@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Ref, computed, ref, watch } from 'vue';
+import { Ref, computed, ref, watch, nextTick } from 'vue';
 
 const props = defineProps(['value', 'placeholder']);
 const emits = defineEmits(['update:value', 'change', 'keydown', 'paste']);
@@ -57,9 +57,23 @@ const is_show_placeholder = computed(() => {
     return false;
 })
 
+async function cursor_to_end() {
+    await nextTick();
+    var range = document.createRange();
+    range.selectNodeContents(search_input.value);
+    range.collapse(false);
+    var sel = window.getSelection();
+    if (sel == null) return;
+    sel.removeAllRanges();
+    sel.addRange(range);
+    search_input.value.scrollLeft = search_input.value.scrollWidth;
+    search_input.value.focus();
+}
+
 defineExpose({
     focus,
-    selected
+    selected,
+    cursor_to_end
 })
 
 </script>
@@ -77,10 +91,11 @@ defineExpose({
 <style scoped lang="less">
 .Search {
     position: relative;
+    padding: 0 10px;
 
     div {
         min-width: 20px;
-        max-width: 730px;
+        max-width: 710px;
         font-family: 'Arial', sans-serif;
         height: 30px;
         margin: 10px 0;
@@ -91,9 +106,7 @@ defineExpose({
         border: none;
         background-color: #252525;
         color: #f1f2f3;
-        padding: 0 10px;
         white-space: nowrap;
-        overflow-x: auto;
         overflow-y: hidden;
 
         &::selection {

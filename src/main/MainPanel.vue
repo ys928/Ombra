@@ -126,6 +126,7 @@ async function fun_switch_panel_status() {
         Ombra.set_text(text_trim);
         if (text_trim.indexOf('\n') == -1) {
             search_content.value = text_trim;
+            main_input.value.cursor_to_end();
         } else {
             if (text_trim.length > 50) {
                 block_content.value = text_trim.substring(0, 50).replace('\n', '¬') + ' ......';
