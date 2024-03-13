@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, reactive } from 'vue';
-import { App, CLI, Notification, Url, Window, Dialog, FS } from '~/api';
+import { App, CLI, Url, Window, Dialog, FS } from '~/api';
 import { useAppListStore } from '~/stores/appList';
 import { useConfigStore } from '~/stores/config';
 import { Delete, Plus } from '@element-plus/icons-vue'
-import { ElIcon, ElAlert } from 'element-plus'
+import { ElIcon, ElAlert, ElMessage } from 'element-plus'
 const local_apps = reactive([]) as Array<LocalApp>;
 
 const applistStore = useAppListStore();
@@ -23,13 +23,13 @@ onMounted(async () => {
     uf_file_drag = await Window.event_file_drag(async (files) => {
         for (let f of files) {
             if (!f.endsWith('.exe')) {
-                Notification.send('提示', '暂不支持非exe可执行文件');
+                ElMessage.error('暂不支持非可执行文件');
                 continue;
             }
-            let name = await FS.file_stem(f);
+            let name = FS.file_stem(f);
             let icon = await App.get_icon(f);
             if (icon.length == 0) {
-                Notification.send('错误', '获取程序图标失败');
+                ElMessage.error('获取程序图标失败');
                 continue;
             }
             local_apps.push({
@@ -37,9 +37,12 @@ onMounted(async () => {
                 path: f,
                 icon: icon
             });
-            applistStore.add(name, f, Url.convert(icon), [], null, () => {
+            let status = applistStore.add(name, f, Url.convert(icon), [], null, () => {
                 CLI.exec(['start', '', f]);
-            })
+            });
+            if (status != 'success') {
+                ElMessage.error('添加失败，请勿重复添加！');
+            }
         }
         configStore.write_local_app(local_apps);
     });
@@ -66,10 +69,10 @@ async function fun_add() {
     const ret = await Dialog.open({ title: '选择文件', filters: [{ name: '可执行文件', extensions: ['exe'] }] });
     if (ret == null) return;
     let f = ret as string;
-    let name = await FS.file_stem(f);
+    let name = FS.file_stem(f);
     let icon = await App.get_icon(f);
     if (icon.length == 0) {
-        Notification.send('错误', '获取程序图标失败');
+        ElMessage.error('获取程序图标失败');
         return;
     }
     local_apps.push({
@@ -83,7 +86,7 @@ async function fun_add() {
     if (status == 'success') {
         configStore.write_local_app(local_apps);
     } else {
-        Notification.send('错误', '请勿重复添加');
+        ElMessage.error('添加失败，请勿重复添加！');
     }
 }
 
