@@ -4,7 +4,7 @@ import { App, CLI, Notification, Url, Window, Dialog, FS } from '~/api';
 import { useAppListStore } from '~/stores/appList';
 import { useConfigStore } from '~/stores/config';
 import { Delete, Plus } from '@element-plus/icons-vue'
-import { ElIcon } from 'element-plus'
+import { ElIcon, ElAlert } from 'element-plus'
 const local_apps = reactive([]) as Array<LocalApp>;
 
 const applistStore = useAppListStore();
@@ -91,17 +91,22 @@ async function fun_add() {
 
 <template>
     <div class="LocalExe">
-        <div class="item" v-for="item in local_apps">
-            <div class="info">
-                <img :src="Url.convert(item.icon)" alt="" srcset="">
-                <div>
-                    <span class="name">{{ item.name }}</span>
-                    <span class="path">{{ item.path }}</span>
+        <div class="tip">
+            <el-alert title="拖拽可执行文件到本页面可快速添加" center type="info" />
+        </div>
+        <div class="content">
+            <div class="item" v-for="item in local_apps">
+                <div class="info">
+                    <img :src="Url.convert(item.icon)" alt="" srcset="">
+                    <div>
+                        <span class="name">{{ item.name }}</span>
+                        <span class="path">{{ item.path }}</span>
+                    </div>
                 </div>
+                <el-icon class="delete" @click="fun_delete(item.path)">
+                    <Delete />
+                </el-icon>
             </div>
-            <el-icon class="delete" @click="fun_delete(item.path)">
-                <Delete />
-            </el-icon>
         </div>
         <el-icon class="plus" @click="fun_add">
             <Plus />
@@ -117,55 +122,66 @@ async function fun_add() {
     display: flex;
     flex-direction: column;
 
-    .item {
+    .tip {
+        text-align: center;
+    }
+
+    .content {
         display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 20px;
+        flex-direction: column;
+        flex-grow: 1;
 
-        .info {
+        .item {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            margin: 10px 0;
+            padding: 0 20px;
 
-            img {
-                width: 30px;
-                height: 30px;
-                margin: 0 10px;
-            }
-
-            div {
-                height: 30px;
+            .info {
                 display: flex;
-                flex-direction: column;
-                justify-content: space-between;
+                align-items: center;
+                margin: 10px 0;
 
-                .name {
-                    color: #eee;
-                    font-size: 13px;
+                img {
+                    width: 30px;
+                    height: 30px;
+                    margin: 0 10px;
                 }
 
-                .path {
-                    color: #8E8E8E;
-                    font-size: 12px;
+                div {
+                    height: 30px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+
+                    .name {
+                        color: #eee;
+                        font-size: 13px;
+                    }
+
+                    .path {
+                        color: #8E8E8E;
+                        font-size: 12px;
+                    }
+                }
+
+            }
+
+            .delete {
+                background-color: #383838;
+                color: white;
+                width: 26px;
+                height: 26px;
+                border-radius: 13px;
+                cursor: pointer;
+                font-size: 12px;
+
+                &:hover {
+                    background-color: #F56C6C;
                 }
             }
-
         }
 
-        .delete {
-            background-color: #383838;
-            color: white;
-            width: 26px;
-            height: 26px;
-            border-radius: 13px;
-            cursor: pointer;
-            font-size: 12px;
-
-            &:hover {
-                background-color: #F56C6C;
-            }
-        }
     }
 
     .plus {
