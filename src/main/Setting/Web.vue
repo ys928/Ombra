@@ -56,13 +56,23 @@ async function fun_add_web() {
     let item = {
         name: add_web_name.value,
         url: add_web_url.value,
-        id: add_web_url.value,
         features: is_query ? ['text'] : [],
         icon: fav_icon,
-        on: true
+        on: true,
     }
 
-    applistStore.add_web(item);
+    if (fav_icon.length > 0) {
+        applistStore.add_web({
+            name: add_web_name.value,
+            url: add_web_url.value,
+            features: is_query ? ['text'] : [],
+            icon: Url.convert(fav_icon),
+            on: true,
+        });
+    } else {
+        applistStore.add_web(item);
+    }
+
     web_apps.push(item);
 
     let cfg_web_apps = await configStore.read_web_apps();
