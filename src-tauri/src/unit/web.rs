@@ -1,3 +1,5 @@
+use log::warn;
+use reqwest::header;
 use scraper::ElementRef;
 
 pub async fn save_web_icon(url: &str, save_path: &str) -> bool {
@@ -46,8 +48,11 @@ pub async fn save_web_icon(url: &str, save_path: &str) -> bool {
 }
 
 pub async fn get_url_bin(url: &str) -> Option<Vec<u8>> {
-    let w = reqwest::get(url).await;
-    if w.is_err() {
+    let client = reqwest::Client::new();
+    let req=client.get(url).header(header::USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0").build().unwrap();
+    let w = client.execute(req).await;
+    if let Err(e) = w {
+        warn!("get_url_bin:{}", e);
         return None;
     }
     let resp = w.unwrap();
@@ -56,12 +61,15 @@ pub async fn get_url_bin(url: &str) -> Option<Vec<u8>> {
         let buf = Vec::from(bytes);
         return Some(buf);
     } else {
+        warn!("get_url_bin:{}", resp.status());
         return None;
     }
 }
 
 pub async fn get_url_text(url: &str) -> Option<String> {
-    let w = reqwest::get(url).await;
+    let client = reqwest::Client::new();
+    let req=client.get(url).header(header::USER_AGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0").build().unwrap();
+    let w = client.execute(req).await;
     if w.is_err() {
         return None;
     }
