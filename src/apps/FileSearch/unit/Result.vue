@@ -15,10 +15,10 @@ const logo_size = ref({
     h: 13,
 })
 
-function fun_file_item_contextmenu(e: MouseEvent, item: FileInfo) {
+function fun_file_item_contextmenu(e: MouseEvent, item: FileInfo, index: number) {
     popMenuStore.set_show(true);
     popMenuStore.set_pos(e.clientX, e.clientY);
-    popMenuStore.set_click_item(item);
+    popMenuStore.set_click_item(item, index);
 }
 
 function handle_scroll(e: Event) {
@@ -104,8 +104,9 @@ const file_type = computed(() => (ext: string) => {
             <span class="path">路径</span>
             <span class="time">修改时间</span>
         </div>
-        <div v-for="item in searchResultStore.result" class="item"
-            @contextmenu="fun_file_item_contextmenu($event, item)" @dblclick="fun_dbclick(item)">
+        <div v-for="(item, index) in searchResultStore.result" class="item"
+            @contextmenu="fun_file_item_contextmenu($event, item, index)"
+            :class="{ active: index == popMenuStore.click_item.index }" @dblclick="fun_dbclick(item)">
             <span class="name" :title="item.name">
                 <KIFolder :w="logo_size.w" :h="logo_size.h" v-if="item.isdir"></KIFolder>
                 <KIDll :w="logo_size.w" :h="logo_size.h" v-else-if="file_type(item.ext) == 'dll'"></KIDll>
@@ -229,6 +230,10 @@ const file_type = computed(() => (ext: string) => {
             flex-grow: 1;
             line-height: 24px;
         }
+    }
+
+    .active {
+        background-color: #454545;
     }
 }
 </style>

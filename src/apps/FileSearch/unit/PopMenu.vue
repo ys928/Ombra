@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Ref, ref } from 'vue';
-import { Path, Explorer, Clipboard } from '~/api'
+import { Path, Explorer, Clipboard, FS } from '~/api'
 import { usePopMenuStore } from '../stores/popMenu';
-
+import { useSearchResultStore } from '../stores/searchResult';
+import { ElMessageBox } from "element-plus"
 const popMenuStore = usePopMenuStore();
-
+const searchResultStore = useSearchResultStore();
 const div_pop_menu = ref() as Ref<HTMLElement>
 
 async function fun_open_path() {
@@ -44,6 +45,22 @@ async function fun_copy_path() {
     }
     Clipboard.set_text(p);
 }
+
+async function fun_remove_file() {
+    popMenuStore.set_show(false);
+    let p = popMenuStore.click_item.name;
+    if (popMenuStore.click_item.ext.length > 0) {
+        p += '.' + popMenuStore.click_item.ext;
+    }
+    if (popMenuStore.click_item.path.length != 0) {
+        p = await Path.join(popMenuStore.click_item.path, p);
+    }
+    let ret = await ElMessageBox.confirm('该文件(夹)将被彻底删除！');
+    if (ret != "confirm") return;
+    FS.remove(p)
+    searchResultStore.remove(popMenuStore.click_item.path, popMenuStore.click_item.name, popMenuStore.click_item.ext);
+}
+
 </script>
 
 <template>
@@ -52,6 +69,7 @@ async function fun_copy_path() {
         <div class="item" @click="fun_open_file">打开</div>
         <div class="item" @click="fun_open_path">打开路径</div>
         <div class="item" @click="fun_copy_path">复制路径</div>
+        <div class="item" @click="fun_remove_file">删除</div>
     </div>
 </template>
 

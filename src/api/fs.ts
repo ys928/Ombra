@@ -78,6 +78,20 @@ namespace FS {
     export function extension(path: string) {
         return path.substring(path.lastIndexOf('.') + 1);
     }
+
+    /**
+     * @description 删除一个路径，无论文件、还是文件夹
+     * @param path 路径
+     */
+    export async function remove(path: string) {
+        if (await is_dir(path)) {
+            fs.removeDir(path, {
+                recursive: true,
+            });
+        } else {
+            fs.removeFile(path);
+        }
+    }
 }
 
 export default FS;

@@ -14,7 +14,7 @@ pub async fn save_web_icon(url: &str, save_path: &str) -> bool {
         std::fs::write(save_path, ret).unwrap();
         return true;
     }
-    let ret = get_url_text(&url);
+    let ret = get_url_text(&url).await;
     if ret.is_none() {
         return false;
     }
@@ -60,14 +60,14 @@ pub async fn get_url_bin(url: &str) -> Option<Vec<u8>> {
     }
 }
 
-pub fn get_url_text(url: &str) -> Option<String> {
-    let w = reqwest::blocking::get(url);
+pub async fn get_url_text(url: &str) -> Option<String> {
+    let w = reqwest::get(url).await;
     if w.is_err() {
         return None;
     }
     let resp = w.unwrap();
     if resp.status().is_success() {
-        let text = resp.text();
+        let text = resp.text().await;
         if text.is_err() {
             return None;
         }

@@ -72,5 +72,14 @@ export const useSearchResultStore = defineStore('file_search_result', () => {
         scroll_count.value = count;
     }
 
-    return { result, is_processing, last_search, is_searching, search, set_process_status, set_search_status, set_scroll_count, scroll_count };
+    function remove(path: string, name: string, ext: string) {
+        for (let i = 0; i < result.length; i++) {
+            if (result[i].path == path && result[i].name == name && result[i].ext == ext) {
+                result.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+    return { result, is_processing, last_search, is_searching, remove, search, set_process_status, set_search_status, set_scroll_count, scroll_count };
 });
