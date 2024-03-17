@@ -2937,7 +2937,7 @@ dependencies = [
 
 [[package]]
 name = "ombra"
-version = "0.0.5"
+version = "0.0.6"
 dependencies = [
  "auto-launch",
  "dirs 5.0.1",
