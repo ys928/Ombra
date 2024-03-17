@@ -257,21 +257,21 @@ async function fun_open_app(app: AppInfo, is_from_search: boolean) {
     }
 }
 let old_search_content = "";
-//由父组件触发搜索事件
-async function search(init = false) {
+//启动搜索
+async function search() {
     const app_list = applistStore.applist;
-    //如果搜索内容变化，则重新折叠面板
+
     let search_content = Ombra.get_text();
+
+    //非扩展状态、且搜索内容变化，则重新折叠面板
     if (old_search_content != search_content) {
         old_search_content = search_content;
         search_result_is_expand.value = false;
     }
-    //只在非初始化(主窗口被唤出时)的情况下才重置feature
-    if (!init) {
-        //首先根据输入内容匹配特性
-        let fe = await match_feature(search_content);
-        Ombra.set_features(fe);
-    }
+
+    //首先根据输入内容匹配特性
+    let fe = await match_feature(search_content);
+    Ombra.set_features(fe);
 
     //用于临时存储匹配结果
     let tmp_match_result = [];
@@ -279,6 +279,7 @@ async function search(init = false) {
     let tmp_recommend_result = [];
 
     for (let app_item of app_list) {
+
         //匹配推荐应用
         const features_list = Ombra.get_features();
         for (let f of app_item.feature) {
@@ -287,8 +288,10 @@ async function search(init = false) {
                 tmp_recommend_result.push(app);
             }
         }
+
         //跳过only_featur显示
         if (app_item.only_feature) continue;
+
         //匹配搜索应用
         let app = await test_name_match(app_item, search_content);
         if (app.is_match) {
@@ -321,45 +324,33 @@ async function search(init = false) {
 }
 
 //根据app name匹配构造要用于显示的show_name标签内容
-async function test_name_match(app: AppInfo, search = '') {
-    let appName = app.name;
+async function test_name_match(app: AppInfo, search = ''): Promise<AppInfoExt> {
+    const appName = app.name;
+    const lowerAppName = appName.toLowerCase();
+    const lowerSearch = search.toLowerCase();
+
     //没有搜索内容，则直接返回
     if (search.length == 0) {
-        let appExt: AppInfoExt = {
+        return {
             is_match: true,
             show_name: Tools.get_span(appName, 'normal'),
             ...app
         };
-        return appExt;
     }
 
     //直接搜索
-    let pos = appName.toLocaleLowerCase().indexOf(search.toLocaleLowerCase());
+    let pos = lowerAppName.indexOf(lowerSearch);
     if (pos != -1) {
         let s = Tools.get_span(appName.substring(0, pos), 'normal');
         s += Tools.get_span(appName.substring(pos, pos + search.length), 'match');
         s += Tools.get_span(appName.substring(pos + search.length), 'normal');
-        let weight = app.weight;
-        if (pos == 0) { //if in header
-            weight += 3;
-        } else if (pos == 1) {
-            weight += 2;
-        } else if (pos == 2) {
-            weight += 1;
-        }
-        let appExt: AppInfoExt = {
+        const weight = app.weight + (pos >= 3 ? 0 : 3 - pos);
+        return {
             is_match: true,
             show_name: s,
-            weight: weight,
-            name: app.name,
-            id: app.id,
-            icon: app.icon,
-            feature: app.feature,
-            only_feature: app.only_feature,
-            component: app.component,
-            setup: app.setup
+            ...app,
+            weight: weight
         };
-        return appExt;
     }
 
     //如果搜索内容中没有汉字，则可以尝试英文首字母匹配、中文汉字拼音匹配、中文汉字首字母匹配
@@ -381,71 +372,39 @@ async function test_name_match(app: AppInfo, search = '') {
                         s += Tools.get_span(words[i] + ' ', 'normal');
                     }
                 }
-                let weight = app.weight;
-                if (pos == 0) { //if in header
-                    weight += 3;
-                } else if (pos == 1) {
-                    weight += 2;
-                } else if (pos == 2) {
-                    weight += 1;
-                }
-                let appExt: AppInfoExt = {
+
+                const weight = app.weight + (pos >= 3 ? 0 : 3 - pos);
+
+                return {
                     is_match: true,
                     show_name: s,
+                    ...app,
                     weight: weight,
-                    name: app.name,
-                    id: app.id,
-                    icon: app.icon,
-                    feature: app.feature,
-                    only_feature: app.only_feature,
-                    component: app.component,
-                    setup: app.setup
                 };
-                return appExt;
             }
         }
         //如果appName中包含中文，则尝试单独汉字拼音匹配
         if (/.*[\u4e00-\u9fa5].*/.test(appName)) {
-            let s = ''
-            let f = false;
-            let index = 0;
-            for (; index < appName.length; index++) {
+            for (let index = 0; index < appName.length; index++) {
                 let c = appName.charAt(index);
                 //如果某个字符为汉字
                 if (/[\u4e00-\u9fa5]/.test(c)) {
                     let py = await Ombra.to_pinyin(c); //将其转化为拼音
-                    //如果该汉字的拼音以搜索的字符串作为开头，则表示匹配成功
-                    if (py[0].indexOf(search.toLocaleLowerCase()) == 0) {
-                        s += Tools.get_span(appName.substring(0, index), 'normal');
-                        s += Tools.get_span(appName.substring(index, index + 1), 'match');
-                        s += Tools.get_span(appName.substring(index + 1), 'normal');
-                        f = true;
-                        break;
-                    }
+                    //如果该汉字的拼音以搜索的字符串作为开头，则表示匹配成功，否则匹配失败
+                    if (py[0].indexOf(lowerSearch) != 0) continue;
+                    let s = Tools.get_span(appName.substring(0, index), 'normal');
+                    s += Tools.get_span(appName.substring(index, index + 1), 'match');
+                    s += Tools.get_span(appName.substring(index + 1), 'normal');
+
+                    const weight = app.weight + (pos >= 3 ? 0 : 3 - pos);
+
+                    return {
+                        is_match: true,
+                        show_name: s,
+                        ...app,
+                        weight: weight
+                    };
                 }
-            }
-            if (f) {
-                let weight = app.weight;
-                if (index == 0) { //if in header
-                    weight += 3;
-                } else if (index == 1) {
-                    weight += 2;
-                } else if (index == 2) {
-                    weight += 1;
-                }
-                let appExt: AppInfoExt = {
-                    is_match: true,
-                    show_name: s,
-                    weight: weight,
-                    name: app.name,
-                    id: app.id,
-                    icon: app.icon,
-                    feature: app.feature,
-                    only_feature: app.only_feature,
-                    component: app.component,
-                    setup: app.setup
-                };
-                return appExt;
             }
         }
         //如果appName由汉字开头，则尝试拼音首字母匹配
@@ -472,30 +431,22 @@ async function test_name_match(app: AppInfo, search = '') {
                 if (pos == 0) { //if in header
                     weight += 3;
                 }
-                let appExt: AppInfoExt = {
+                return {
                     is_match: true,
                     show_name: s,
+                    ...app,
                     weight: weight,
-                    name: app.name,
-                    id: app.id,
-                    icon: app.icon,
-                    feature: app.feature,
-                    only_feature: app.only_feature,
-                    component: app.component,
-                    setup: app.setup
                 };
-                return appExt;
             }
         }
     }
 
     //没有匹配项的返回结果
-    let appExt: AppInfoExt = {
+    return {
         is_match: false,
         show_name: Tools.get_span(appName, 'normal'),
         ...app
     };
-    return appExt;
 }
 
 //根据搜索内容返回可能的特性
