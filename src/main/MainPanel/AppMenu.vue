@@ -258,7 +258,7 @@ async function fun_open_app(app: AppInfo, is_from_search: boolean) {
 }
 let old_search_content = "";
 //启动搜索
-async function search() {
+async function search(features = []) {
     const app_list = applistStore.applist;
 
     let search_content = Ombra.get_text();
@@ -269,9 +269,13 @@ async function search() {
         search_result_is_expand.value = false;
     }
 
-    //首先根据输入内容匹配特性
-    let fe = await match_feature(search_content);
-    Ombra.set_features(fe);
+    if (features.length == 0) { //如果未传入匹配特性，则自行匹配添加
+        //首先根据输入内容匹配特性
+        let fe = await match_feature(search_content);
+        Ombra.set_features(fe);
+    } else { //否则，直接设置传入的特性
+        Ombra.set_features(features);
+    }
 
     //用于临时存储匹配结果
     let tmp_match_result = [];

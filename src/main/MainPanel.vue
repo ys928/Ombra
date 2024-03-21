@@ -111,12 +111,10 @@ async function fun_switch_panel_status() {
     let p = await Explorer.get_path();
     if (p == 'none') {
         Ombra.set_text('');
-        Ombra.set_features([]);
-        apps_menu.value.search(true);
+        apps_menu.value.search();
     } else {
         Ombra.set_text(p);
-        Ombra.set_features(['explorer']);
-        apps_menu.value.search(true);
+        apps_menu.value.search(['explorer']);
     }
     Window.show();
     Window.focus();
