@@ -14,6 +14,7 @@ tauri-build = { version = "1", features = [] }
 
 [dependencies]
 tauri = { version = "1", features = [ "system-tray", "api-all", "devtools"] }
+winit = "0.29.15"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 pinyin = "0.10.0"
@@ -40,6 +41,7 @@ tauri-plugin-clipboard = "0.6.0"
 scraper = "0.19.0"
 tauri-plugin-single-instance = { git = "https://github.com/tauri-apps/plugins-workspace", branch = "v1" }
 lazy_static = "1.4.0"
+softbuffer = "0.4.1"
 [target.'cfg(windows)'.dependencies]
 windows = { version = "0.53.0", features = [
     "Win32_System_Com",

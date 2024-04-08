@@ -24,6 +24,21 @@ let search_result_is_expand = ref(false); //记录搜索结果是否为展开状
 const applistStore = useAppListStore();
 
 onMounted(async () => {
+    await init_data();
+    search(); //初始化操作
+});
+
+//当app列表发送变化时，自动刷新app面板数据
+let watch_applist_timer: NodeJS.Timeout | undefined;
+watch(() => applistStore.applist.length, () => {
+    if (watch_applist_timer) clearTimeout(watch_applist_timer);
+    watch_applist_timer = setTimeout(async () => {
+        await init_data();
+        search();
+    }, 200);
+});
+
+async function init_data() {
     let appinfo = await configStore.read_appinfo();
     const app_list = applistStore.applist;
     for (let i = 0; i < app_list.length; i++) {
@@ -43,21 +58,7 @@ onMounted(async () => {
             })
         }
     }
-    app_list.sort((a, b) => {
-        return a.weight - b.weight;
-    });
-    search(); //初始化操作
-});
-
-//当app列表发送变化时，自动刷新app面板数据
-let watch_applist_timer: NodeJS.Timeout | undefined;
-watch(() => applistStore.applist.length, () => {
-    if (watch_applist_timer) clearTimeout(watch_applist_timer);
-    watch_applist_timer = setTimeout(() => {
-        search();
-    }, 200);
-});
-
+}
 
 function click_app() {
     if (search_result_list.length == 0) {
@@ -306,20 +307,21 @@ async function search(features = []) {
     tmp_recommend_result.sort((a, b) => {
         return b.weight - a.weight;
     })
-    recommend_list.splice(0); //清空
+    recommend_list.length = 0; //清空
     //最多8个推荐应用
     recommend_list.push(...tmp_recommend_result.slice(0, 8));
     //根据权重排序
     tmp_match_result.sort((a, b) => {
         return b.weight - a.weight;
     })
-    search_result_list.splice(0); //清空
+    search_result_list.length = 0; //清空
     //当前是否展开
     if (search_result_is_expand.value) {
         search_result_list.push(...tmp_match_result);
     } else { //在未展开模式下，最多显示8个应用
         search_result_list.push(...tmp_match_result.slice(0, 8));
     }
+
     //显示的搜索结果始终为实际匹配到的个数
     search_count.value = tmp_match_result.length;
     //调整窗口
